@@ -241,6 +241,7 @@ export default function MyVehicles() {
   const [submittingThirdParty, setSubmittingThirdParty] = useState(false);
 
   // Third-Party Driver Registration Form States
+  const [tpDriverType, setTpDriverType] = useState<"permanent" | "optional">("permanent");
   const [tpSelectedPlates, setTpSelectedPlates] = useState<string[]>([]);
   const [tpDriverName, setTpDriverName] = useState("");
   const [tpDriverAddress, setTpDriverAddress] = useState("");
@@ -253,6 +254,31 @@ export default function MyVehicles() {
   const [tpErrorMessage, setTpErrorMessage] = useState("");
   const [tpReviewOpen, setTpReviewOpen] = useState(false);
   const [resumingPaymentId, setResumingPaymentId] = useState<string | null>(null);
+
+  // Permanent Driver Duration
+  const [tpDurationType, setTpDurationType] = useState<string>("12 Months");
+  const [tpStartDate, setTpStartDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
+  const [tpEndDate, setTpEndDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 365);
+    return d.toISOString().split("T")[0];
+  });
+
+  // Optional NFC Card States
+  const [tpNfcCards, setTpNfcCards] = useState<any[]>([]);
+  const [tpSelectedCardId, setTpSelectedCardId] = useState<string>("");
+  const [tpNfcDuration, setTpNfcDuration] = useState<string>("7 Days");
+  const [tpNfcStartDate, setTpNfcStartDate] = useState<string>(() => new Date().toISOString().slice(0, 16));
+  const [tpNfcEndDate, setTpNfcEndDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 16);
+  });
+  const [tpOtpSent, setTpOtpSent] = useState(false);
+  const [tpOtpCode, setTpOtpCode] = useState("");
+  const [tpOtpSending, setTpOtpSending] = useState(false);
+  const [tpAssigning, setTpAssigning] = useState(false);
+  const [tpAssignSuccess, setTpAssignSuccess] = useState("");
 
   // Termination Request States
   const [terminateTargetReq, setTerminateTargetReq] = useState<any | null>(null);
@@ -372,7 +398,26 @@ export default function MyVehicles() {
     }
   };
 
+  const loadTpNfcInventory = async (nic: string) => {
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/inventory?nic=${encodeURIComponent(nic)}`);
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.cards)) {
+        setTpNfcCards(data.cards);
+        const avail = data.cards.find((c: any) => c.status === "Available");
+        if (avail) {
+          setTpSelectedCardId(avail.cardId);
+        } else if (data.cards.length > 0) {
+          setTpSelectedCardId(data.cards[0].cardId);
+        }
+      }
+    } catch (e) {
+      console.warn("Error loading NFC inventory:", e);
+    }
+  };
+
   const handleOpenThirdPartyForVehicle = (plate: string) => {
+    setTpDriverType("permanent");
     setTpSelectedPlates([plate]);
     setTpDriverName("");
     setTpDriverAddress("");
@@ -384,10 +429,19 @@ export default function MyVehicles() {
     setTpDlBack("");
     setTpErrorMessage("");
     setTpReviewOpen(false);
+    setTpOtpSent(false);
+    setTpOtpCode("");
+    setTpAssignSuccess("");
+    handleTpDurationChange("12 Months");
+    handleTpNfcDurationChange("7 Days");
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (u?.nic) loadTpNfcInventory(u.nic);
     setThirdPartyModalOpen(true);
   };
 
   const handleOpenThirdPartyNew = () => {
+    setTpDriverType("permanent");
     setTpSelectedPlates([]);
     setTpDriverName("");
     setTpDriverAddress("");
@@ -399,7 +453,129 @@ export default function MyVehicles() {
     setTpDlBack("");
     setTpErrorMessage("");
     setTpReviewOpen(false);
+    setTpOtpSent(false);
+    setTpOtpCode("");
+    setTpAssignSuccess("");
+    handleTpDurationChange("12 Months");
+    handleTpNfcDurationChange("7 Days");
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (u?.nic) loadTpNfcInventory(u.nic);
     setThirdPartyModalOpen(true);
+  };
+
+  const handleTpDurationChange = (type: string) => {
+    setTpDurationType(type);
+    const start = new Date();
+    setTpStartDate(start.toISOString().split("T")[0]);
+    let days = 365;
+    if (type === "1 Month") days = 30;
+    else if (type === "3 Months") days = 90;
+    else if (type === "6 Months") days = 180;
+    else if (type === "12 Months") days = 365;
+    if (type !== "Custom") {
+      const end = new Date();
+      end.setDate(end.getDate() + days);
+      setTpEndDate(end.toISOString().split("T")[0]);
+    }
+  };
+
+  const handleTpNfcDurationChange = (type: string) => {
+    setTpNfcDuration(type);
+    const start = new Date();
+    setTpNfcStartDate(start.toISOString().slice(0, 16));
+    let days = 7;
+    if (type === "1 Day") days = 1;
+    else if (type === "2 Days") days = 2;
+    else if (type === "7 Days") days = 7;
+    else if (type === "10 Days") days = 10;
+    if (type !== "Custom") {
+      const end = new Date();
+      end.setDate(end.getDate() + days);
+      setTpNfcEndDate(end.toISOString().slice(0, 16));
+    }
+  };
+
+  const handleSendAssignmentOtp = async () => {
+    setTpErrorMessage("");
+    if (!tpDriverName.trim() || !tpDriverPhone.trim()) {
+      setTpErrorMessage("Driver name and phone number are required.");
+      return;
+    }
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (!u?.nic) return;
+
+    setTpOtpSending(true);
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/request-assignment-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ policyHolderNic: u.nic })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to dispatch verification OTP.");
+      setTpOtpSent(true);
+    } catch (err: any) {
+      setTpErrorMessage(err.message || "Failed to send OTP.");
+    } finally {
+      setTpOtpSending(false);
+    }
+  };
+
+  const handleConfirmAssignOptionalDriver = async () => {
+    setTpErrorMessage("");
+    if (!tpSelectedCardId) {
+      setTpErrorMessage("Please select an available physical NFC card from your inventory.");
+      return;
+    }
+    if (!tpOtpCode || tpOtpCode.trim().length !== 6) {
+      setTpErrorMessage("Please enter the 6-digit OTP code received on your phone.");
+      return;
+    }
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (!u?.nic) return;
+
+    setTpAssigning(true);
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/assign-driver`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policyHolderNic: u.nic,
+          cardId: tpSelectedCardId,
+          otp: tpOtpCode.trim(),
+          driverDetails: {
+            fullName: tpDriverName.trim(),
+            phoneNumber: tpDriverPhone.trim(),
+            residentialAddress: tpDriverAddress.trim(),
+            nicNumber: tpDriverNic.trim().toUpperCase()
+          },
+          vehiclePlate: tpSelectedPlates[0] || (vehicles[0]?.numberPlate || ""),
+          duration: {
+            durationType: tpNfcDuration,
+            startDate: tpNfcStartDate,
+            endDate: tpNfcEndDate
+          }
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Driver assignment failed.");
+
+      setTpAssignSuccess("Optional driver authorized & activated immediately via NFC card!");
+      setTimeout(() => {
+        setThirdPartyModalOpen(false);
+        setTpAssignSuccess("");
+        setTpOtpSent(false);
+        setTpOtpCode("");
+        loadThirdPartyRequests();
+      }, 1500);
+    } catch (err: any) {
+      setTpErrorMessage(err.message || "Failed to complete assignment.");
+    } finally {
+      setTpAssigning(false);
+    }
   };
 
   const handleFileUpload = (
@@ -454,6 +630,11 @@ export default function MyVehicles() {
         body: JSON.stringify({
           policyHolderNic: u.nic,
           selectedVehiclePlates: tpSelectedPlates,
+          accessDuration: {
+            durationType: tpDurationType,
+            startDate: tpStartDate,
+            endDate: tpEndDate
+          },
           driverDetails: {
             fullName: tpDriverName.trim(),
             residentialAddress: tpDriverAddress.trim(),
@@ -3203,9 +3384,13 @@ export default function MyVehicles() {
                   <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#102A43]">Register Third-Party Driver</h3>
+                  <h3 className="text-lg font-bold text-[#102A43]">
+                    {tpDriverType === "permanent" ? "Register Permanent Third-Party Driver" : "Assign Optional Temporary Driver (NFC Card)"}
+                  </h3>
                   <p className="text-xs text-slate-500">
-                    Authorize an external driver across your vehicles • Single fixed fee: <strong>LKR 300</strong>
+                    {tpDriverType === "permanent"
+                      ? "Long-term authorization across your vehicles • Single fixed fee: LKR 300 (Requires branch approval)"
+                      : "Instant short-term authorization • Activated via Policyholder OTP (No branch review required)"}
                   </p>
                 </div>
               </div>
@@ -3220,203 +3405,464 @@ export default function MyVehicles() {
 
             {/* Modal Scrollable Body */}
             <div className="p-8 overflow-y-auto flex-1 space-y-6">
-              {/* Error Message */}
+              {/* Type Switcher: Permanent vs Optional */}
+              <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTpDriverType("permanent")}
+                  className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border-none ${
+                    tpDriverType === "permanent"
+                      ? "bg-white text-indigo-700 shadow-xs"
+                      : "bg-transparent text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" />
+                  <span>Permanent Driver (1M - 12M)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTpDriverType("optional")}
+                  className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border-none ${
+                    tpDriverType === "optional"
+                      ? "bg-white text-emerald-700 shadow-xs"
+                      : "bg-transparent text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                  <span>Optional NFC Card (1D - 10D)</span>
+                </button>
+              </div>
+
+              {/* Error & Success Messages */}
               {tpErrorMessage && (
                 <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
                   <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>{tpErrorMessage}</span>
                 </div>
               )}
-
-              {/* Step 1: Vehicle Selection */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-blue-600" />
-                    <span>Select Covered Vehicles <span className="text-rose-500">*</span></span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (tpSelectedPlates.length === vehicles.length) {
-                        setTpSelectedPlates([]);
-                      } else {
-                        setTpSelectedPlates(vehicles.map((v) => v.numberPlate));
-                      }
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer border-none bg-transparent"
-                  >
-                    {tpSelectedPlates.length === vehicles.length ? "Deselect All" : "Select All"}
-                  </button>
+              {tpAssignSuccess && (
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-bold flex items-start gap-2">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{tpAssignSuccess}</span>
                 </div>
+              )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-40 overflow-y-auto p-1">
-                  {vehicles.map((veh) => {
-                    const isChecked = tpSelectedPlates.includes(veh.numberPlate);
-                    return (
-                      <div
-                        key={veh.numberPlate}
+              {/* ==================================================== */}
+              {/* FLOW A: PERMANENT DRIVER REGISTRATION */}
+              {/* ==================================================== */}
+              {tpDriverType === "permanent" && (
+                <>
+                  {/* Step 1: Vehicle Selection */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-blue-600" />
+                        <span>Select Covered Vehicles <span className="text-rose-500">*</span></span>
+                      </label>
+                      <button
+                        type="button"
                         onClick={() => {
-                          if (isChecked) {
-                            setTpSelectedPlates(tpSelectedPlates.filter((p) => p !== veh.numberPlate));
+                          if (tpSelectedPlates.length === vehicles.length) {
+                            setTpSelectedPlates([]);
                           } else {
-                            setTpSelectedPlates([...tpSelectedPlates, veh.numberPlate]);
+                            setTpSelectedPlates(vehicles.map((v) => v.numberPlate));
                           }
                         }}
-                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
-                          isChecked
-                            ? "bg-indigo-50/70 border-indigo-300 ring-2 ring-indigo-500/10"
-                            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                        }`}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer border-none bg-transparent"
                       >
-                        <div className="min-w-0">
-                          <div className="font-mono font-bold text-xs text-slate-900">{formatNumberPlate(veh.numberPlate)}</div>
-                          <div className="text-[11px] text-slate-500 truncate">{veh.company} {veh.model}</div>
-                        </div>
+                        {tpSelectedPlates.length === vehicles.length ? "Deselect All" : "Select All"}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-40 overflow-y-auto p-1">
+                      {vehicles.map((veh) => {
+                        const isChecked = tpSelectedPlates.includes(veh.numberPlate);
+                        return (
+                          <div
+                            key={veh.numberPlate}
+                            onClick={() => {
+                              if (isChecked) {
+                                setTpSelectedPlates(tpSelectedPlates.filter((p) => p !== veh.numberPlate));
+                              } else {
+                                setTpSelectedPlates([...tpSelectedPlates, veh.numberPlate]);
+                              }
+                            }}
+                            className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                              isChecked
+                                ? "bg-indigo-50/70 border-indigo-300 ring-2 ring-indigo-500/10"
+                                : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="font-mono font-bold text-xs text-slate-900">{formatNumberPlate(veh.numberPlate)}</div>
+                              <div className="text-[11px] text-slate-500 truncate">{veh.company} {veh.model}</div>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Duration Selector */}
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                      Authorization Duration
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {["1 Month", "3 Months", "6 Months", "12 Months", "Custom"].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => handleTpDurationChange(t)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                            tpDurationType === t
+                              ? "bg-indigo-600 text-white border-indigo-600"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
+                      <span>Valid: <strong className="font-mono text-slate-800">{tpStartDate}</strong> to <strong className="font-mono text-slate-800">{tpEndDate}</strong></span>
+                      <span className="text-indigo-600 font-semibold">{tpDurationType}</span>
+                    </div>
+                  </div>
+
+                  {/* Fixed Fee Banner */}
+                  <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                        LKR
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-indigo-950">Fixed Registration Fee</div>
+                        <div className="text-[11px] text-indigo-700">Covers all {tpSelectedPlates.length} selected vehicle(s)</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-indigo-950 font-mono">LKR 300.00</div>
+                      <div className="text-[10px] text-indigo-600">Single One-Time Fee</div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Driver Details */}
+                  <div className="space-y-3.5">
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                      Driver Personal Details
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Full Name <span className="text-rose-500">*</span>
+                        </label>
                         <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {}}
-                          className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                          type="text"
+                          placeholder="e.g. Sunil Perera"
+                          value={tpDriverName}
+                          onChange={(e) => setTpDriverName(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
                         />
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Fixed Fee Banner */}
-              <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
-                    LKR
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-indigo-950">Fixed Registration Fee</div>
-                    <div className="text-[11px] text-indigo-700">Covers all {tpSelectedPlates.length} selected vehicle(s)</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-black text-indigo-950 font-mono">LKR 300.00</div>
-                  <div className="text-[10px] text-indigo-600">Single One-Time Fee</div>
-                </div>
-              </div>
-
-              {/* Step 2: Driver Details */}
-              <div className="space-y-3.5">
-                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                  Driver Personal Details
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Full Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Sunil Perera"
-                      value={tpDriverName}
-                      onChange={(e) => setTpDriverName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      NIC Number <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 199512345678 or 951234567V"
-                      value={tpDriverNic}
-                      onChange={(e) => setTpDriverNic(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-mono font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Contact Mobile <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 0771234567 or +94771234567"
-                      value={tpDriverPhone}
-                      onChange={(e) => setTpDriverPhone(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-mono font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Residential Address <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. No. 45, Temple Road, Galle"
-                      value={tpDriverAddress}
-                      onChange={(e) => setTpDriverAddress(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 3: KYC Document Uploaders */}
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                  Driver Identity & Licence Documents (All 4 Required) <span className="text-rose-500">*</span>
-                </label>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "NIC Front", state: tpNicFront, setter: setTpNicFront, ref: tpNicFrontRef },
-                    { label: "NIC Back", state: tpNicBack, setter: setTpNicBack, ref: tpNicBackRef },
-                    { label: "Licence Front", state: tpDlFront, setter: setTpDlFront, ref: tpDlFrontRef },
-                    { label: "Licence Back", state: tpDlBack, setter: setTpDlBack, ref: tpDlBackRef }
-                  ].map((doc, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center flex flex-col justify-between"
-                    >
-                      <span className="text-xs font-semibold text-slate-700 mb-2 block">{doc.label}</span>
-
-                      {doc.state ? (
-                        <div className="relative h-24 rounded-xl overflow-hidden border border-slate-200 group">
-                          <img src={doc.state} alt={doc.label} className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => doc.setter("")}
-                            className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-none"
-                            title="Remove image"
-                          >
-                            <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => doc.ref.current?.click()}
-                          className="h-24 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 bg-white flex flex-col items-center justify-center cursor-pointer transition-colors"
-                        >
-                          <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5 text-slate-400 mb-1" />
-                          <span className="text-[11px] text-slate-500 font-medium">Upload Photo</span>
-                        </div>
-                      )}
-
-                      <input
-                        type="file"
-                        ref={doc.ref}
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(e, doc.setter)}
-                      />
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          NIC Number <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 199512345678 or 951234567V"
+                          value={tpDriverNic}
+                          onChange={(e) => setTpDriverNic(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-mono font-medium"
+                        />
+                      </div>
                     </div>
-                  ))}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Contact Mobile <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 0771234567 or +94771234567"
+                          value={tpDriverPhone}
+                          onChange={(e) => setTpDriverPhone(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-mono font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Residential Address <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. No. 45, Temple Road, Galle"
+                          value={tpDriverAddress}
+                          onChange={(e) => setTpDriverAddress(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3: KYC Document Uploaders */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                      Driver Identity & Licence Documents (All 4 Required) <span className="text-rose-500">*</span>
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: "NIC Front", state: tpNicFront, setter: setTpNicFront, ref: tpNicFrontRef },
+                        { label: "NIC Back", state: tpNicBack, setter: setTpNicBack, ref: tpNicBackRef },
+                        { label: "Licence Front", state: tpDlFront, setter: setTpDlFront, ref: tpDlFrontRef },
+                        { label: "Licence Back", state: tpDlBack, setter: setTpDlBack, ref: tpDlBackRef }
+                      ].map((doc, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center flex flex-col justify-between"
+                        >
+                          <span className="text-xs font-semibold text-slate-700 mb-2 block">{doc.label}</span>
+
+                          {doc.state ? (
+                            <div className="relative h-24 rounded-xl overflow-hidden border border-slate-200 group">
+                              <img src={doc.state} alt={doc.label} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => doc.setter("")}
+                                className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-none"
+                                title="Remove image"
+                              >
+                                <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => doc.ref.current?.click()}
+                              className="h-24 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 bg-white flex flex-col items-center justify-center cursor-pointer transition-colors"
+                            >
+                              <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5 text-slate-400 mb-1" />
+                              <span className="text-[11px] text-slate-500 font-medium">Upload Photo</span>
+                            </div>
+                          )}
+
+                          <input
+                            type="file"
+                            ref={doc.ref}
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(e, doc.setter)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ==================================================== */}
+              {/* FLOW B: OPTIONAL NFC CARD DRIVER ASSIGNMENT */}
+              {/* ==================================================== */}
+              {tpDriverType === "optional" && (
+                <div className="space-y-5 animate-in fade-in duration-150">
+                  {/* Security Notice */}
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-start gap-2.5">
+                    <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold">Instant Policyholder Authorization:</span>
+                      <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                        To authorize this temporary driver, an OTP is dispatched to <strong>YOUR verified phone number</strong>. Once verified, access is activated immediately with <strong>no branch review required</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Physical Card Selector or Order Prompt */}
+                  {tpNfcCards.filter((c: any) => c.status === "Available").length === 0 ? (
+                    <div className="p-5 bg-slate-50 border border-dashed border-slate-300 rounded-2xl text-center space-y-2">
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-8 h-8 text-slate-400 mx-auto" />
+                      <div className="font-bold text-xs text-slate-800">No Available Physical NFC Cards in Inventory</div>
+                      <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                        You need at least one Available physical NFC card to assign a temporary driver. Order cards (LKR 500 each) in the NFC portal.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { window.location.href = "/Policy_Holder/ThirdParty?tab=nfc-cards"; }}
+                        className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer border-none"
+                      >
+                        Order NFC Cards in Third-Party Portal
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block mb-1">
+                        Select Available Physical NFC Card <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        value={tpSelectedCardId}
+                        onChange={(e) => setTpSelectedCardId(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        {tpNfcCards
+                          .filter((c: any) => c.status === "Available")
+                          .map((c: any) => (
+                            <option key={c._id} value={c.cardId}>
+                              {c.cardId} — Physical Tag (Available)
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Covered Vehicle */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block mb-1">
+                      Covered Vehicle <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={tpSelectedPlates[0] || (vehicles[0]?.numberPlate || "")}
+                      onChange={(e) => setTpSelectedPlates([e.target.value])}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {vehicles.map((v) => (
+                        <option key={v.numberPlate} value={v.numberPlate}>
+                          {formatNumberPlate(v.numberPlate)} — {v.company} {v.model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Driver Details */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                      Temporary Driver Details
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Driver Full Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Ruwan Jayawardena"
+                          value={tpDriverName}
+                          onChange={(e) => setTpDriverName(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Driver Phone Number <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          placeholder="e.g. 0712345678"
+                          value={tpDriverPhone}
+                          onChange={(e) => setTpDriverPhone(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 font-mono font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Driver NIC / ID (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 911234567V"
+                          value={tpDriverNic}
+                          onChange={(e) => setTpDriverNic(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500 font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">
+                          Residential Address
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Colombo, Sri Lanka"
+                          value={tpDriverAddress}
+                          onChange={(e) => setTpDriverAddress(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Temporary Duration Selector */}
+                  <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                      Temporary Assignment Duration
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {["1 Day", "2 Days", "7 Days", "10 Days", "Custom"].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => handleTpNfcDurationChange(t)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                            tpNfcDuration === t
+                              ? "bg-emerald-600 text-white border-emerald-600"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Policyholder OTP Verification */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900 block text-xs">Policyholder Authorization OTP</span>
+                        <span className="text-[11px] text-slate-500">Sent to your verified mobile number</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSendAssignmentOtp}
+                        disabled={tpOtpSending}
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl cursor-pointer border-none disabled:opacity-50"
+                      >
+                        {tpOtpSending ? "Sending OTP..." : tpOtpSent ? "Resend OTP" : "Send OTP"}
+                      </button>
+                    </div>
+
+                    {tpOtpSent && (
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Enter 6-Digit OTP Code
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          placeholder="e.g. 123456"
+                          value={tpOtpCode}
+                          onChange={(e) => setTpOtpCode(e.target.value.replace(/\D/g, ""))}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-widest font-extrabold focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -3429,15 +3875,27 @@ export default function MyVehicles() {
                 Cancel
               </button>
 
-              <button
-                type="button"
-                onClick={handleSubmitThirdParty}
-                disabled={submittingThirdParty}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
-              >
-                <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
-                <span>{submittingThirdParty ? "Connecting to Stripe..." : "Pay LKR 300 via Stripe"}</span>
-              </button>
+              {tpDriverType === "permanent" ? (
+                <button
+                  type="button"
+                  onClick={handleSubmitThirdParty}
+                  disabled={submittingThirdParty}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
+                >
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                  <span>{submittingThirdParty ? "Connecting to Stripe..." : "Pay LKR 300 via Stripe"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleConfirmAssignOptionalDriver}
+                  disabled={tpAssigning || !tpOtpSent || tpOtpCode.length !== 6 || !tpSelectedCardId}
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
+                >
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" />
+                  <span>{tpAssigning ? "Activating..." : "Verify & Activate Assignment"}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
