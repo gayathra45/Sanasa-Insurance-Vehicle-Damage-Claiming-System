@@ -688,185 +688,277 @@ export default function AdminThirdPartyPage() {
             </div>
           </div>
 
-          {/* Table Container */}
+          {/* List Content */}
           {activeTab === "optional-cards" ? (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              {loadingOrders ? (
-                <div className="py-16">
-                  <SimpleLoader message="Loading card orders..." />
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="py-16 text-center text-slate-400">
-                  <HugeiconsIcon icon={CreditCardIcon} className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-semibold text-slate-600">No NFC Card Orders Found</p>
-                  <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search keywords.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="py-3 px-4">Order #</th>
-                        <th className="py-3 px-4">Policyholder</th>
-                        <th className="py-3 px-4">Branch</th>
-                        <th className="py-3 px-4 text-center">Cards</th>
-                        <th className="py-3 px-4">Payment</th>
-                        <th className="py-3 px-4">Fulfillment Status</th>
-                        <th className="py-3 px-4">Date</th>
-                        <th className="py-3 px-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                      {orders.map((o) => (
-                        <tr
-                          key={o._id}
-                          className="hover:bg-slate-50/60 transition-colors cursor-pointer"
-                          onClick={() => setSelectedOrder(o)}
-                        >
-                          <td className="py-3.5 px-4">
-                            <span className="font-mono font-bold text-[#102A43]">{o.orderNumber}</span>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-900">{o.policyHolderName}</div>
-                            <div className="text-[11px] text-slate-400 font-mono">{o.policyHolderNic}</div>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                              <HugeiconsIcon icon={Building01Icon} className="w-3.5 h-3.5 text-slate-400" />
-                              {o.branch}
+            loadingOrders ? (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs py-16">
+                <SimpleLoader message="Loading card orders..." />
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs py-16 text-center text-slate-400">
+                <HugeiconsIcon icon={CreditCardIcon} className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-semibold text-slate-600">No NFC Card Orders Found</p>
+                <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search keywords.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto pb-3 -mx-2 px-2">
+                <div className="min-w-[1080px] flex flex-col gap-3">
+                  {/* Proportional Grid Header */}
+                  <div className="hidden md:grid md:grid-cols-[minmax(150px,1.4fr)_minmax(160px,1.5fr)_minmax(110px,1fr)_minmax(70px,0.6fr)_minmax(140px,1.2fr)_minmax(150px,1.3fr)_minmax(100px,0.9fr)_minmax(100px,0.9fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
+                    <div>Order #</div>
+                    <div>Policyholder</div>
+                    <div>Branch</div>
+                    <div className="text-center">Cards</div>
+                    <div>Payment</div>
+                    <div>Fulfillment Status</div>
+                    <div>Date</div>
+                    <div className="text-right">Action</div>
+                  </div>
+
+                  {/* Card Rows with Colored Left Accent */}
+                  {orders.map((o) => {
+                    let borderAccentClass = "border-l-slate-300";
+                    let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
+
+                    if (o.status === "Collected") {
+                      borderAccentClass = "border-l-slate-400";
+                      gradientBgClass = "from-slate-50/30 via-transparent to-transparent";
+                    } else if (o.status === "Ready for Collection") {
+                      borderAccentClass = "border-l-blue-500";
+                      gradientBgClass = "from-blue-50/30 via-transparent to-transparent";
+                    } else if (o.status === "Approved") {
+                      borderAccentClass = "border-l-emerald-500";
+                      gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
+                    } else if (o.status === "Processing") {
+                      borderAccentClass = "border-l-indigo-500";
+                      gradientBgClass = "from-indigo-50/30 via-transparent to-transparent";
+                    } else if (o.status === "Request Submitted" || o.status === "Pending Payment") {
+                      borderAccentClass = "border-l-amber-500";
+                      gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
+                    } else if (o.status === "Rejected" || o.status === "Cancelled") {
+                      borderAccentClass = "border-l-rose-500";
+                      gradientBgClass = "from-rose-50/30 via-transparent to-transparent";
+                    }
+
+                    return (
+                      <div
+                        key={o._id}
+                        onClick={() => setSelectedOrder(o)}
+                        className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(150px,1.4fr)_minmax(160px,1.5fr)_minmax(110px,1fr)_minmax(70px,0.6fr)_minmax(140px,1.2fr)_minmax(150px,1.3fr)_minmax(100px,0.9fr)_minmax(100px,0.9fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group cursor-pointer`}
+                      >
+                        {/* Col 1: Order # */}
+                        <div>
+                          <span className="font-mono font-bold text-[#102A43] text-xs">{o.orderNumber}</span>
+                        </div>
+
+                        {/* Col 2: Policyholder */}
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 text-xs truncate">{o.policyHolderName}</div>
+                          <div className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">{o.policyHolderNic}</div>
+                        </div>
+
+                        {/* Col 3: Branch */}
+                        <div className="min-w-0">
+                          <span className="inline-flex items-center gap-1 font-semibold text-slate-800 text-xs truncate">
+                            <HugeiconsIcon icon={Building01Icon} className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            {o.branch}
+                          </span>
+                        </div>
+
+                        {/* Col 4: Cards */}
+                        <div className="text-center md:text-center">
+                          <span className="font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded text-xs">
+                            {o.quantity}
+                          </span>
+                        </div>
+
+                        {/* Col 5: Payment */}
+                        <div>
+                          {o.payment?.status === "Paid" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Paid (LKR {o.totalAmount.toLocaleString()})
                             </span>
-                          </td>
-                          <td className="py-3.5 px-4 text-center">
-                            <span className="font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded">
-                              {o.quantity}
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                              {o.payment?.status || "Pending Payment"}
                             </span>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            {o.payment?.status === "Paid" ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Paid (LKR {o.totalAmount.toLocaleString()})
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                {o.payment?.status || "Pending Payment"}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4">{getStatusBadge(o.status)}</td>
-                          <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                          )}
+                        </div>
+
+                        {/* Col 6: Fulfillment Status */}
+                        <div>{getStatusBadge(o.status)}</div>
+
+                        {/* Col 7: Date */}
+                        <div>
+                          <span className="text-slate-500 text-[11px]">
                             {new Date(o.createdAt).toLocaleDateString("en-LK", {
                               month: "short",
                               day: "numeric",
                               year: "numeric"
                             })}
-                          </td>
-                          <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => setSelectedOrder(o)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
-                            >
-                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                              <span>Inspect</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </span>
+                        </div>
+
+                        {/* Col 8: Action */}
+                        <div className="text-right flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => setSelectedOrder(o)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                            <span>Inspect</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Bottom Summary Bar */}
+                  <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+                    <span className="font-semibold text-slate-700">
+                      Showing {orders.length} card purchase orders across all branches
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      Click any order card or Inspect to review and manage fulfillment
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              {loadingPermanent ? (
-                <div className="py-16">
-                  <SimpleLoader message="Loading permanent driver registrations..." />
-                </div>
-              ) : permanentRequests.length === 0 ? (
-                <div className="py-16 text-center text-slate-400">
-                  <HugeiconsIcon icon={UserCheck01Icon} className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-semibold text-slate-600">No Permanent Driver Records Found</p>
-                  <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search keywords.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="py-3 px-4">Pass Ref</th>
-                        <th className="py-3 px-4">Authorized Driver</th>
-                        <th className="py-3 px-4">Policyholder</th>
-                        <th className="py-3 px-4">Branch</th>
-                        <th className="py-3 px-4">Permitted Vehicles</th>
-                        <th className="py-3 px-4">Authorization Status</th>
-                        <th className="py-3 px-4">Registered</th>
-                        <th className="py-3 px-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                      {permanentRequests.map((req) => (
-                        <tr
-                          key={req._id}
-                          className="hover:bg-slate-50/60 transition-colors cursor-pointer"
-                          onClick={() => setSelectedDriverReq(req)}
-                        >
-                          <td className="py-3.5 px-4">
-                            <span className="font-mono font-bold text-[#102A43]">
-                              {req.requestReference || req._id.substring(0, 8)}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-900">{req.driverDetails.fullName}</div>
-                            <div className="text-[11px] text-slate-500">
-                              NIC: {req.driverDetails.nicNumber || "N/A"} • {req.driverDetails.phoneNumber}
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-semibold text-slate-800">{req.policyHolderName || "Owner"}</div>
-                            <div className="text-[11px] text-slate-400 font-mono">{req.policyHolderNic}</div>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                              <HugeiconsIcon icon={Building01Icon} className="w-3.5 h-3.5 text-slate-400" />
-                              {req.branch}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-wrap gap-1 max-w-xs">
-                              {(req.selectedVehicles || []).map((v, i) => (
-                                <span
-                                  key={i}
-                                  className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono font-bold text-slate-700"
-                                >
-                                  {v.numberPlate}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4">{getStatusBadge(req.status)}</td>
-                          <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+            loadingPermanent ? (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs py-16">
+                <SimpleLoader message="Loading permanent driver registrations..." />
+              </div>
+            ) : permanentRequests.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs py-16 text-center text-slate-400">
+                <HugeiconsIcon icon={UserCheck01Icon} className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-semibold text-slate-600">No Permanent Driver Records Found</p>
+                <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search keywords.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto pb-3 -mx-2 px-2">
+                <div className="min-w-[1080px] flex flex-col gap-3">
+                  {/* Proportional Grid Header */}
+                  <div className="hidden md:grid md:grid-cols-[minmax(140px,1.3fr)_minmax(180px,1.6fr)_minmax(150px,1.3fr)_minmax(100px,0.9fr)_minmax(150px,1.3fr)_minmax(150px,1.3fr)_minmax(100px,0.9fr)_minmax(100px,0.9fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
+                    <div>Pass Ref</div>
+                    <div>Authorized Driver</div>
+                    <div>Policyholder</div>
+                    <div>Branch</div>
+                    <div>Permitted Vehicles</div>
+                    <div>Authorization Status</div>
+                    <div>Registered</div>
+                    <div className="text-right">Action</div>
+                  </div>
+
+                  {/* Card Rows with Colored Left Accent */}
+                  {permanentRequests.map((req) => {
+                    let borderAccentClass = "border-l-slate-300";
+                    let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
+
+                    if (req.status === "Approved") {
+                      borderAccentClass = "border-l-emerald-500";
+                      gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
+                    } else if (req.status === "Pending Branch Approval" || req.status === "Pending Payment") {
+                      borderAccentClass = "border-l-amber-500";
+                      gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
+                    } else if (req.status === "Pending Termination Approval") {
+                      borderAccentClass = "border-l-orange-500";
+                      gradientBgClass = "from-orange-50/30 via-transparent to-transparent";
+                    } else if (req.status === "Terminated" || req.status === "Rejected" || req.status === "Temporarily Blocked") {
+                      borderAccentClass = "border-l-rose-500";
+                      gradientBgClass = "from-rose-50/30 via-transparent to-transparent";
+                    }
+
+                    return (
+                      <div
+                        key={req._id}
+                        onClick={() => setSelectedDriverReq(req)}
+                        className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(140px,1.3fr)_minmax(180px,1.6fr)_minmax(150px,1.3fr)_minmax(100px,0.9fr)_minmax(150px,1.3fr)_minmax(150px,1.3fr)_minmax(100px,0.9fr)_minmax(100px,0.9fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group cursor-pointer`}
+                      >
+                        {/* Col 1: Pass Ref */}
+                        <div>
+                          <span className="font-mono font-bold text-[#102A43] text-xs">
+                            {req.requestReference || req._id.substring(0, 8)}
+                          </span>
+                        </div>
+
+                        {/* Col 2: Authorized Driver */}
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 text-xs truncate">{req.driverDetails.fullName}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                            NIC: {req.driverDetails.nicNumber || "N/A"} • {req.driverDetails.phoneNumber}
+                          </div>
+                        </div>
+
+                        {/* Col 3: Policyholder */}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-800 text-xs truncate">{req.policyHolderName || "Owner"}</div>
+                          <div className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">{req.policyHolderNic}</div>
+                        </div>
+
+                        {/* Col 4: Branch */}
+                        <div className="min-w-0">
+                          <span className="inline-flex items-center gap-1 font-semibold text-slate-800 text-xs truncate">
+                            <HugeiconsIcon icon={Building01Icon} className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            {req.branch}
+                          </span>
+                        </div>
+
+                        {/* Col 5: Permitted Vehicles */}
+                        <div>
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {(req.selectedVehicles || []).map((v, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono font-bold text-slate-700"
+                              >
+                                {v.numberPlate}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Col 6: Authorization Status */}
+                        <div>{getStatusBadge(req.status)}</div>
+
+                        {/* Col 7: Registered */}
+                        <div>
+                          <span className="text-slate-500 text-[11px]">
                             {new Date(req.createdAt).toLocaleDateString("en-LK", {
                               month: "short",
                               day: "numeric",
                               year: "numeric"
                             })}
-                          </td>
-                          <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => setSelectedDriverReq(req)}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
-                            >
-                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                              <span>Dossier</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </span>
+                        </div>
+
+                        {/* Col 8: Action */}
+                        <div className="text-right flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => setSelectedDriverReq(req)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                            <span>Dossier</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Bottom Summary Bar */}
+                  <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+                    <span className="font-semibold text-slate-700">
+                      Showing {permanentRequests.length} driver registrations across all branches
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      Click any driver card or Dossier to view full verification details & documents
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )
           )}
 
           {/* Order Inspection Modal */}
