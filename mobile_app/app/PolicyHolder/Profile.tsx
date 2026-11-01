@@ -13,7 +13,8 @@ import {
   Image,
   Modal,
   TextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Switch
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -25,6 +26,14 @@ import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { compressImageMobile } from "../../utils/imageCompressor";
+import {
+  getBiometricCapabilities,
+  authenticateWithBiometrics,
+  isBiometricLoginEnabled,
+  saveBiometricCredentials,
+  clearBiometricCredentials,
+  BiometricCapability
+} from "../../utils/biometricAuth";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -142,6 +151,11 @@ export default function PolicyHolderProfilePage() {
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
+  // Biometric Auth Settings state
+  const [biometricCap, setBiometricCap] = useState<BiometricCapability | null>(null);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [togglingBiometric, setTogglingBiometric] = useState(false);
+
   // Update Requests state
   const [updateRequests, setUpdateRequests] = useState<any[]>([]);
 
@@ -246,6 +260,16 @@ export default function PolicyHolderProfilePage() {
         }
       } catch {
         router.replace("/login/page");
+      }
+
+      // Check device biometric capabilities and user preference
+      try {
+        const caps = await getBiometricCapabilities();
+        setBiometricCap(caps);
+        const bioOn = await isBiometricLoginEnabled();
+        setBiometricEnabled(bioOn);
+      } catch (e) {
+        console.warn("Failed to check biometrics:", e);
       }
     })();
   }, []);
@@ -582,6 +606,77 @@ export default function PolicyHolderProfilePage() {
       });
     } finally {
       setChangingPassword(false);
+    }
+  };
+
+  // Toggle Biometric Login (Face Unlock / Fingerprint)
+  const handleToggleBiometric = async (newVal: boolean) => {
+    if (newVal) {
+      if (!biometricCap?.available) {
+        setCustomPopup({
+          show: true,
+          title: "Hardware Unsupported",
+          message: "This device does not have biometric hardware sensors (Face ID / Fingerprint).",
+          type: "error"
+        });
+        return;
+      }
+      if (!biometricCap?.enrolled) {
+        setCustomPopup({
+          show: true,
+          title: "No Biometrics Enrolled",
+          message: "Please register your fingerprint or face in your phone's OS settings first, then return to enable instant login.",
+          type: "error"
+        });
+        return;
+      }
+      setTogglingBiometric(true);
+      try {
+        const auth = await authenticateWithBiometrics(
+          `Scan your ${biometricCap.label} to activate instant login`
+        );
+        if (auth.success && user) {
+          await saveBiometricCredentials({
+            role: "policy_holder",
+            loginId: user.nic || user.email,
+            displayName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.nic,
+            userData: user,
+            savedAt: new Date().toISOString()
+          });
+          setBiometricEnabled(true);
+          setCustomPopup({
+            show: true,
+            title: "Biometric Login Enabled",
+            message: `${biometricCap.label} is now active for your policyholder account! You won't have to enter your password every time.`,
+            type: "success"
+          });
+        } else if (auth.error && auth.error !== "Authentication canceled") {
+          setCustomPopup({
+            show: true,
+            title: "Verification Failed",
+            message: auth.error,
+            type: "error"
+          });
+        }
+      } catch (err: any) {
+        setCustomPopup({
+          show: true,
+          title: "Error",
+          message: err?.message || "Failed to activate biometrics.",
+          type: "error"
+        });
+      } finally {
+        setTogglingBiometric(false);
+      }
+    } else {
+      await clearBiometricCredentials();
+      setBiometricEnabled(false);
+      setCustomPopup({
+        show: true,
+        title: "Biometrics Disabled",
+        message: "Biometric instant login has been disabled. You will need to enter your password to sign in.",
+        type: "info"
+      });
     }
   };
 
@@ -1087,13 +1182,107 @@ export default function PolicyHolderProfilePage() {
 
         {/* ── TAB 4: ACCOUNT SECURITY ── */}
         {activeTab === "security" && (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.cardTitle}>Account Login Security</Text>
-                <Text style={styles.cardSubtitle}>Update your password to keep your policies secure</Text>
+          <View>
+            {/* ── BIOMETRIC LOGIN CARD ── */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>Device Biometric Login</Text>
+                  <Text style={styles.cardSubtitle}>
+                    Fast sign-in with Face Unlock or Fingerprint without typing password
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.bioCardContent}>
+                <View style={styles.bioRow}>
+                  <View style={styles.bioIconBox}>
+                    <Ionicons
+                      name={biometricCap?.iconName || "finger-print-outline"}
+                      size={24}
+                      color="#000080"
+                    />
+                  </View>
+                  <View style={styles.bioTextBox}>
+                    <Text style={styles.bioTitle}>{biometricCap?.label || "Biometric Authentication"}</Text>
+                    <Text style={styles.bioSubtitle}>
+                      {biometricCap?.enrolled
+                        ? `Use your ${biometricCap?.label || "Face Unlock / Fingerprint"} to quickly unlock your insurance portal.`
+                        : biometricCap?.available
+                        ? "Hardware detected. Enroll fingerprint or face in OS settings to enable."
+                        : "Device does not have biometric hardware."}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={biometricEnabled}
+                    onValueChange={handleToggleBiometric}
+                    disabled={togglingBiometric || !biometricCap?.available || !biometricCap?.enrolled}
+                    trackColor={{ false: "#cbd5e1", true: "#000080" }}
+                    thumbColor={"#ffffff"}
+                  />
+                </View>
+
+                {/* Biometric Status Row */}
+                <View style={styles.bioStatusBox}>
+                  <Text style={styles.bioStatusLabel}>Hardware Sensor Status</Text>
+                  <View
+                    style={[
+                      styles.bioStatusBadge,
+                      biometricEnabled
+                        ? styles.bioBadgeActive
+                        : biometricCap?.enrolled
+                        ? styles.bioBadgeInactive
+                        : styles.bioBadgeWarning,
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        biometricEnabled
+                          ? "checkmark-circle"
+                          : biometricCap?.enrolled
+                          ? "information-circle-outline"
+                          : "alert-circle-outline"
+                      }
+                      size={13}
+                      color={
+                        biometricEnabled
+                          ? "#059669"
+                          : biometricCap?.enrolled
+                          ? "#0284c7"
+                          : "#d97706"
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.bioBadgeText,
+                        {
+                          color: biometricEnabled
+                            ? "#059669"
+                            : biometricCap?.enrolled
+                            ? "#0284c7"
+                            : "#d97706",
+                        },
+                      ]}
+                    >
+                      {biometricEnabled
+                        ? "Active (Saved for Fast Login)"
+                        : biometricCap?.enrolled
+                        ? "Supported (Ready to Enable)"
+                        : "Not Enrolled on Device"}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
+
+            {/* ── PASSWORD CHANGE CARD ── */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View>
+                  <Text style={styles.cardTitle}>Account Password</Text>
+                  <Text style={styles.cardSubtitle}>Update your password to keep your policies secure</Text>
+                </View>
+              </View>
 
             <View style={styles.formWrap}>
               <View style={styles.formGroup}>
@@ -1179,6 +1368,7 @@ export default function PolicyHolderProfilePage() {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
         )}
 
       </ScrollView>
@@ -2212,5 +2402,80 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#ffffff"
-  }
+  },
+  bioCardContent: {
+    paddingTop: 8,
+  },
+  bioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  bioIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  bioTextBox: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  bioTitle: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  bioSubtitle: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  bioStatusBox: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  bioStatusLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748b",
+  },
+  bioStatusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  bioBadgeActive: {
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+  },
+  bioBadgeInactive: {
+    backgroundColor: "#f0f9ff",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+  },
+  bioBadgeWarning: {
+    backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+  },
+  bioBadgeText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+  },
 });

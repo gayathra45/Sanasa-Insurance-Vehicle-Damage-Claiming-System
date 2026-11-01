@@ -18,7 +18,10 @@ export const translations = {
       networkError: "Network Error",
       connMsg: "Could not connect to server. Please check your connection.",
       accessDenied: "Access Denied",
-      accessDeniedMsg: "Only Policy Holders and Agents can log in via this mobile app."
+      accessDeniedMsg: "Only Policy Holders and Agents can log in via this mobile app.",
+      biometricLogin: "Instant Biometric Login",
+      biometricLoginSub: "Log in with Face Unlock or Fingerprint",
+      orBiometric: "OR QUICK BIOMETRIC LOGIN"
     },
     dashboard: {
       welcomeBack: "Welcome back,",
@@ -133,7 +136,10 @@ export const translations = {
       networkError: "ජාල දෝෂයකි",
       connMsg: "සේවාදායකයට සම්බන්ධ විය නොහැක. කරුණාකර ඔබගේ ජාලය පරීක්ෂා කරන්න.",
       accessDenied: "ප්‍රවේශය ප්‍රතික්ෂේප විය",
-      accessDeniedMsg: "මෙම ජංගම යෙදුම හරහා ලොග් විය හැක්කේ රක්ෂණ හිමියන්ට සහ නියෝජිතයින්ට පමණි."
+      accessDeniedMsg: "මෙම ජංගම යෙදුම හරහා ලොග් විය හැක්කේ රක්ෂණ හිමියන්ට සහ නියෝජිතයින්ට පමණි.",
+      biometricLogin: "ක්ෂණික ජෛවමිතික පිවිසුම",
+      biometricLoginSub: "මුහුණ හෝ ඇඟිලි සලකුණෙන් පිවිසෙන්න",
+      orBiometric: "හෝ ජෛවමිතික මඟින් පිවිසෙන්න"
     },
     dashboard: {
       welcomeBack: "ආයුබෝවන්,",
@@ -248,7 +254,10 @@ export const translations = {
       networkError: "பிணைய பிழை",
       connMsg: "சேவையகத்துடன் இணைக்க முடியவில்லை. உங்கள் பிணையத்தைச் சரிபார்க்கவும்.",
       accessDenied: "அணுகல் மறுக்கப்பட்டது",
-      accessDeniedMsg: "இந்த மொபைல் செயலி மூலம் காப்பீட்டாளர்கள் மற்றும் முகவர்கள் மட்டுமே உள்நுழைய முடியும்."
+      accessDeniedMsg: "இந்த மொபைல் செயலி மூலம் காப்பீட்டாளர்கள் மற்றும் முகவர்கள் மட்டுமே உள்நுழைய முடியும்.",
+      biometricLogin: "பயோமெட்ரிக் உடனடி உள்நுழைவு",
+      biometricLoginSub: "முகம் அல்லது கைரேகை மூலம் உள்நுழைக",
+      orBiometric: "அல்லது பயோமெட்ரிக் மூலம்"
     },
     dashboard: {
       welcomeBack: "வரவேற்கிறோம்,",

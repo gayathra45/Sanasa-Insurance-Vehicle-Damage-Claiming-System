@@ -8,14 +8,16 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
-  StatusBar,
   Platform,
   Alert,
   Image,
   Modal,
   TextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Switch,
+  StatusBar as RNStatusBar
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -26,6 +28,14 @@ import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
 import { sriLankaBanks } from "../../../utils/banks";
+import {
+  getBiometricCapabilities,
+  authenticateWithBiometrics,
+  isBiometricLoginEnabled,
+  saveBiometricCredentials,
+  clearBiometricCredentials,
+  BiometricCapability
+} from "../../../utils/biometricAuth";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -150,6 +160,11 @@ export default function AgentProfilePage() {
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
+  // Biometric Settings
+  const [biometricCap, setBiometricCap] = useState<BiometricCapability | null>(null);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [togglingBiometric, setTogglingBiometric] = useState(false);
+
   // Update requests
   const [updateRequests, setUpdateRequests] = useState<any[]>([]);
 
@@ -256,6 +271,16 @@ export default function AgentProfilePage() {
         }
       } catch {
         router.replace("/login/page");
+      }
+
+      // Check device biometric capabilities and user preference
+      try {
+        const caps = await getBiometricCapabilities();
+        setBiometricCap(caps);
+        const bioOn = await isBiometricLoginEnabled();
+        setBiometricEnabled(bioOn);
+      } catch (e) {
+        console.warn("Failed to check agent biometrics:", e);
       }
     })();
   }, []);
@@ -625,6 +650,77 @@ export default function AgentProfilePage() {
     }
   };
 
+  // Toggle Agent Biometric Login (Face Unlock / Fingerprint)
+  const handleToggleBiometric = async (newVal: boolean) => {
+    if (newVal) {
+      if (!biometricCap?.available) {
+        setCustomPopup({
+          show: true,
+          title: "Hardware Unsupported",
+          message: "This device does not have biometric hardware sensors (Face ID / Fingerprint).",
+          type: "error"
+        });
+        return;
+      }
+      if (!biometricCap?.enrolled) {
+        setCustomPopup({
+          show: true,
+          title: "No Biometrics Enrolled",
+          message: "Please register your fingerprint or face in your phone's OS settings first, then return to enable instant login.",
+          type: "error"
+        });
+        return;
+      }
+      setTogglingBiometric(true);
+      try {
+        const auth = await authenticateWithBiometrics(
+          `Scan your ${biometricCap.label} to activate instant agent login`
+        );
+        if (auth.success && agent) {
+          await saveBiometricCredentials({
+            role: "insurance_agent",
+            loginId: agent.email || agent.nic,
+            displayName: agent.name || "Insurance Agent",
+            userData: agent,
+            savedAt: new Date().toISOString()
+          });
+          setBiometricEnabled(true);
+          setCustomPopup({
+            show: true,
+            title: "Biometric Login Enabled",
+            message: `${biometricCap.label} is now active for your field agent account! You can now log in securely without entering your password.`,
+            type: "success"
+          });
+        } else if (auth.error && auth.error !== "Authentication canceled") {
+          setCustomPopup({
+            show: true,
+            title: "Verification Failed",
+            message: auth.error,
+            type: "error"
+          });
+        }
+      } catch (err: any) {
+        setCustomPopup({
+          show: true,
+          title: "Error",
+          message: err?.message || "Failed to activate biometrics.",
+          type: "error"
+        });
+      } finally {
+        setTogglingBiometric(false);
+      }
+    } else {
+      await clearBiometricCredentials();
+      setBiometricEnabled(false);
+      setCustomPopup({
+        show: true,
+        title: "Biometrics Disabled",
+        message: "Biometric instant login has been disabled for your agent account. You will need to enter your password to sign in.",
+        type: "info"
+      });
+    }
+  };
+
   const handleLogout = () => {
     setCustomPopup({
       show: true,
@@ -661,7 +757,7 @@ export default function AgentProfilePage() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+        <StatusBar style="light" />
         <ActivityIndicator size="large" color="#f97316" />
         <Text style={styles.loadingText}>Loading agent profile...</Text>
       </View>
@@ -670,7 +766,7 @@ export default function AgentProfilePage() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -1595,6 +1691,102 @@ export default function AgentProfilePage() {
         {/* ── TAB 4: ACCOUNT SECURITY & PASSWORD ── */}
         {activeTab === "security" && (
           <View style={styles.tabContent}>
+            {/* Biometric Quick Login Card */}
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <Ionicons name="finger-print" size={18} color="#f97316" />
+                  <Text style={styles.cardTitle}>Device Biometric Login</Text>
+                </View>
+              </View>
+
+              <Text style={styles.cardDesc}>
+                Log in instantly to your field agent portal using Face Unlock or Fingerprint without entering your credentials every time.
+              </Text>
+
+              <View style={styles.agentBioBox}>
+                <View style={styles.agentBioRow}>
+                  <View style={styles.agentBioIconWrap}>
+                    <Ionicons
+                      name={biometricCap?.iconName || "finger-print-outline"}
+                      size={24}
+                      color="#f97316"
+                    />
+                  </View>
+                  <View style={styles.agentBioTextCol}>
+                    <Text style={styles.agentBioTitle}>
+                      {biometricCap?.label || "Biometric Authentication"}
+                    </Text>
+                    <Text style={styles.agentBioDesc}>
+                      {biometricCap?.enrolled
+                        ? `Use your ${biometricCap?.label || "device biometric"} for fast portal access.`
+                        : biometricCap?.available
+                        ? "Hardware sensor found. Enroll biometric profile in OS settings to use."
+                        : "Device does not support biometric authentication."}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={biometricEnabled}
+                    onValueChange={handleToggleBiometric}
+                    disabled={togglingBiometric || !biometricCap?.available || !biometricCap?.enrolled}
+                    trackColor={{ false: "#cbd5e1", true: "#f97316" }}
+                    thumbColor={"#ffffff"}
+                  />
+                </View>
+
+                {/* Status Indicator */}
+                <View style={styles.agentBioFooterRow}>
+                  <Text style={styles.agentBioFooterLabel}>Device Sensor Status</Text>
+                  <View
+                    style={[
+                      styles.agentBioStatusPill,
+                      biometricEnabled
+                        ? styles.agentBioPillActive
+                        : biometricCap?.enrolled
+                        ? styles.agentBioPillReady
+                        : styles.agentBioPillWarn,
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        biometricEnabled
+                          ? "checkmark-circle"
+                          : biometricCap?.enrolled
+                          ? "information-circle-outline"
+                          : "alert-circle-outline"
+                      }
+                      size={13}
+                      color={
+                        biometricEnabled
+                          ? "#15803d"
+                          : biometricCap?.enrolled
+                          ? "#ea580c"
+                          : "#ca8a04"
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.agentBioStatusText,
+                        {
+                          color: biometricEnabled
+                            ? "#15803d"
+                            : biometricCap?.enrolled
+                            ? "#ea580c"
+                            : "#ca8a04",
+                        },
+                      ]}
+                    >
+                      {biometricEnabled
+                        ? "Active (Saved for Instant Login)"
+                        : biometricCap?.enrolled
+                        ? "Supported (Ready to Enable)"
+                        : "Not Enrolled on Device"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
             {/* Change Password Card */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
@@ -1944,7 +2136,7 @@ const styles = StyleSheet.create({
 
   /* Hero Gradient */
   heroGradient: {
-    paddingTop: Platform.OS === "ios" ? 52 : (StatusBar.currentHeight || 30) + 12,
+    paddingTop: Platform.OS === "ios" ? 52 : ((RNStatusBar.currentHeight || 30) + 12),
     paddingBottom: 22,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 28,
@@ -2796,5 +2988,85 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
     color: "#ffffff"
-  }
+  },
+  agentBioBox: {
+    backgroundColor: "#fff7ed",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#ffedd5",
+    marginTop: 8,
+  },
+  agentBioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  agentBioIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  agentBioTextCol: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  agentBioTitle: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  agentBioDesc: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  agentBioFooterRow: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(249, 115, 22, 0.15)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  agentBioFooterLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#78716c",
+  },
+  agentBioStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  agentBioPillActive: {
+    backgroundColor: "#dcfce7",
+    borderWidth: 1,
+    borderColor: "#86efac",
+  },
+  agentBioPillReady: {
+    backgroundColor: "#ffedd5",
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+  },
+  agentBioPillWarn: {
+    backgroundColor: "#fef9c3",
+    borderWidth: 1,
+    borderColor: "#fde047",
+  },
+  agentBioStatusText: {
+    fontSize: 10.5,
+    fontWeight: "800",
+  },
 });

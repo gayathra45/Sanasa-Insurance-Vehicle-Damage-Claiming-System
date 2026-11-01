@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -20,6 +20,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../_config";
 
 import { useLanguage } from "../../utils/translations";
+import {
+  getBiometricCapabilities,
+  authenticateWithBiometrics,
+  isBiometricLoginEnabled,
+  getBiometricCredentials,
+  saveBiometricCredentials,
+  BiometricCapability,
+  BiometricCredentials,
+} from "../../utils/biometricAuth";
 
 export default function MobileLogin() {
   const { lang, changeLang, t } = useLanguage();
@@ -28,12 +37,60 @@ export default function MobileLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [customAlert, setCustomAlert] = useState<{ title: string; message: string } | null>(null);
 
+  const [biometricCap, setBiometricCap] = useState<BiometricCapability | null>(null);
+  const [savedBiometricUser, setSavedBiometricUser] = useState<BiometricCredentials | null>(null);
+  const [bioAuthenticating, setBioAuthenticating] = useState(false);
+
   const showAlert = (title: string, message: string) => {
     setCustomAlert({ title, message });
   };
   const { width, height } = useWindowDimensions();
 
   const [loggingIn, setLoggingIn] = useState(false);
+
+  // Check biometric capability and saved credentials on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const caps = await getBiometricCapabilities();
+        setBiometricCap(caps);
+        const enabled = await isBiometricLoginEnabled();
+        if (enabled) {
+          const creds = await getBiometricCredentials();
+          setSavedBiometricUser(creds);
+        }
+      } catch (err) {
+        console.warn("Error initializing biometrics on login:", err);
+      }
+    })();
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    if (!savedBiometricUser) return;
+    setBioAuthenticating(true);
+    try {
+      const result = await authenticateWithBiometrics(
+        `Log in to SANASA as ${savedBiometricUser.displayName}`
+      );
+      if (result.success) {
+        if (savedBiometricUser.role === "policy_holder") {
+          await AsyncStorage.setItem("logged_in_user", JSON.stringify(savedBiometricUser.userData));
+          router.replace("/PolicyHolder/page");
+        } else if (savedBiometricUser.role === "insurance_agent") {
+          await AsyncStorage.setItem("logged_in_agent", JSON.stringify(savedBiometricUser.userData));
+          router.replace("/Agent/Dashboard/page");
+        } else {
+          showAlert(t.login.accessDenied, t.login.accessDeniedMsg);
+        }
+      } else if (result.error && result.error !== "Authentication canceled") {
+        showAlert(t.login.loginFailed, result.error);
+      }
+    } catch (err: any) {
+      showAlert(t.login.networkError, err?.message || "Biometric authentication failed.");
+    } finally {
+      setBioAuthenticating(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!loginId.trim() || !password) {
@@ -56,9 +113,30 @@ export default function MobileLogin() {
 
       if (data.role === "policy_holder") {
         await AsyncStorage.setItem("logged_in_user", JSON.stringify(data.user));
+        // Keep biometric credentials fresh if already enabled
+        const bioEnabled = await isBiometricLoginEnabled();
+        if (bioEnabled) {
+          await saveBiometricCredentials({
+            role: "policy_holder",
+            loginId: loginId.trim(),
+            displayName: `${data.user.firstName || ""} ${data.user.lastName || ""}`.trim() || data.user.nic,
+            userData: data.user,
+            savedAt: new Date().toISOString(),
+          });
+        }
         router.replace("/PolicyHolder/page");
       } else if (data.role === "insurance_agent") {
         await AsyncStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
+        const bioEnabled = await isBiometricLoginEnabled();
+        if (bioEnabled) {
+          await saveBiometricCredentials({
+            role: "insurance_agent",
+            loginId: loginId.trim(),
+            displayName: data.agent.name || data.agent.email,
+            userData: data.agent,
+            savedAt: new Date().toISOString(),
+          });
+        }
         router.replace("/Agent/Dashboard/page");
       } else {
         showAlert(t.login.accessDenied, t.login.accessDeniedMsg);
@@ -198,7 +276,7 @@ export default function MobileLogin() {
               activeOpacity={0.8}
               onPress={handleLogin}
               style={[styles.submitButton, loggingIn && { opacity: 0.7 }]}
-              disabled={loggingIn}
+              disabled={loggingIn || bioAuthenticating}
             >
               {loggingIn ? (
                 <ActivityIndicator color="#fff" size="small" />
@@ -206,6 +284,57 @@ export default function MobileLogin() {
                 <Text style={styles.submitButtonText}>{t.login.loginBtn}</Text>
               )}
             </TouchableOpacity>
+
+            {/* Biometric Instant Login Option */}
+            {savedBiometricUser && (
+              <View style={styles.biometricSection}>
+                <View style={styles.biometricDividerRow}>
+                  <View style={styles.biometricDividerLine} />
+                  <Text style={styles.biometricDividerText}>
+                    {t.login.orBiometric || "OR INSTANT LOGIN"}
+                  </Text>
+                  <View style={styles.biometricDividerLine} />
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.82}
+                  onPress={handleBiometricLogin}
+                  disabled={loggingIn || bioAuthenticating}
+                  style={styles.biometricLoginBtn}
+                >
+                  <View style={styles.biometricIconBadge}>
+                    {bioAuthenticating ? (
+                      <ActivityIndicator size="small" color="#00f2fe" />
+                    ) : (
+                      <Ionicons
+                        name={biometricCap?.iconName || "finger-print-outline"}
+                        size={22}
+                        color="#00f2fe"
+                      />
+                    )}
+                  </View>
+                  <View style={styles.biometricInfoCol}>
+                    <Text style={styles.biometricActionText}>
+                      {biometricCap?.label || "Face / Fingerprint Unlock"}
+                    </Text>
+                    <Text style={styles.biometricUserText} numberOfLines={1}>
+                      {savedBiometricUser.displayName} ({savedBiometricUser.role === "policy_holder" ? "Policyholder" : "Agent"})
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Hardware supported tip when not enabled */}
+            {!savedBiometricUser && biometricCap?.available && biometricCap?.enrolled && (
+              <View style={styles.biometricTipWrap}>
+                <Ionicons name={biometricCap.iconName} size={15} color="#38bdf8" />
+                <Text style={styles.biometricTipText}>
+                  {biometricCap.label} supported. Turn it on in App Settings after login.
+                </Text>
+              </View>
+            )}
 
             {/* Bottom Navigation Links */}
             <View style={styles.footerLinks}>
@@ -515,5 +644,78 @@ const styles = StyleSheet.create({
   langSelectTextActive: {
     color: "#ffffff",
     fontWeight: "bold",
+  },
+  biometricSection: {
+    marginTop: 18,
+    width: "100%",
+  },
+  biometricDividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  biometricDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+  },
+  biometricDividerText: {
+    paddingHorizontal: 10,
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "rgba(255, 255, 255, 0.55)",
+    letterSpacing: 0.8,
+  },
+  biometricLoginBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    borderWidth: 1.2,
+    borderColor: "rgba(0, 242, 254, 0.35)",
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 12,
+  },
+  biometricIconBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(0, 242, 254, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 242, 254, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  biometricInfoCol: {
+    flex: 1,
+  },
+  biometricActionText: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: "#ffffff",
+  },
+  biometricUserText: {
+    fontSize: 11.5,
+    color: "#94a3b8",
+    marginTop: 2,
+  },
+  biometricTipWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(56, 189, 248, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(56, 189, 248, 0.2)",
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 16,
+  },
+  biometricTipText: {
+    fontSize: 11,
+    color: "#bae6fd",
+    fontWeight: "500",
+    flex: 1,
   },
 });
