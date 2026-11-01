@@ -99,6 +99,177 @@ interface OptionalCardRequestsTabProps {
   showToast: (text: string, type?: "success" | "error") => void;
 }
 
+// Safe Date and Currency formatting helpers to prevent runtime RangeError crashes
+const safeFormatDate = (val?: string | null, opts?: Intl.DateTimeFormatOptions) => {
+  if (!val) return "—";
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-LK", { timeZone: "Asia/Colombo", ...opts });
+  } catch {
+    return "—";
+  }
+};
+
+const safeFormatTime = (val?: string | null) => {
+  if (!val) return "—";
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "—";
+  }
+};
+
+const safeFormatDateTime = (val?: string | null) => {
+  if (!val) return "—";
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-LK", {
+      timeZone: "Asia/Colombo",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch {
+    return "—";
+  }
+};
+
+const safeCurrency = (val?: number | null) => {
+  if (typeof val !== "number" || isNaN(val)) return "0";
+  return val.toLocaleString("en-LK");
+};
+
+// Request Issuance Lifecycle Stages
+const LIFECYCLE_STEPS = [
+  {
+    key: "Request Submitted",
+    fullName: "Request Submitted",
+    shortName: "Submitted",
+    subLabel: "Order Placed",
+    icon: File01Icon,
+    stepNum: 1
+  },
+  {
+    key: "Approved",
+    fullName: "Branch Approved",
+    shortName: "Approved",
+    subLabel: "Cards Generated",
+    icon: Shield01Icon,
+    stepNum: 2
+  },
+  {
+    key: "Processing",
+    fullName: "NFC Encoding",
+    shortName: "Processing",
+    subLabel: "Writing Tag Data",
+    icon: SmartPhone01Icon,
+    stepNum: 3
+  },
+  {
+    key: "Ready for Collection",
+    fullName: "Ready for Pickup",
+    shortName: "Ready",
+    subLabel: "At Branch Counter",
+    icon: Building01Icon,
+    stepNum: 4
+  },
+  {
+    key: "Collected",
+    fullName: "Handed Over",
+    shortName: "Collected",
+    subLabel: "Cards Received",
+    icon: CheckmarkCircle01Icon,
+    stepNum: 5
+  }
+];
+
+const getStageGuidance = (order: NfcOrder) => {
+  switch (order.status) {
+    case "Request Submitted":
+      return {
+        icon: Shield01Icon,
+        badgeText: "Awaiting Staff Review",
+        title: "Stage 1: Awaiting Branch Staff Verification",
+        description: `Policyholder ${order.policyHolderName} placed an order for ${order.quantity} optional NFC card(s). Payment of LKR ${safeCurrency(order.totalAmount)} has been verified. Review policyholder details below and click 'Approve & Generate Cards' to produce cryptographic NFC credentials.`,
+        actionHint: "Action: Approve Request",
+        badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+        containerColor: "bg-amber-50/70 border-amber-200/80 text-amber-950",
+        iconColor: "bg-amber-100 text-amber-700"
+      };
+    case "Approved":
+      return {
+        icon: SmartPhone01Icon,
+        badgeText: "Credentials Ready",
+        title: "Stage 2: Approved • Ready for NFC Tag Encoding",
+        description: `Request approved and ${order.issuedCards?.length || order.quantity} secure card tokens are generated in the system. Connect your Android device running SANASA NFC Writer and click 'Start Physical NFC Preparation' to encode physical cards.`,
+        actionHint: "Action: Start NFC Preparation",
+        badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+        containerColor: "bg-blue-50/70 border-blue-200/80 text-blue-950",
+        iconColor: "bg-blue-100 text-blue-700"
+      };
+    case "Processing":
+      return {
+        icon: RefreshIcon,
+        badgeText: "Tag Encoding Active",
+        title: "Stage 3: Physical NFC Tag Encoding In Progress",
+        description: `Physical cards are currently being encoded and verified via the SANASA NFC Writer phone. Once all physical tags are successfully written and verified, click 'Confirm Preparation & Mark Ready'.`,
+        actionHint: "Action: Mark Ready When Done",
+        badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+        containerColor: "bg-indigo-50/70 border-indigo-200/80 text-indigo-950",
+        iconColor: "bg-indigo-100 text-indigo-700"
+      };
+    case "Ready for Collection":
+      return {
+        icon: Building01Icon,
+        badgeText: "Available at Counter",
+        title: `Stage 4: Cards Ready for Collection at ${order.branch} Branch Desk`,
+        description: `All ${order.quantity} physical NFC cards are encoded, verified, and placed safely at the branch counter. When the customer or authorized recipient visits, click 'Record Physical Handover' to finalize the issuance.`,
+        actionHint: "Action: Record Handover",
+        badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
+        containerColor: "bg-teal-50/70 border-teal-200/80 text-teal-950",
+        iconColor: "bg-teal-100 text-teal-700"
+      };
+    case "Collected":
+      return {
+        icon: CheckmarkCircle01Icon,
+        badgeText: "Lifecycle Complete",
+        title: "Stage 5: Cards Successfully Handed Over",
+        description: `Order fully fulfilled. Cards collected by ${order.collectionInfo?.collectedBy || order.policyHolderName}${order.collectionInfo?.collectedAt ? ` on ${safeFormatDateTime(order.collectionInfo.collectedAt)}` : ""}. All NFC credentials are live and active for the policyholder.`,
+        actionHint: "Fulfilled",
+        badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        containerColor: "bg-emerald-50/70 border-emerald-200/80 text-emerald-950",
+        iconColor: "bg-emerald-100 text-emerald-700"
+      };
+    case "Rejected":
+      return {
+        icon: Cancel01Icon,
+        badgeText: "Request Rejected",
+        title: "Lifecycle Terminated: Request Rejected by Branch Staff",
+        description: `This request was rejected. Reason: "${order.rejectionReason || "No details provided"}". Contact the policyholder if further assistance or re-submission is needed.`,
+        actionHint: "Terminated",
+        badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
+        containerColor: "bg-rose-50/80 border-rose-200 text-rose-950",
+        iconColor: "bg-rose-100 text-rose-700"
+      };
+    default:
+      return {
+        icon: Clock01Icon,
+        badgeText: "Pending Action",
+        title: `Status: ${order.status}`,
+        description: `Request is currently in status "${order.status}". Follow standard branch procedures.`,
+        actionHint: "Pending",
+        badgeColor: "bg-slate-50 text-slate-700 border-slate-200",
+        containerColor: "bg-slate-50 border-slate-200 text-slate-800",
+        iconColor: "bg-slate-100 text-slate-600"
+      };
+  }
+};
+
 export default function OptionalCardRequestsTab({
   branch,
   staffInfo,
@@ -676,7 +847,7 @@ export default function OptionalCardRequestsTab({
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          Paid (LKR {amount.toLocaleString()})
+          Paid (LKR {safeCurrency(amount)})
         </span>
       );
     }
@@ -999,7 +1170,7 @@ export default function OptionalCardRequestsTab({
                     </div>
                     {order.payment?.paidAt && (
                       <span className="text-[10px] text-slate-400 mt-0.5">
-                        Paid {new Date(order.payment.paidAt).toLocaleDateString("en-LK", { month: "short", day: "numeric" })}
+                        Paid {safeFormatDate(order.payment.paidAt, { month: "short", day: "numeric" })}
                       </span>
                     )}
                   </div>
@@ -1013,14 +1184,14 @@ export default function OptionalCardRequestsTab({
                     <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
                       <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
                       <span>
-                        {new Date(order.createdAt).toLocaleDateString("en-GB", {
+                        {safeFormatDate(order.createdAt, {
                           day: "2-digit",
                           month: "short",
                           year: "numeric"
                         })}
                       </span>
                       <span className="text-slate-400 text-[10px]">
-                        {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {safeFormatTime(order.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -1150,8 +1321,7 @@ export default function OptionalCardRequestsTab({
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Branch: <span className="font-semibold text-slate-700">{selectedOrder.branch}</span> • Placed:{" "}
-                    {new Date(selectedOrder.createdAt).toLocaleDateString("en-LK", {
-                      timeZone: "Asia/Colombo",
+                    {safeFormatDate(selectedOrder.createdAt, {
                       month: "short",
                       day: "numeric",
                       year: "numeric"
@@ -1170,80 +1340,211 @@ export default function OptionalCardRequestsTab({
 
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 text-xs">
-              {/* Status Workflow Progression */}
-              <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-4">
-                  Request Issuance Lifecycle
-                </span>
-                <div className="flex items-center justify-between relative">
-                  {/* Connecting line */}
-                  <div className="absolute top-3.5 left-8 right-8 h-0.5 bg-slate-200" />
+              {/* Status Workflow Progression (Redesigned Enterprise Lifecycle Tracker) */}
+              {(() => {
+                const stepKeys = [
+                  "Request Submitted",
+                  "Approved",
+                  "Processing",
+                  "Ready for Collection",
+                  "Collected"
+                ];
+                const currentIdx = stepKeys.indexOf(selectedOrder.status);
+                const isRejected = selectedOrder.status === "Rejected";
+                const stageGuidance = getStageGuidance(selectedOrder);
 
-                  {/* Stepper items */}
-                  {[
-                    "Request Submitted",
-                    "Approved",
-                    "Processing",
-                    "Ready for Collection",
-                    "Collected"
-                  ].map((step, idx) => {
-                    const stepOrder = [
-                      "Request Submitted",
-                      "Approved",
-                      "Processing",
-                      "Ready for Collection",
-                      "Collected"
-                    ];
-                    const currentIdx = stepOrder.indexOf(selectedOrder.status);
-                    const isCompleted = currentIdx >= idx;
-                    const isCurrent = selectedOrder.status === step;
-                    const isRejected = selectedOrder.status === "Rejected";
+                const getStepTimestamp = (stepKey: string) => {
+                  if (stepKey === "Request Submitted") {
+                    return safeFormatDateTime(selectedOrder.createdAt);
+                  }
+                  if (stepKey === "Approved" && selectedOrder.branchReview?.reviewedAt) {
+                    return safeFormatDateTime(selectedOrder.branchReview.reviewedAt);
+                  }
+                  if (stepKey === "Collected" && selectedOrder.collectionInfo?.collectedAt) {
+                    return safeFormatDateTime(selectedOrder.collectionInfo.collectedAt);
+                  }
+                  const hist = selectedOrder.statusHistory?.find(
+                    (h) => h.status.toLowerCase() === stepKey.toLowerCase()
+                  );
+                  if (hist?.timestamp) {
+                    return safeFormatDateTime(hist.timestamp);
+                  }
+                  return null;
+                };
 
-                    return (
-                      <div
-                        key={step}
-                        className="flex flex-col items-center text-center relative z-10 flex-1"
-                      >
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ring-4 ring-slate-50 ${
-                            isRejected
-                              ? "bg-rose-100 text-rose-700 border border-rose-300"
-                              : isCompleted
-                              ? "bg-emerald-600 text-white shadow-xs"
-                              : "bg-slate-200 text-slate-500"
-                          }`}
-                        >
-                          {isCompleted ? "✓" : idx + 1}
-                        </div>
-                        <span
-                          className={`text-[10px] mt-2 font-medium leading-tight max-w-[80px] ${
-                            isCurrent
-                              ? "text-blue-700 font-bold"
-                              : isCompleted
-                              ? "text-slate-800"
-                              : "text-slate-400"
-                          }`}
-                        >
-                          {step}
+                return (
+                  <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50/70 p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-5">
+                    {/* Header bar with stage counter and live badge */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[11px] font-black text-[#102A43] uppercase tracking-wider">
+                          Request Issuance Lifecycle
                         </span>
+                        {!isRejected && currentIdx >= 0 && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#102A43]/10 text-[#102A43]">
+                            Stage {currentIdx + 1} of 5
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Rejection Alert if rejected */}
-              {selectedOrder.status === "Rejected" && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800">
-                  <div className="flex items-center gap-2 font-bold text-sm">
-                    <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-rose-600" />
-                    <span>Request Rejected by Branch</span>
+                      <div className="flex items-center gap-2">
+                        {isRejected ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                            <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                            <span>Request Terminated: Rejected</span>
+                          </span>
+                        ) : selectedOrder.status === "Collected" ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>All Cards Successfully Collected</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
+                            <span>Current Stage: {selectedOrder.status}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Stepper Timeline & Track */}
+                    <div className="relative pt-4 pb-2 overflow-x-auto">
+                      <div className="min-w-[540px] relative">
+                        {/* Base background track */}
+                        <div className="absolute top-[26px] left-[10%] right-[10%] h-1.5 bg-slate-200/80 rounded-full z-0" />
+
+                        {/* Dynamic active filled progress track */}
+                        <div
+                          className="absolute top-[26px] left-[10%] h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 rounded-full z-0 transition-all duration-700 ease-out shadow-xs"
+                          style={{
+                            width: isRejected
+                              ? "0%"
+                              : currentIdx < 0
+                              ? "0%"
+                              : `${Math.min(80, Math.max(0, (currentIdx / 4) * 80))}%`
+                          }}
+                        />
+
+                        {/* 5 Stage Nodes */}
+                        <div className="grid grid-cols-5 relative z-10 gap-2">
+                          {LIFECYCLE_STEPS.map((step, idx) => {
+                            const isCompleted = !isRejected && currentIdx > idx;
+                            const isCurrent = !isRejected && (currentIdx === idx || (currentIdx === -1 && idx === 0));
+                            const isTerminatedHere = isRejected && idx === 0;
+                            const stepTimestamp = getStepTimestamp(step.key);
+
+                            return (
+                              <div
+                                key={step.key}
+                                className="flex flex-col items-center text-center relative px-1 group"
+                              >
+                                {/* Floating "Current" Badge */}
+                                {isCurrent && (
+                                  <span className="absolute -top-4.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-blue-600 text-[9px] font-black uppercase text-white shadow-xs tracking-wider whitespace-nowrap animate-bounce">
+                                    Current
+                                  </span>
+                                )}
+
+                                {/* Node Icon Button */}
+                                <div
+                                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                                    isTerminatedHere
+                                      ? "bg-rose-500 text-white shadow-md shadow-rose-500/20 ring-4 ring-rose-100"
+                                      : isCompleted
+                                      ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 ring-4 ring-emerald-50 scale-100"
+                                      : isCurrent
+                                      ? "bg-gradient-to-br from-[#102A43] via-blue-700 to-indigo-600 text-white shadow-xl shadow-blue-600/35 ring-4 ring-blue-100 ring-offset-2 scale-105"
+                                      : "bg-white border-2 border-slate-200 text-slate-400 shadow-2xs hover:border-slate-300"
+                                  }`}
+                                >
+                                  {isCompleted ? (
+                                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-white" />
+                                  ) : isTerminatedHere ? (
+                                    <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-white" />
+                                  ) : (
+                                    <HugeiconsIcon
+                                      icon={step.icon}
+                                      className={`w-5 h-5 ${isCurrent ? "text-white" : "text-slate-400"}`}
+                                    />
+                                  )}
+                                </div>
+
+                                {/* Step Label & Subtitle */}
+                                <div className="mt-2.5 flex flex-col items-center">
+                                  <span
+                                    className={`text-xs font-bold leading-tight ${
+                                      isCurrent
+                                        ? "text-[#102A43]"
+                                        : isCompleted
+                                        ? "text-slate-800"
+                                        : isTerminatedHere
+                                        ? "text-rose-700"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {step.fullName}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-medium mt-0.5 ${
+                                      isCurrent
+                                        ? "text-blue-600 font-semibold"
+                                        : isCompleted
+                                        ? "text-emerald-700"
+                                        : isTerminatedHere
+                                        ? "text-rose-500"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {step.subLabel}
+                                  </span>
+
+                                  {/* Step Timestamp */}
+                                  {stepTimestamp ? (
+                                    <span className="text-[9px] text-slate-500 font-mono mt-1 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60 truncate max-w-[100px]">
+                                      {stepTimestamp}
+                                    </span>
+                                  ) : isCurrent ? (
+                                    <span className="text-[9px] text-blue-600 font-semibold mt-1 flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
+                                      Active Now
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active Stage Insights & Action Guidance Card */}
+                    <div
+                      className={`p-4 rounded-xl border flex items-start gap-3.5 transition-all shadow-2xs ${stageGuidance.containerColor}`}
+                    >
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-2xs ${stageGuidance.iconColor}`}
+                      >
+                        <HugeiconsIcon icon={stageGuidance.icon} className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                          <h4 className="font-bold text-xs tracking-tight">
+                            {stageGuidance.title}
+                          </h4>
+                          <span
+                            className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border self-start sm:self-auto ${stageGuidance.badgeColor}`}
+                          >
+                            {stageGuidance.actionHint}
+                          </span>
+                        </div>
+                        <p className="text-[11px] mt-1 opacity-90 leading-relaxed font-normal">
+                          {stageGuidance.description}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="mt-1 text-xs text-rose-700">
-                    Reason: {selectedOrder.rejectionReason || "No details provided."}
-                  </p>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Policyholder & Payment Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1281,7 +1582,7 @@ export default function OptionalCardRequestsTab({
                     </span>
                   </div>
                   <div className="text-sm font-bold text-slate-900">
-                    LKR {selectedOrder.totalAmount?.toLocaleString()}
+                    LKR {safeCurrency(selectedOrder.totalAmount)}
                     <span className="text-xs text-slate-400 font-normal ml-1">
                       ({selectedOrder.quantity} {selectedOrder.quantity === 1 ? "card" : "cards"} @ LKR {selectedOrder.unitPrice || 500})
                     </span>
@@ -1295,9 +1596,7 @@ export default function OptionalCardRequestsTab({
                       <div>
                         Paid On:{" "}
                         <span className="font-medium text-slate-800">
-                          {new Date(selectedOrder.payment.paidAt).toLocaleString("en-LK", {
-                            timeZone: "Asia/Colombo"
-                          })}
+                          {safeFormatDateTime(selectedOrder.payment.paidAt)}
                         </span>
                       </div>
                     )}
@@ -1520,9 +1819,7 @@ export default function OptionalCardRequestsTab({
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="font-bold text-slate-800">{h.status}</span>
                           <span className="text-slate-400">
-                            {new Date(h.timestamp).toLocaleString("en-LK", {
-                              timeZone: "Asia/Colombo"
-                            })}
+                            {safeFormatDateTime(h.timestamp)}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-600 mt-0.5">
@@ -1551,9 +1848,7 @@ export default function OptionalCardRequestsTab({
                     <div>
                       Collected on:{" "}
                       <span className="font-medium">
-                        {new Date(selectedOrder.collectionInfo.collectedAt).toLocaleString("en-LK", {
-                          timeZone: "Asia/Colombo"
-                        })}
+                        {safeFormatDateTime(selectedOrder.collectionInfo.collectedAt)}
                       </span>
                     </div>
                     {selectedOrder.collectionInfo.notes && (
@@ -1931,7 +2226,7 @@ export default function OptionalCardRequestsTab({
                       Device ID: {pairedDevice.deviceId}
                     </div>
                     <div className="text-[11px] text-emerald-700">
-                      Paired on: {new Date(pairedDevice.pairedAt).toLocaleTimeString()}
+                      Paired on: {safeFormatTime(pairedDevice.pairedAt)}
                     </div>
                   </div>
                   <p className="text-[11px] text-emerald-700">
