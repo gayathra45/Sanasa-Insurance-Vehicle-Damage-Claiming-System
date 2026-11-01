@@ -21,7 +21,8 @@ import {
   RefreshIcon,
   BubbleChatIcon,
   DatabaseIcon,
-  UserCheck01Icon
+  UserCheck01Icon,
+  Building01Icon
 } from "@hugeicons/core-free-icons";
 import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
@@ -44,15 +45,15 @@ export default function AdminNavbar() {
 
   const menuItems: MenuItem[] = [
     { name: "Dashboard", href: "/Admin/Dashboard" },
-    { name: "Staff", href: "/Admin/Staff" },
     { name: "Policy Holders", href: "/Admin/PolicyHolders" },
+    { name: "Branch", href: "/Admin/Staff" },
+    { name: "Agents", href: "/Admin/Agents" },
+    { name: "Admins", href: "/Admin/Admins" },
     { name: "Third Party", href: "/Admin/ThirdParty" },
     { name: "Renewals", href: "/Admin/Renewals" },
-    { name: "Admins", href: "/Admin/Admins" },
     { name: "Claims", href: "/Admin/Claims" },
-    { name: "Reports", href: "/Admin/Analytics" },
-    { name: "Agents", href: "/Admin/Agents" },
     { name: "Backups", href: "/Admin/Backups" },
+    { name: "Reports", href: "/Admin/Analytics" },
     { name: "Notifications", href: "/Admin/Notifications" },
     { name: "Contact", href: "/Admin/Contact" },
   ];
@@ -66,17 +67,21 @@ export default function AdminNavbar() {
       case "registrations":
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
+      case "policy holder":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "branch":
+      case "staff":
+        return <HugeiconsIcon icon={Building01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "third party":
+      case "thirdparty":
         return <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "renewals":
         return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "agents":
+      case "agent":
         return <HugeiconsIcon icon={Briefcase01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "admins":
         return <HugeiconsIcon icon={SecurityCheckIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
-      case "staff":
-        return <HugeiconsIcon icon={UserGroupIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "reports":
       case "analytics & reports":
         return <HugeiconsIcon icon={Analytics01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
@@ -99,8 +104,8 @@ export default function AdminNavbar() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-[280px] bg-[#102A43] h-screen sticky top-0 flex-col text-white shadow-xl flex-shrink-0 select-none z-20 pb-6">
         {/* Logo Section */}
-        <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
-          <div className="relative w-44 h-16">
+        <div className="py-7 px-6 flex flex-col items-center border-b border-white/5">
+          <div className="relative w-44 h-14">
             <Image
               src="/logo.png"
               alt="Sanasa General Insurance Logo"
@@ -112,11 +117,11 @@ export default function AdminNavbar() {
         </div>
 
         {/* Menu Navigation Links */}
-        <nav className="flex-1 mt-6 flex flex-col overflow-y-auto">
+        <nav className="flex-1 mt-4 flex flex-col overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {menuItems.map((item) => {
             const isChat = item.isChatAction;
             const isActive = !isChat && (pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href)));
-            const hasChevron = ["policy holders", "renewals", "policy renewals", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+            const hasChevron = ["policy holders", "policy holder", "renewals", "agents", "branch", "staff", "admins", "third party", "thirdparty", "claims", "reports", "analytics & reports"].includes(item.name.toLowerCase());
 
             const badgeCount =
               item.name === "Claim Chat"
@@ -149,7 +154,7 @@ export default function AdminNavbar() {
                 <button
                   key={item.name}
                   onClick={() => openChat()}
-                  className="mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-[calc(100%-32px)] text-left focus:outline-none"
+                  className="mx-3 my-0.5 px-3.5 py-2 text-sm font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-[calc(100%-24px)] text-left focus:outline-none"
                 >
                   {content}
                 </button>
@@ -160,7 +165,7 @@ export default function AdminNavbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
+                className={`mx-3 my-0.5 px-3.5 py-2 text-sm font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
                   isActive
                     ? "bg-[#1b75e0] text-white shadow-sm font-bold"
                     : "text-slate-100 hover:bg-white/10 hover:text-white"
@@ -210,7 +215,7 @@ export default function AdminNavbar() {
               {menuItems.map((item) => {
                 const isChat = item.isChatAction;
                 const isActive = !isChat && (pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href)));
-                const hasChevron = ["policy holders", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+                const hasChevron = ["policy holders", "policy holder", "renewals", "agents", "branch", "staff", "admins", "third party", "thirdparty", "claims", "reports", "analytics & reports"].includes(item.name.toLowerCase());
 
                 const badgeCount =
                   item.name === "Claim Chat"
