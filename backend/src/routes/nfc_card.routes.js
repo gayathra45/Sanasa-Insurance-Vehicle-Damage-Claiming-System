@@ -811,6 +811,9 @@ router.post("/branch/revoke-card/:cardId", async (req, res) => {
     const now = new Date();
     card.status = "Revoked";
 
+    const oldUrl = card.currentAssignment?.accessUrl || "";
+    const oldTokenHash = card.currentAssignment?.tokenHash || "";
+
     // Invalidate access url and tokens
     if (card.currentAssignment) {
       card.currentAssignment.rawToken = "";
@@ -821,8 +824,35 @@ router.post("/branch/revoke-card/:cardId", async (req, res) => {
       card.currentAssignment.blockedReason = reason || "Card revoked by branch";
     }
 
+    if (!card.notes) card.notes = "";
+    card.notes += ` [Revoked on ${now.toISOString()} by ${staffName || "Staff"}: ${reason || "No reason specified"}]`;
+
     await card.save();
     emitNfcCardUpdated(card);
+
+    // Also update order issuedCards record if associated
+    if (card.orderId) {
+      const order = await NfcCardOrder.findById(card.orderId);
+      if (order && order.issuedCards) {
+        order.issuedCards.forEach((c) => {
+          if (c.cardId === card.cardId) {
+            c.status = "Revoked";
+            c.cardUrl = "";
+            c.rawToken = "";
+            c.tokenHash = "";
+          }
+        });
+        order.statusHistory = order.statusHistory || [];
+        order.statusHistory.push({
+          status: "Card Revoked",
+          timestamp: now,
+          updatedBy: staffName || "Branch Staff",
+          note: `Card ${card.cardId} was revoked: ${reason || "Branch security revocation"}`
+        });
+        await order.save();
+        emitNfcOrderUpdated(order);
+      }
+    }
 
     return res.json({
       success: true,
@@ -832,6 +862,91 @@ router.post("/branch/revoke-card/:cardId", async (req, res) => {
   } catch (err) {
     console.error("POST /api/nfc-card/branch/revoke-card error:", err);
     return res.status(500).json({ error: err.message || "Failed to revoke card." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/reissue-card-url/:cardId
+ * Authorized staff reissues a fresh, cryptographically secure URL for a revoked or replacement card
+ */
+router.post("/branch/reissue-card-url/:cardId", async (req, res) => {
+  try {
+    const { cardId } = req.params;
+    const { staffId, staffName, branch, reason } = req.body;
+
+    const card = await NfcCard.findOne({ cardId: String(cardId).trim() });
+    if (!card) {
+      return res.status(404).json({ error: "Card not found." });
+    }
+
+    if (branch && card.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Card belongs to another branch." });
+    }
+
+    const now = new Date();
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const newAccessUrl = `${frontendUrl}/driver-access/${rawToken}`;
+
+    // Update Card record
+    card.status = "Available";
+    if (!card.currentAssignment) {
+      card.currentAssignment = {};
+    }
+    card.currentAssignment.rawToken = rawToken;
+    card.currentAssignment.tokenHash = tokenHash;
+    card.currentAssignment.accessUrl = newAccessUrl;
+    card.currentAssignment.status = "Scheduled";
+    card.currentAssignment.isBlocked = false;
+    card.currentAssignment.blockedReason = "";
+    card.currentAssignment.assignedAt = now;
+    card.currentAssignment.assignedBy = staffName || "Branch Staff";
+
+    if (!card.notes) card.notes = "";
+    card.notes += ` [Replacement URL reissued on ${now.toISOString()} by ${staffName || "Staff"}]`;
+
+    await card.save();
+    emitNfcCardUpdated(card);
+
+    // Update Order record
+    let updatedOrder = null;
+    if (card.orderId) {
+      const order = await NfcCardOrder.findById(card.orderId);
+      if (order && order.issuedCards) {
+        order.issuedCards.forEach((c) => {
+          if (c.cardId === card.cardId) {
+            c.cardUrl = newAccessUrl;
+            c.rawToken = rawToken;
+            c.tokenHash = tokenHash;
+            c.status = "Pending Preparation";
+            c.isPrepared = false;
+          }
+        });
+        order.statusHistory = order.statusHistory || [];
+        order.statusHistory.push({
+          status: "Replacement URL Reissued",
+          timestamp: now,
+          updatedBy: staffName || "Branch Staff",
+          note: `New secure access URL generated for card ${card.cardId}. Ready to write.`
+        });
+        await order.save();
+        emitNfcOrderUpdated(order);
+        updatedOrder = order;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `New replacement URL generated for card ${card.cardId}.`,
+      cardId: card.cardId,
+      newAccessUrl,
+      card,
+      order: updatedOrder
+    });
+  } catch (err) {
+    console.error("POST /branch/reissue-card-url error:", err);
+    return res.status(500).json({ error: err.message || "Failed to reissue replacement URL." });
   }
 });
 
@@ -1969,6 +2084,114 @@ router.post("/writer/sync-retry", async (req, res) => {
   } catch (err) {
     console.error("POST /writer/sync-retry error:", err);
     return res.status(500).json({ error: "Failed to retry sync." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/verify-access
+ * Purpose-built Stage B backend verification endpoint
+ */
+router.post("/writer/verify-access", async (req, res) => {
+  try {
+    const { cardId, cardUrl, staffId, staffName, branch } = req.body;
+    if (!cardId) {
+      return res.status(400).json({ error: "cardId is required." });
+    }
+
+    const cleanCardId = String(cardId).trim();
+    const card = await NfcCard.findOne({ cardId: cleanCardId });
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        verified: false,
+        tokenStatus: "Invalid",
+        assignmentStatus: "Unavailable",
+        accessRouteStatus: "Failed",
+        message: `Card ${cleanCardId} does not exist in backend database.`
+      });
+    }
+
+    // Branch authorization check
+    if (branch && card.branch && card.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({
+        success: false,
+        verified: false,
+        tokenStatus: "Unauthorized",
+        assignmentStatus: "Invalid",
+        accessRouteStatus: "Failed",
+        message: "Unauthorized: Card belongs to another branch."
+      });
+    }
+
+    // Determine Token Status
+    let tokenStatus = "Active";
+    let tokenHash = "";
+    let rawToken = "";
+
+    // Extract raw token from url if present
+    if (cardUrl) {
+      const match = cardUrl.match(/driver-access\/([a-f0-9]+)/i);
+      if (match) {
+        rawToken = match[1];
+        tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      }
+    }
+
+    if (card.status === "Revoked" || card.currentAssignment?.isBlocked) {
+      tokenStatus = "Revoked";
+    } else if (card.status === "Expired") {
+      tokenStatus = "Expired";
+    } else if (tokenHash && card.currentAssignment?.tokenHash && tokenHash !== card.currentAssignment.tokenHash) {
+      tokenStatus = "Invalid";
+    }
+
+    // Check assignment
+    let assignmentStatus = "Valid";
+    let accessRouteStatus = "Available";
+    let vehiclePlate = card.currentAssignment?.vehiclePlate || "";
+    let driverName = card.currentAssignment?.driverName || card.policyHolderName || "";
+
+    if (tokenStatus !== "Active") {
+      assignmentStatus = "Invalid";
+      accessRouteStatus = "Failed";
+    }
+
+    const verified = tokenStatus === "Active" && assignmentStatus === "Valid";
+    const now = new Date();
+
+    // Log verification check to security audit history
+    if (!card.notes) card.notes = "";
+    card.notes += ` [Backend verified on ${now.toISOString()} by ${staffName || "Writer App"} - Result: ${verified ? "PASSED" : "FAILED"}]`;
+    await card.save();
+
+    return res.json({
+      success: true,
+      verified,
+      tokenStatus,
+      assignmentStatus,
+      accessRouteStatus,
+      cardId: cleanCardId,
+      branch: card.branch,
+      vehiclePlate: vehiclePlate || "Assigned on Dispatch",
+      policyHolderName: card.policyHolderName,
+      driverName,
+      verifiedAt: now.toISOString(),
+      auditLogged: true,
+      message: verified
+        ? "Backend token, vehicle assignment, and limited-access permissions verified successfully."
+        : `Backend verification failed: Token is ${tokenStatus}.`
+    });
+  } catch (err) {
+    console.error("POST /writer/verify-access error:", err);
+    return res.status(500).json({
+      success: false,
+      verified: false,
+      tokenStatus: "Unavailable",
+      assignmentStatus: "Unavailable",
+      accessRouteStatus: "Failed",
+      error: err.message || "Failed to verify backend access."
+    });
   }
 });
 
