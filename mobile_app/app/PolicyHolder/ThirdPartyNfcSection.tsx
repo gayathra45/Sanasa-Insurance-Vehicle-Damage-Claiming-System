@@ -1410,16 +1410,37 @@ export default function ThirdPartyNfcSection({
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.fullDetailModalBox}>
-            {/* Header */}
+            {/* Top Sheet Grab Handle */}
+            <View style={styles.modalGrabHandle} />
+
+            {/* Header Hero Profile Card */}
             <View style={styles.detailModalHeader}>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text style={styles.detailModalRef}>{selectedDriverForViewMore?.requestReference || "REF"}</Text>
+              <View style={styles.driverAvatarBadge}>
+                <Text style={styles.driverAvatarText}>
+                  {(selectedDriverForViewMore?.driverDetails?.fullName || "D")
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((n: string) => n[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase() || "D"}
+                </Text>
+              </View>
+
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+                  <View style={styles.detailRefBadge}>
+                    <Ionicons name="pricetag-outline" size={10} color="#64748b" />
+                    <Text style={styles.detailModalRef}>
+                      {selectedDriverForViewMore?.requestReference || "REF"}
+                    </Text>
+                  </View>
+
                   <View
                     style={[
                       styles.statusPill,
                       selectedDriverForViewMore?.status === "Approved"
-                        ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }
+                        ? { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0" }
                         : selectedDriverForViewMore?.status === "Temporarily Blocked"
                         ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
                         : selectedDriverForViewMore?.status === "Rejected"
@@ -1427,11 +1448,23 @@ export default function ThirdPartyNfcSection({
                         : { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }
                     ]}
                   >
+                    <View
+                      style={[
+                        styles.liveDot,
+                        selectedDriverForViewMore?.status === "Approved"
+                          ? { backgroundColor: "#10b981" }
+                          : selectedDriverForViewMore?.status === "Temporarily Blocked"
+                          ? { backgroundColor: "#f59e0b" }
+                          : selectedDriverForViewMore?.status === "Rejected"
+                          ? { backgroundColor: "#ef4444" }
+                          : { backgroundColor: "#3b82f6" }
+                      ]}
+                    />
                     <Text
                       style={[
                         styles.statusText,
                         selectedDriverForViewMore?.status === "Approved"
-                          ? { color: "#16a34a" }
+                          ? { color: "#059669" }
                           : selectedDriverForViewMore?.status === "Temporarily Blocked"
                           ? { color: "#b45309" }
                           : selectedDriverForViewMore?.status === "Rejected"
@@ -1443,15 +1476,18 @@ export default function ThirdPartyNfcSection({
                     </Text>
                   </View>
                 </View>
+
                 <Text style={styles.detailModalTitle} numberOfLines={1}>
                   {selectedDriverForViewMore?.driverDetails?.fullName || "Driver Details"}
                 </Text>
               </View>
+
               <TouchableOpacity
                 onPress={() => setSelectedDriverForViewMore(null)}
                 style={styles.detailCloseBtn}
+                activeOpacity={0.7}
               >
-                <Ionicons name="close" size={22} color="#64748b" />
+                <Ionicons name="close" size={20} color="#475569" />
               </TouchableOpacity>
             </View>
 
@@ -1465,7 +1501,12 @@ export default function ThirdPartyNfcSection({
                 const isApprovedOrActive = req.status === "Approved" || req.status === "Scheduled" || req.status === "Temporarily Blocked" || req.status === "Pending Termination Approval";
                 const isRejected = req.status === "Rejected";
 
-                const steps = ["Submitted", "Fee Paid", "Review", "Active"];
+                const steps = [
+                  { label: "Submitted", icon: "document-text-outline" },
+                  { label: "Fee Paid", icon: "card-outline" },
+                  { label: "Review", icon: "shield-checkmark-outline" },
+                  { label: "Active", icon: "checkmark-circle-outline" }
+                ];
                 let curIdx = 0;
                 if (isApprovedOrActive) curIdx = 3;
                 else if (isBranchReview || isPaid) curIdx = 2;
@@ -1473,62 +1514,125 @@ export default function ThirdPartyNfcSection({
 
                 return (
                   <View style={styles.detailStepperCard}>
-                    <Text style={styles.detailSectionTitle}>Application Progress & Verification</Text>
+                    <View style={styles.detailStepperHeaderRow}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Ionicons name="git-network-outline" size={15} color="#102A43" />
+                        <Text style={styles.detailSectionTitle}>Application Progress & Verification</Text>
+                      </View>
+                      {!isRejected && (
+                        <View style={styles.stepperStageBadge}>
+                          <Text style={styles.stepperStageBadgeText}>
+                            Stage {curIdx + 1} of 4
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
                     {isRejected ? (
                       <View style={styles.tpRejectBox}>
-                        <Ionicons name="close-circle" size={16} color="#dc2626" />
+                        <Ionicons name="close-circle" size={18} color="#dc2626" />
                         <Text style={styles.tpRejectText}>
                           Verification Rejected: {req.branchReview?.rejectionReason || "Verification criteria not met"}
                         </Text>
                       </View>
                     ) : (
-                      <View style={styles.tpStepperContainer}>
-                        <View style={styles.tpStepperLineBg} />
+                      <>
+                        <View style={styles.tpStepperContainerRedesigned}>
+                          {/* Connecting track line */}
+                          <View style={styles.tpStepperLineBgRedesigned} />
+                          <View
+                            style={[
+                              styles.tpStepperLineProgressRedesigned,
+                              { width: `${(Math.min(curIdx, 3) / 3) * 75}%` }
+                            ]}
+                          />
+
+                          <View style={styles.tpStepperRow}>
+                            {steps.map((st, i) => {
+                              const passed = curIdx > i;
+                              const isCurrent = curIdx === i;
+                              const isDoneOrCurrent = curIdx >= i;
+
+                              return (
+                                <View key={st.label} style={styles.tpStepCol}>
+                                  <View
+                                    style={[
+                                      styles.tpStepBox,
+                                      passed
+                                        ? styles.tpStepBoxPassed
+                                        : isCurrent
+                                        ? styles.tpStepBoxCurrent
+                                        : styles.tpStepBoxPending
+                                    ]}
+                                  >
+                                    <Ionicons
+                                      name={passed ? "checkmark" : (st.icon as any)}
+                                      size={14}
+                                      color={isDoneOrCurrent ? "#ffffff" : "#94a3b8"}
+                                    />
+                                  </View>
+                                  <Text
+                                    style={[
+                                      styles.tpStepLabelRedesigned,
+                                      isCurrent && styles.tpStepLabelCurrentRedesigned,
+                                      passed && styles.tpStepLabelPassedRedesigned
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {st.label}
+                                  </Text>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        </View>
+
+                        {/* Status Advice Banner */}
                         <View
                           style={[
-                            styles.tpStepperLineProgress,
-                            { width: `${(Math.min(curIdx, 3) / 3) * 78}%` }
+                            styles.stepperGuidanceBanner,
+                            curIdx === 3
+                              ? styles.guidanceBannerSuccess
+                              : curIdx === 2
+                              ? styles.guidanceBannerInfo
+                              : styles.guidanceBannerWarning
                           ]}
-                        />
-                        <View style={styles.tpStepperRow}>
-                          {steps.map((st, i) => {
-                            const passed = curIdx >= i;
-                            const isCurrent = curIdx === i;
-                            return (
-                              <View key={st} style={styles.tpStepCol}>
-                                <View
-                                  style={[
-                                    styles.tpStepCircle,
-                                    passed
-                                      ? styles.tpStepCirclePassed
-                                      : isCurrent
-                                      ? styles.tpStepCircleCurrent
-                                      : styles.tpStepCirclePending
-                                  ]}
-                                >
-                                  {passed ? (
-                                    <Ionicons name="checkmark" size={12} color="#ffffff" />
-                                  ) : (
-                                    <Text style={[styles.tpStepNumText, isCurrent && { color: "#ffffff" }]}>
-                                      {i + 1}
-                                    </Text>
-                                  )}
-                                </View>
-                                <Text
-                                  style={[
-                                    styles.tpStepLabel,
-                                    isCurrent && styles.tpStepLabelCurrent,
-                                    passed && styles.tpStepLabelPassed
-                                  ]}
-                                  numberOfLines={1}
-                                >
-                                  {st}
-                                </Text>
-                              </View>
-                            );
-                          })}
+                        >
+                          <Ionicons
+                            name={
+                              curIdx === 3
+                                ? "shield-checkmark"
+                                : curIdx === 2
+                                ? "time-outline"
+                                : "information-circle-outline"
+                            }
+                            size={14}
+                            color={
+                              curIdx === 3
+                                ? "#059669"
+                                : curIdx === 2
+                                ? "#0284c7"
+                                : "#d97706"
+                            }
+                          />
+                          <Text
+                            style={[
+                              styles.stepperGuidanceText,
+                              curIdx === 3
+                                ? { color: "#065f46" }
+                                : curIdx === 2
+                                ? { color: "#075985" }
+                                : { color: "#92400e" }
+                            ]}
+                          >
+                            {curIdx === 3
+                              ? "Driver is fully verified. Active authorization is enabled on your policy."
+                              : curIdx === 2
+                              ? `Submitted to ${req.branch || "Galle"} Branch. Officer verification in progress.`
+                              : "Registration fee is pending. Complete payment to forward to branch."}
+                          </Text>
                         </View>
-                      </View>
+                      </>
                     )}
                   </View>
                 );
@@ -1537,13 +1641,17 @@ export default function ThirdPartyNfcSection({
               {/* ── DRIVER DETAILS & EDITABLE FIELDS ── */}
               <View style={styles.detailSectionCard}>
                 <View style={styles.detailSectionHeaderRow}>
-                  <Text style={styles.detailSectionTitle}>Driver Identity & Contact</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="person-circle-outline" size={17} color="#102A43" />
+                    <Text style={styles.detailSectionTitle}>Driver Identity & Contact</Text>
+                  </View>
+
                   {!isEditingPermanentDriver ? (
                     <TouchableOpacity
                       style={styles.detailEditTriggerBtn}
                       onPress={() => setIsEditingPermanentDriver(true)}
                     >
-                      <Ionicons name="pencil-outline" size={13} color="#2563eb" />
+                      <Ionicons name="pencil-outline" size={12} color="#0284c7" />
                       <Text style={styles.detailEditTriggerText}>Edit</Text>
                     </TouchableOpacity>
                   ) : (
@@ -1556,54 +1664,81 @@ export default function ThirdPartyNfcSection({
                   )}
                 </View>
 
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailKey}>Full Name:</Text>
-                  <Text style={styles.detailValBold}>
-                    {selectedDriverForViewMore?.driverDetails?.fullName || "—"}
-                  </Text>
-                </View>
+                {/* Structured Key-Value Rows */}
+                <View style={styles.detailCardBody}>
+                  {/* Full Name */}
+                  <View style={styles.detailFieldItem}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="person-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailFieldLabel}>Full Name</Text>
+                      <Text style={styles.detailFieldValBold}>
+                        {selectedDriverForViewMore?.driverDetails?.fullName || "—"}
+                      </Text>
+                    </View>
+                  </View>
 
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailKey}>NIC Number:</Text>
-                  <Text style={styles.detailValMono}>
-                    {selectedDriverForViewMore?.driverDetails?.nicNumber || "—"}
-                  </Text>
-                </View>
+                  {/* NIC */}
+                  <View style={styles.detailFieldItem}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="card-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailFieldLabel}>NIC Number</Text>
+                      <View style={styles.detailNicChip}>
+                        <Text style={styles.detailFieldValMono}>
+                          {selectedDriverForViewMore?.driverDetails?.nicNumber || "—"}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
 
-                {/* Editable Phone */}
-                <View style={styles.detailRowVertical}>
-                  <Text style={styles.detailKey}>Phone Number:</Text>
-                  {isEditingPermanentDriver ? (
-                    <TextInput
-                      style={styles.detailInput}
-                      value={editPermanentPhone}
-                      onChangeText={setEditPermanentPhone}
-                      keyboardType="phone-pad"
-                      placeholder="0771234567"
-                    />
-                  ) : (
-                    <Text style={styles.detailValBold}>
-                      {selectedDriverForViewMore?.driverDetails?.phoneNumber || "—"}
-                    </Text>
-                  )}
-                </View>
+                  {/* Phone */}
+                  <View style={styles.detailFieldItem}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="call-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailFieldLabel}>Phone Number</Text>
+                      {isEditingPermanentDriver ? (
+                        <TextInput
+                          style={styles.detailInput}
+                          value={editPermanentPhone}
+                          onChangeText={setEditPermanentPhone}
+                          keyboardType="phone-pad"
+                          placeholder="0771234567"
+                        />
+                      ) : (
+                        <Text style={styles.detailFieldValBold}>
+                          {selectedDriverForViewMore?.driverDetails?.phoneNumber || "—"}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
 
-                {/* Editable Residential Address */}
-                <View style={styles.detailRowVertical}>
-                  <Text style={styles.detailKey}>Residential Address:</Text>
-                  {isEditingPermanentDriver ? (
-                    <TextInput
-                      style={[styles.detailInput, { minHeight: 60 }]}
-                      value={editPermanentAddress}
-                      onChangeText={setEditPermanentAddress}
-                      multiline
-                      placeholder="Enter street address..."
-                    />
-                  ) : (
-                    <Text style={styles.detailVal}>
-                      {selectedDriverForViewMore?.driverDetails?.residentialAddress || "—"}
-                    </Text>
-                  )}
+                  {/* Address */}
+                  <View style={[styles.detailFieldItem, { borderBottomWidth: 0 }]}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="location-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailFieldLabel}>Residential Address</Text>
+                      {isEditingPermanentDriver ? (
+                        <TextInput
+                          style={[styles.detailInput, { minHeight: 60 }]}
+                          value={editPermanentAddress}
+                          onChangeText={setEditPermanentAddress}
+                          multiline
+                          placeholder="Enter street address..."
+                        />
+                      ) : (
+                        <Text style={styles.detailFieldVal}>
+                          {selectedDriverForViewMore?.driverDetails?.residentialAddress || "—"}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
                 </View>
 
                 {isEditingPermanentDriver && (
@@ -1626,13 +1761,23 @@ export default function ThirdPartyNfcSection({
 
               {/* ── COVERED VEHICLES ── */}
               <View style={styles.detailSectionCard}>
-                <Text style={styles.detailSectionTitle}>Covered Insured Vehicles</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <Ionicons name="car-sport-outline" size={17} color="#102A43" />
+                  <Text style={styles.detailSectionTitle}>Covered Insured Vehicles</Text>
+                </View>
+
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
                   {(selectedDriverForViewMore?.selectedVehicles || []).map((v: any) => (
-                    <View key={v.numberPlate} style={styles.detailPlatePill}>
-                      <MaterialCommunityIcons name="car" size={14} color="#0369a1" />
-                      <Text style={styles.detailPlatePillText}>{v.numberPlate}</Text>
-                      {v.model ? <Text style={styles.detailPlateModelText}>({v.model})</Text> : null}
+                    <View key={v.numberPlate} style={styles.detailPlateCard}>
+                      <View style={styles.detailPlateIconBox}>
+                        <MaterialCommunityIcons name="car" size={16} color="#ffffff" />
+                      </View>
+                      <View>
+                        <Text style={styles.detailPlateText}>{v.numberPlate}</Text>
+                        <Text style={styles.detailPlateSubText}>
+                          {v.model ? `${v.model} • ` : ""}Authorized
+                        </Text>
+                      </View>
                     </View>
                   ))}
                 </View>
@@ -1640,30 +1785,58 @@ export default function ThirdPartyNfcSection({
 
               {/* ── DURATION & BRANCH DETAILS ── */}
               <View style={styles.detailSectionCard}>
-                <Text style={styles.detailSectionTitle}>Authorization Window & Branch</Text>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailKey}>Duration Type:</Text>
-                  <Text style={styles.detailVal}>
-                    {selectedDriverForViewMore?.accessDuration?.durationType || "12 Months"}
-                  </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <Ionicons name="shield-checkmark-outline" size={17} color="#102A43" />
+                  <Text style={styles.detailSectionTitle}>Authorization Window & Branch</Text>
                 </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailKey}>Valid Until:</Text>
-                  <Text style={styles.detailValBold}>
-                    {selectedDriverForViewMore?.accessDuration?.endDate
-                      ? new Date(selectedDriverForViewMore.accessDuration.endDate).toLocaleDateString("en-LK")
-                      : "—"}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailKey}>Reviewing Branch:</Text>
-                  <Text style={styles.detailVal}>{selectedDriverForViewMore?.branch || "Galle"} Branch</Text>
+
+                <View style={styles.detailCardBody}>
+                  <View style={styles.detailFieldItem}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="time-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <Text style={styles.detailFieldLabel}>Duration Type</Text>
+                      <Text style={styles.detailFieldValBold}>
+                        {selectedDriverForViewMore?.accessDuration?.durationType || "12 Months"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailFieldItem}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="calendar-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <Text style={styles.detailFieldLabel}>Valid Until</Text>
+                      <Text style={styles.detailFieldValBold}>
+                        {selectedDriverForViewMore?.accessDuration?.endDate
+                          ? new Date(selectedDriverForViewMore.accessDuration.endDate).toLocaleDateString("en-LK")
+                          : "12 Months from Issue"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={[styles.detailFieldItem, { borderBottomWidth: 0 }]}>
+                    <View style={styles.detailFieldIconBox}>
+                      <Ionicons name="business-outline" size={14} color="#0284c7" />
+                    </View>
+                    <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <Text style={styles.detailFieldLabel}>Reviewing Branch</Text>
+                      <Text style={styles.detailFieldValBold}>
+                        {selectedDriverForViewMore?.branch || "Galle"} Branch
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </View>
 
               {/* ── MANAGEMENT FUNCTIONS ── */}
               <View style={styles.detailActionsCard}>
-                <Text style={styles.detailSectionTitle}>Driver Management Actions</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <Ionicons name="settings-outline" size={16} color="#102A43" />
+                  <Text style={styles.detailSectionTitle}>Driver Management Actions</Text>
+                </View>
 
                 {/* Temporary Block / Unblock Button */}
                 {selectedDriverForViewMore?.status === "Approved" && (
@@ -1671,9 +1844,17 @@ export default function ThirdPartyNfcSection({
                     style={styles.detailBlockBtn}
                     onPress={() => handleBlockPermanentDriver(selectedDriverForViewMore)}
                     disabled={blockingPermanentLoading}
+                    activeOpacity={0.8}
                   >
-                    <MaterialCommunityIcons name="pause-circle-outline" size={18} color="#b45309" />
-                    <Text style={styles.detailBlockBtnText}>Temporarily Block Driver Access</Text>
+                    <View style={styles.actionIconCircleAmber}>
+                      <MaterialCommunityIcons name="pause-circle-outline" size={18} color="#b45309" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailBlockBtnTitle}>Temporarily Suspend Driver Access</Text>
+                      <Text style={styles.detailBlockBtnSubtitle}>
+                        Pauses coverage eligibility without deleting driver records
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 )}
 
@@ -1682,9 +1863,17 @@ export default function ThirdPartyNfcSection({
                     style={styles.detailUnblockBtn}
                     onPress={() => handleUnblockPermanentDriver(selectedDriverForViewMore)}
                     disabled={blockingPermanentLoading}
+                    activeOpacity={0.8}
                   >
-                    <MaterialCommunityIcons name="play-circle-outline" size={18} color="#16a34a" />
-                    <Text style={styles.detailUnblockBtnText}>Restore & Unblock Driver Access</Text>
+                    <View style={styles.actionIconCircleGreen}>
+                      <MaterialCommunityIcons name="play-circle-outline" size={18} color="#16a34a" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailUnblockBtnTitle}>Restore & Unblock Driver Access</Text>
+                      <Text style={styles.detailUnblockBtnSubtitle}>
+                        Re-enables active third-party coverage for this driver
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 )}
 
@@ -1696,9 +1885,17 @@ export default function ThirdPartyNfcSection({
                       setSelectedDriverForViewMore(null);
                       onOpenTerminateModal(selectedDriverForViewMore);
                     }}
+                    activeOpacity={0.8}
                   >
-                    <MaterialCommunityIcons name="account-remove-outline" size={18} color="#dc2626" />
-                    <Text style={styles.detailTerminateBtnText}>Terminate Driver Authorization</Text>
+                    <View style={styles.actionIconCircleRed}>
+                      <MaterialCommunityIcons name="account-remove-outline" size={18} color="#dc2626" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailTerminateBtnTitle}>Terminate Driver Authorization</Text>
+                      <Text style={styles.detailTerminateBtnSubtitle}>
+                        Permanently revokes third-party access under this policy
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 )}
 
@@ -1711,6 +1908,7 @@ export default function ThirdPartyNfcSection({
                       setSelectedDriverForViewMore(null);
                       onResumePayment(req._id, req.requestReference);
                     }}
+                    activeOpacity={0.8}
                   >
                     <MaterialCommunityIcons name="credit-card-outline" size={18} color="#ffffff" />
                     <Text style={styles.detailPayBtnText}>Complete LKR 300 Registration Fee</Text>
@@ -2845,98 +3043,252 @@ const styles = StyleSheet.create({
   },
 
   // ── FULL DETAIL & MANAGEMENT BOTTOM MODAL ──
+  // ── FULL DETAIL & MANAGEMENT BOTTOM MODAL ──
   fullDetailModalBox: {
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: "88%",
-    paddingHorizontal: 18,
-    paddingTop: 18,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: "90%",
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 24,
-    width: "100%"
+    width: "100%",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8
+  },
+  modalGrabHandle: {
+    width: 44,
+    height: 4.5,
+    borderRadius: 3,
+    backgroundColor: "#cbd5e1",
+    alignSelf: "center",
+    marginBottom: 14
   },
   detailModalHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 14,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9"
   },
-  detailModalRef: {
-    fontSize: 12,
+  driverAvatarBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#102A43",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#102A43",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  driverAvatarText: {
+    color: "#ffffff",
+    fontSize: 16,
     fontWeight: "800",
-    color: "#64748b",
-    letterSpacing: 0.5,
+    letterSpacing: 0.5
+  },
+  detailRefBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6
+  },
+  detailModalRef: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475569",
     fontFamily: "monospace"
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 4
   },
   detailModalTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#0f172a",
-    marginTop: 4
+    color: "#102A43",
+    marginTop: 2
   },
   detailCloseBtn: {
-    padding: 6,
-    borderRadius: 20,
-    backgroundColor: "#f1f5f9"
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center"
   },
   detailModalScroll: {
-    paddingTop: 14,
-    paddingBottom: 24
+    paddingTop: 16,
+    paddingBottom: 28
   },
+
+  // Stepper Redesign
   detailStepperCard: {
     backgroundColor: "#f8fafc",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: "#e2e8f0"
   },
+  detailStepperHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12
+  },
+  stepperStageBadge: {
+    backgroundColor: "#102A43",
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 12
+  },
+  stepperStageBadgeText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "700"
+  },
+  tpStepperContainerRedesigned: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    position: "relative"
+  },
+  tpStepperLineBgRedesigned: {
+    position: "absolute",
+    top: 21,
+    left: 28,
+    right: 28,
+    height: 3,
+    backgroundColor: "#e2e8f0",
+    borderRadius: 2
+  },
+  tpStepperLineProgressRedesigned: {
+    position: "absolute",
+    top: 21,
+    left: 28,
+    height: 3,
+    backgroundColor: "#10b981",
+    borderRadius: 2
+  },
+  tpStepBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 5,
+    borderWidth: 1.5
+  },
+  tpStepBoxPassed: {
+    backgroundColor: "#10b981",
+    borderColor: "#10b981"
+  },
+  tpStepBoxCurrent: {
+    backgroundColor: "#102A43",
+    borderColor: "#0284c7"
+  },
+  tpStepBoxPending: {
+    backgroundColor: "#ffffff",
+    borderColor: "#cbd5e1"
+  },
+  tpStepLabelRedesigned: {
+    fontSize: 10,
+    color: "#94a3b8",
+    textAlign: "center",
+    fontWeight: "500"
+  },
+  tpStepLabelCurrentRedesigned: {
+    color: "#102A43",
+    fontWeight: "800"
+  },
+  tpStepLabelPassedRedesigned: {
+    color: "#059669",
+    fontWeight: "700"
+  },
+  stepperGuidanceBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 12,
+    borderWidth: 1
+  },
+  guidanceBannerSuccess: {
+    backgroundColor: "#ecfdf5",
+    borderColor: "#a7f3d0"
+  },
+  guidanceBannerInfo: {
+    backgroundColor: "#f0f9ff",
+    borderColor: "#bae6fd"
+  },
+  guidanceBannerWarning: {
+    backgroundColor: "#fffbeb",
+    borderColor: "#fde68a"
+  },
+  stepperGuidanceText: {
+    fontSize: 11,
+    fontWeight: "600",
+    flex: 1,
+    lineHeight: 15
+  },
+
+  // Cards
   detailSectionTitle: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: 10
+    fontWeight: "800",
+    color: "#102A43"
   },
   detailSectionCard: {
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     shadowColor: "#0f172a",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 1
   },
   detailSectionHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10
+    marginBottom: 12
   },
   detailEditTriggerBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 4.5,
     borderRadius: 8,
-    backgroundColor: "#eff6ff",
+    backgroundColor: "#f0f9ff",
     borderWidth: 1,
-    borderColor: "#bfdbfe"
+    borderColor: "#bae6fd"
   },
   detailEditTriggerText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#2563eb"
+    color: "#0284c7"
   },
   detailEditCancelBtn: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 4.5,
     borderRadius: 8,
     backgroundColor: "#f1f5f9"
   },
@@ -2945,6 +3297,235 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#64748b"
   },
+  detailCardBody: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+    overflow: "hidden"
+  },
+  detailFieldItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9"
+  },
+  detailFieldIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10
+  },
+  detailFieldLabel: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "600"
+  },
+  detailFieldVal: {
+    fontSize: 13,
+    color: "#1e293b",
+    marginTop: 1
+  },
+  detailFieldValBold: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0f172a",
+    marginTop: 1
+  },
+  detailNicChip: {
+    backgroundColor: "#ffffff",
+    alignSelf: "flex-start",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    marginTop: 2
+  },
+  detailFieldValMono: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0f172a",
+    fontFamily: "monospace"
+  },
+  detailInput: {
+    borderWidth: 1.5,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: "#0f172a",
+    backgroundColor: "#ffffff",
+    marginTop: 6
+  },
+  saveEditBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#0284c7",
+    paddingVertical: 11,
+    borderRadius: 12,
+    marginTop: 12
+  },
+  saveEditBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  detailPlateCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#102A43",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    shadowColor: "#102A43",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  detailPlateIconBox: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  detailPlateText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#ffffff",
+    fontFamily: "monospace",
+    letterSpacing: 0.5
+  },
+  detailPlateSubText: {
+    fontSize: 10,
+    color: "#93c5fd",
+    fontWeight: "600"
+  },
+  detailActionsCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    gap: 10
+  },
+  detailBlockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fffbeb",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    padding: 12,
+    borderRadius: 14
+  },
+  actionIconCircleAmber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#fef3c7",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  detailBlockBtnTitle: {
+    color: "#b45309",
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  detailBlockBtnSubtitle: {
+    color: "#d97706",
+    fontSize: 10.5,
+    marginTop: 1
+  },
+  detailUnblockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+    padding: 12,
+    borderRadius: 14
+  },
+  actionIconCircleGreen: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#d1fae5",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  detailUnblockBtnTitle: {
+    color: "#059669",
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  detailUnblockBtnSubtitle: {
+    color: "#047857",
+    fontSize: 10.5,
+    marginTop: 1
+  },
+  detailTerminateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    padding: 12,
+    borderRadius: 14
+  },
+  actionIconCircleRed: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#fee2e2",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  detailTerminateBtnTitle: {
+    color: "#dc2626",
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  detailTerminateBtnSubtitle: {
+    color: "#ef4444",
+    fontSize: 10.5,
+    marginTop: 1
+  },
+  detailPayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#0284c7",
+    paddingVertical: 13,
+    borderRadius: 14,
+    shadowColor: "#0284c7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  detailPayBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700"
+  },
+  // Compatibility styles for card modal
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2976,32 +3557,6 @@ const styles = StyleSheet.create({
     color: "#0f172a",
     fontFamily: "monospace"
   },
-  detailInput: {
-    borderWidth: 1.5,
-    borderColor: "#cbd5e1",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: "#0f172a",
-    backgroundColor: "#f8fafc",
-    marginTop: 6
-  },
-  saveEditBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#2563eb",
-    paddingVertical: 10,
-    borderRadius: 10,
-    marginTop: 12
-  },
-  saveEditBtnText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "bold"
-  },
   detailPlatePill: {
     flexDirection: "row",
     alignItems: "center",
@@ -3019,79 +3574,18 @@ const styles = StyleSheet.create({
     color: "#0369a1",
     fontFamily: "monospace"
   },
-  detailPlateModelText: {
-    fontSize: 11,
-    color: "#0284c7",
-    fontWeight: "500"
-  },
-  detailActionsCard: {
-    backgroundColor: "#f8fafc",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    gap: 10
-  },
-  detailBlockBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#fef3c7",
-    borderWidth: 1,
-    borderColor: "#fde68a",
-    paddingVertical: 12,
-    borderRadius: 12
-  },
   detailBlockBtnText: {
     color: "#b45309",
     fontSize: 13,
     fontWeight: "bold"
-  },
-  detailUnblockBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#f0fdf4",
-    borderWidth: 1,
-    borderColor: "#bbf7d0",
-    paddingVertical: 12,
-    borderRadius: 12
   },
   detailUnblockBtnText: {
     color: "#16a34a",
     fontSize: 13,
     fontWeight: "bold"
   },
-  detailTerminateBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fecaca",
-    paddingVertical: 12,
-    borderRadius: 12
-  },
   detailTerminateBtnText: {
     color: "#dc2626",
-    fontSize: 13,
-    fontWeight: "bold"
-  },
-  detailPayBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#2563eb",
-    paddingVertical: 12,
-    borderRadius: 12
-  },
-  detailPayBtnText: {
-    color: "#ffffff",
     fontSize: 13,
     fontWeight: "bold"
   },
