@@ -18,11 +18,13 @@ import {
   Search01Icon,
   Location01Icon,
   Cancel01Icon,
-  BubbleChatIcon
+  BubbleChatIcon,
+  SmartPhone01Icon
 } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/app/config";
 import AccessibilityWidget from "@/app/Components/Homepage/AccessibilityWidget";
 import { useChatNotification } from "@/app/context/ChatNotificationContext";
+import AppDownloadModal from "@/app/Components/AppDownloadModal";
 
 const translations = {
   en: {
@@ -41,7 +43,8 @@ const translations = {
     branchTitle: "Sanasa Insurance Branches",
     searchPlaceholder: "Search branches by city, district or address...",
     close: "Close",
-    callNow: "Call Branch"
+    callNow: "Call Branch",
+    downloadApp: "Download App"
   },
   si: {
     home: "මුල් පිටුව",
@@ -59,7 +62,8 @@ const translations = {
     branchTitle: "සනස රක්ෂණ ශාඛා ජාලය",
     searchPlaceholder: "නගරය, දිස්ත්‍රික්කය හෝ ලිපිනය අනුව සොයන්න...",
     close: "වසන්න",
-    callNow: "ඇමතුමක් ගන්න"
+    callNow: "ඇමතුමක් ගන්න",
+    downloadApp: "යෙදුම බාගත කරන්න"
   },
   ta: {
     home: "முகப்பு",
@@ -77,7 +81,8 @@ const translations = {
     branchTitle: "சனச காப்பீட்டுக் கிளைகள்",
     searchPlaceholder: "நகரம் அல்லது முகவரி மூலம் தேடுங்கள்...",
     close: "மூடு",
-    callNow: "அழைக்க"
+    callNow: "அழைக்க",
+    downloadApp: "செயலியைப் பதிவிறக்குக"
   }
 };
 
@@ -103,6 +108,7 @@ export default function PolicyHolderNavbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [branchesModalOpen, setBranchesModalOpen] = useState(false);
+  const [appDownloadModalOpen, setAppDownloadModalOpen] = useState(false);
   const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -407,8 +413,19 @@ export default function PolicyHolderNavbar() {
             </Link>
           </div>
 
-          {/* Right Action Icons (Notifications, Profile & Mobile Hamburger) */}
+          {/* Right Action Icons (Download App, Notifications, Profile & Mobile Hamburger) */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Download Mobile App Button */}
+            <button
+              onClick={() => setAppDownloadModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-50 to-cyan-50 hover:from-sky-100 hover:to-cyan-100 border border-sky-200/90 text-[#0284c7] font-bold text-xs shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+              title="Download Sanasa Mobile App (SClaim Go)"
+            >
+              <HugeiconsIcon icon={SmartPhone01Icon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.4} />
+              <span className="hidden lg:inline">{t.downloadApp || "Download App"}</span>
+              <span className="lg:hidden">App</span>
+            </button>
+
             {/* Notifications Bell */}
             <Link
               href="/Policy_Holder/Notifications"
@@ -527,6 +544,17 @@ export default function PolicyHolderNavbar() {
 
             {/* Mobile New Claim Action */}
             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setAppDownloadModalOpen(true);
+                }}
+                className="w-full text-center font-bold text-sm py-2.5 px-4 rounded-2xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] border border-sky-200 flex items-center justify-center gap-2 cursor-pointer transition-all duration-150"
+              >
+                <HugeiconsIcon icon={SmartPhone01Icon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.4} />
+                <span>{t.downloadApp || "Download Mobile App"}</span>
+              </button>
+
               <Link
                 href="/Policy_Holder/New_Claim"
                 onClick={() => setIsOpen(false)}
@@ -631,6 +659,14 @@ export default function PolicyHolderNavbar() {
 
     {/* Accessibility Control Center — visible on all Policy Holder pages */}
     <AccessibilityWidget />
+
+    {/* App Download Modal */}
+    <AppDownloadModal
+      isOpen={appDownloadModalOpen}
+      onClose={() => setAppDownloadModalOpen(false)}
+      lang={lang}
+      portalType="policyholder"
+    />
     </>
   );
 }
