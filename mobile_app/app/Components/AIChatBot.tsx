@@ -26,16 +26,47 @@ import MobileClaimChatModal from "./ClaimChat/MobileClaimChatModal";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
-type TriggerCallback = () => void;
-let supportTriggerCallbacks: TriggerCallback[] = [];
-let aiTriggerCallbacks: TriggerCallback[] = [];
+interface ChatInstance {
+  openSupport: () => void;
+  closeSupport: () => void;
+  openAI: () => void;
+  closeAI: () => void;
+}
+
+const activeInstances: ChatInstance[] = [];
 
 export const openMobileSupportChat = () => {
-  supportTriggerCallbacks.forEach((cb) => cb());
+  // Close any open chat across all mounted screen instances first to prevent stacking
+  activeInstances.forEach((inst) => {
+    inst.closeSupport();
+    inst.closeAI();
+  });
+  // Open ONLY on the active (latest mounted) screen instance
+  const activeInstance = activeInstances[activeInstances.length - 1];
+  if (activeInstance) {
+    activeInstance.openSupport();
+  }
+};
+
+export const closeMobileSupportChat = () => {
+  // Instantly closes support chat across ALL mounted screen instances in a single tap
+  activeInstances.forEach((inst) => inst.closeSupport());
 };
 
 export const openMobileAIChat = () => {
-  aiTriggerCallbacks.forEach((cb) => cb());
+  activeInstances.forEach((inst) => {
+    inst.closeSupport();
+    inst.closeAI();
+  });
+  const activeInstance = activeInstances[activeInstances.length - 1];
+  if (activeInstance) {
+    activeInstance.openAI();
+  }
+};
+
+export const closeMobileAIChat = () => {
+  // Instantly closes AI chat across ALL mounted screen instances in a single tap
+  activeInstances.forEach((inst) => inst.closeAI());
 };
 
 interface ChatMessage {
@@ -187,18 +218,23 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
   const supportScrollRef = useRef<ScrollView>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Register trigger listener on mount
+  // Register instance in activeInstances on mount
   useEffect(() => {
-    const triggerSupport = () => setSupportModalVisible(true);
-    const triggerAI = () => {
-      setModalVisible(true);
-      scrollToBottom();
+    const instance: ChatInstance = {
+      openSupport: () => setSupportModalVisible(true),
+      closeSupport: () => setSupportModalVisible(false),
+      openAI: () => {
+        setModalVisible(true);
+        scrollToBottom();
+      },
+      closeAI: () => setModalVisible(false),
     };
-    supportTriggerCallbacks.push(triggerSupport);
-    aiTriggerCallbacks.push(triggerAI);
+    activeInstances.push(instance);
     return () => {
-      supportTriggerCallbacks = supportTriggerCallbacks.filter((cb) => cb !== triggerSupport);
-      aiTriggerCallbacks = aiTriggerCallbacks.filter((cb) => cb !== triggerAI);
+      const idx = activeInstances.indexOf(instance);
+      if (idx !== -1) {
+        activeInstances.splice(idx, 1);
+      }
     };
   }, []);
 
@@ -617,7 +653,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         <TouchableOpacity
           activeOpacity={0.88}
           style={styles.supportFabTouch}
-          onPress={() => setSupportModalVisible(true)}
+          onPress={openMobileSupportChat}
         >
           <View style={styles.supportFabCircle}>
             <Ionicons name="chatbubble-ellipses" size={24} color="#ffffff" />
@@ -635,10 +671,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         <TouchableOpacity
           activeOpacity={0.88}
           style={styles.fabTouch}
-          onPress={() => {
-            setModalVisible(true);
-            scrollToBottom();
-          }}
+          onPress={openMobileAIChat}
         >
           <LinearGradient
             colors={["#0a192f", "#0f2d4a", "#0284c7"]}
@@ -658,11 +691,11 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         animationType="slide"
         transparent={true}
         statusBarTranslucent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={closeMobileAIChat}
       >
         <View style={styles.popupOverlay}>
           {/* Dimmed backdrop - tap to close */}
-          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <TouchableWithoutFeedback onPress={closeMobileAIChat}>
             <View style={styles.backdropDismiss} />
           </TouchableWithoutFeedback>
 
@@ -711,7 +744,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                   <Ionicons name="refresh-outline" size={17} color="#93c5fd" />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => setModalVisible(false)}
+                  onPress={closeMobileAIChat}
                   style={styles.headerActionBtn}
                   activeOpacity={0.7}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -846,7 +879,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       {/* ─── Full-Screen Normal Live Claim Messenger with Categories ─── */}
       <MobileClaimChatModal
         visible={supportModalVisible}
-        onClose={() => setSupportModalVisible(false)}
+        onClose={closeMobileSupportChat}
         userRole={userRole}
         onUnreadCountChange={handleUnreadCountChange}
       />

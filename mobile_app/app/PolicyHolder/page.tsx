@@ -888,7 +888,17 @@ export default function PolicyHolderDashboard() {
             {vehicles.length > 0 ? (
               <View style={styles.vehiclesList}>
                 {vehicles.map((v, idx) => (
-                  <View key={idx} style={styles.vehicleRow}>
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.vehicleRow}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      router.push({
+                        pathname: "/PolicyHolder/MyVehicles",
+                        params: { selectPlate: v.numberPlate, _t: Date.now().toString() },
+                      } as any);
+                    }}
+                  >
                     <View style={[styles.vehicleIconContainer, { backgroundColor: getVehicleTheme(v.vehicleType).bg, borderColor: getVehicleTheme(v.vehicleType).border }]}>
                       <MaterialCommunityIcons name={getVehicleTheme(v.vehicleType).icon as any} size={24} color={getVehicleTheme(v.vehicleType).color} />
                     </View>
@@ -898,11 +908,17 @@ export default function PolicyHolderDashboard() {
                     </View>
                     <TouchableOpacity
                       style={styles.vehicleViewBtn}
-                      onPress={() => router.push("/PolicyHolder/MyVehicles" as any)}
+                      onPress={() => {
+                        router.push({
+                          pathname: "/PolicyHolder/MyVehicles",
+                          params: { selectPlate: v.numberPlate, _t: Date.now().toString() },
+                        } as any);
+                      }}
+                      activeOpacity={0.8}
                     >
                       <Text style={styles.vehicleViewBtnText}>{lang === "en" ? "View" : lang === "si" ? "බලන්න" : "பார்"}</Text>
                     </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             ) : (

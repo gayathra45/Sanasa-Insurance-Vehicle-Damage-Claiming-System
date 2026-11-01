@@ -499,6 +499,11 @@ export default function MobileClaimChatModal({
     return { bg: "#fffbeb", border: "#fde68a", text: "#d97706" };
   };
 
+  const handleClose = () => {
+    setActiveView("list");
+    onClose();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -509,7 +514,7 @@ export default function MobileClaimChatModal({
         if (activeView === "chat") {
           setActiveView("list");
         } else {
-          onClose();
+          handleClose();
         }
       }}
     >
@@ -541,7 +546,7 @@ export default function MobileClaimChatModal({
               </View>
               <TouchableOpacity
                 style={styles.closeBtn}
-                onPress={onClose}
+                onPress={handleClose}
                 activeOpacity={0.7}
               >
                 <Ionicons name="close" size={22} color="#ffffff" />
@@ -1004,7 +1009,7 @@ export default function MobileClaimChatModal({
 
               <TouchableOpacity
                 style={styles.chatHeaderAction}
-                onPress={onClose}
+                onPress={handleClose}
                 activeOpacity={0.7}
               >
                 <Ionicons name="close" size={20} color="#ffffff" />

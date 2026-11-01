@@ -20,7 +20,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, useNavigation } from "expo-router";
+import { router, useNavigation, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as ImagePicker from "expo-image-picker";
 import { compressImageMobile } from "../../utils/imageCompressor";
@@ -114,6 +114,7 @@ function vehicleIcon(type: string) {
 
 export default function MyVehicles() {
   const navigation = useNavigation();
+  const { selectPlate, _t } = useLocalSearchParams<{ selectPlate?: string; _t?: string }>();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -671,12 +672,51 @@ export default function MyVehicles() {
 
   // Open Vehicle Details Modal
   const handleOpenVehicleModal = (vehicle: Vehicle) => {
+    setActiveMainTab("vehicles");
     setSelectedVehicleForModal(vehicle);
     setLoadingModalRenewal(true);
     setModalRenewalInfo(renewalMap[vehicle.numberPlate] || null);
     setModalInstallmentInfo(installmentMap[vehicle.numberPlate] || null);
     fetchSingleVehicleRenewal(vehicle.numberPlate).finally(() => setLoadingModalRenewal(false));
   };
+
+  // Auto-open specific vehicle modal if requested via route params (e.g. from Home page)
+  const lastOpenedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectPlate) return;
+    const paramKey = `${selectPlate}_${_t || ""}`;
+    if (lastOpenedKeyRef.current === paramKey) return;
+
+    const cleanTarget = selectPlate.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+
+    const tryOpen = (list: Vehicle[]) => {
+      const matched = list.find(
+        (v) => (v.numberPlate || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase() === cleanTarget
+      );
+      if (matched) {
+        lastOpenedKeyRef.current = paramKey;
+        setActiveMainTab("vehicles");
+        handleOpenVehicleModal(matched);
+        return true;
+      }
+      return false;
+    };
+
+    if (vehicles && vehicles.length > 0) {
+      tryOpen(vehicles);
+    } else {
+      AsyncStorage.getItem("logged_in_user").then((str) => {
+        if (str) {
+          try {
+            const u = JSON.parse(str);
+            if (u.vehicles && Array.isArray(u.vehicles)) {
+              tryOpen(u.vehicles);
+            }
+          } catch {}
+        }
+      });
+    }
+  }, [selectPlate, _t, vehicles]);
 
   // Open 3-Step Renewal Wizard
   const handleOpenRenewalWizard = (vehicle: Vehicle) => {
