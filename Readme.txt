@@ -6,7 +6,7 @@ SCLAIM GO: ENTERPRISE ECOSYSTEM
 PROJECT LINKS & LIVE DEPLOYMENTS:
 --------------------------------------------------------------------------------
 * Official Web Application : https://sanasa-insurance-vehicle-damage-cla.vercel.app/
-* Mobile App (Android APK) : https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/5fef7f9d-cecd-46d3-9191-3e6ccf35841d
+* Mobile App (Android APK) : https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/41208bee-c580-4736-8c07-aeea1a2267bd
 * Source Code Repository   : https://github.com/gayathra45/SanasaInsuarance
 * API Backend Host         : Deployed on Render Cloud Server
 * Cloud Database           : MongoDB Atlas Cloud Cluster
