@@ -1077,13 +1077,14 @@ router.post("/request-assignment-otp", async (req, res) => {
 
     // Fetch verified policyholder user
     const user = await User.findOne({ nic: cleanNic });
-    if (!user || !user.phone) {
+    const userPhone = user ? (user.mobile || user.phone) : null;
+    if (!user || !userPhone) {
       return res.status(400).json({
         error: "Policyholder has no verified mobile number registered for OTP delivery."
       });
     }
 
-    const norm = normalizeSriLankanPhone(user.phone);
+    const norm = normalizeSriLankanPhone(userPhone);
     if (!norm.isValid) {
       return res.status(400).json({ error: norm.error || "Invalid policyholder phone format." });
     }
@@ -1125,19 +1126,21 @@ router.post("/request-assignment-otp", async (req, res) => {
       isVerified: false
     });
 
+    const userDisplayName = user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Policyholder";
+
     // Send SMS via TextBee to Policy Holder
-    const smsMessage = `[SANASA NFC GATEWAY]\nDear ${user.fullName || "Policyholder"},\nYour security OTP to authorize temporary driver assignment on NFC Card ${card.cardId} is: ${otp}\nThis code is valid for 10 minutes. Do not share it with anyone.\nHotline: 0725 575 575`;
+    const smsMessage = `[SANASA NFC GATEWAY]\nDear ${userDisplayName},\nYour security OTP to authorize temporary driver assignment on NFC Card ${card.cardId} is: ${otp}\nThis code is valid for 10 minutes. Do not share it with anyone.\nHotline: 0725 575 575`;
 
     const smsRes = await sendSms({
       phone: norm.normalized,
       message: smsMessage,
       recipientType: "PolicyHolder",
-      recipientName: user.fullName || "Policy Holder",
+      recipientName: userDisplayName,
       eventType: "nfc_assignment_otp",
       idempotencyKey: `nfc_otp_${cleanNic}_${card.cardId}_${Date.now()}`
     });
 
-    const maskedPhone = user.phone.replace(/(\d{3})\d+(\d{3})/, "$1****$2");
+    const maskedPhone = userPhone.replace(/(\d{3})\d+(\d{3})/, "$1****$2");
 
     return res.json({
       success: true,
@@ -1330,12 +1333,14 @@ router.post("/assign-driver", async (req, res) => {
     emitNfcCardUpdated(card);
 
     // 9. Send Confirmation SMS to Policyholder
-    if (user.phone) {
+    const phPhone = user.mobile || user.phone;
+    const phName = user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Policyholder";
+    if (phPhone) {
       sendSms({
-        phone: user.phone,
-        message: `[SANASA NFC GATEWAY]\nDear ${user.fullName},\nTemporary driver ${driverName} was successfully assigned to NFC Card ${card.cardId} for vehicle ${cleanPlate}.\n• Status: ${initialStatus}\n• Duration: Valid until ${end.toLocaleDateString("en-LK")}\n• No branch approval required.\nHotline: 0725 575 575`,
+        phone: phPhone,
+        message: `[SANASA NFC GATEWAY]\nDear ${phName},\nTemporary driver ${driverName} was successfully assigned to NFC Card ${card.cardId} for vehicle ${cleanPlate}.\n• Status: ${initialStatus}\n• Duration: Valid until ${end.toLocaleDateString("en-LK")}\n• No branch approval required.\nHotline: 0725 575 575`,
         recipientType: "PolicyHolder",
-        recipientName: user.fullName,
+        recipientName: phName,
         eventType: "nfc_assignment_success"
       }).catch((e) => console.warn("Policyholder assignment SMS error:", e.message));
     }
