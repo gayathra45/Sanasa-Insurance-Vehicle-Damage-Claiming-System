@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { API_URL } from "@/app/config";
+import { getSocket } from "@/app/utils/socket";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CreditCardIcon,
@@ -126,6 +127,118 @@ export default function OptionalCardRequestsTab({
   const [revokeReason, setRevokeReason] = useState("");
   const [copiedCardId, setCopiedCardId] = useState<string | null>(null);
 
+  // NFC Writer Device Pairing & Transfer States
+  const [showPairModal, setShowPairModal] = useState(false);
+  const [pairingCode, setPairingCode] = useState<string>("");
+  const [pairingExpiry, setPairingExpiry] = useState<string>("");
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [pairedDevice, setPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+    pairedAt: string;
+  } | null>(null);
+  const [transferringCardId, setTransferringCardId] = useState<string | null>(null);
+  const [transferStatuses, setTransferStatuses] = useState<
+    Record<string, { status: string; jobId?: string; errorMessage?: string }>
+  >({});
+
+  // Check current paired device status for this branch
+  const fetchPairingStatus = useCallback(async () => {
+    if (!branch) return;
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/writer/pairing/status?branch=${encodeURIComponent(branch)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.paired && data.pairing) {
+          setPairedDevice({
+            deviceId: data.pairing.deviceId,
+            deviceName: data.pairing.deviceName,
+            pairedAt: data.pairing.pairedAt
+          });
+        } else {
+          setPairedDevice(null);
+        }
+      }
+    } catch {
+      // safe fallback
+    }
+  }, [branch]);
+
+  // Generate a new 6-character single-use pairing code
+  const handleGeneratePairingCode = async () => {
+    if (!branch || !staffInfo?._id) return;
+    setPairingLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/writer/pairing/generate-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffId: staffInfo._id,
+          staffName: staffInfo.name || "Branch Staff",
+          staffEmail: staffInfo.email || "",
+          branch
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate pairing code");
+      setPairingCode(data.pairingCode);
+      setPairingExpiry(data.expiresAt);
+      setShowPairModal(true);
+    } catch (err: any) {
+      showToast(err.message || "Failed to generate pairing code", "error");
+    } finally {
+      setPairingLoading(false);
+    }
+  };
+
+  // Safe Unpair action
+  const handleUnpair = async () => {
+    if (!branch) return;
+    try {
+      await fetch(`${API_URL}/nfc-card/writer/pairing/unpair`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch, staffId: staffInfo?._id })
+      });
+      setPairedDevice(null);
+      setPairingCode("");
+      showToast("NFC Writer device disconnected", "success");
+    } catch {
+      showToast("Failed to unpair device", "error");
+    }
+  };
+
+  // Transfer single card to paired NFC Writer phone
+  const handleTransferToNfcWriter = async (cardId: string) => {
+    if (!selectedOrder) return;
+    setTransferringCardId(cardId);
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/writer/transfer-job`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: selectedOrder._id,
+          cardId,
+          staffId: staffInfo?._id,
+          staffName: staffInfo?.name || "Branch Staff",
+          branch
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to transfer card");
+
+      setTransferStatuses((prev) => ({
+        ...prev,
+        [cardId]: { status: "Pending", jobId: data.job?.jobId }
+      }));
+      showToast(`Card ${cardId} sent to NFC Writer phone! Tap card on phone to write.`, "success");
+    } catch (err: any) {
+      showToast(err.message || "Transfer to NFC Writer failed", "error");
+    } finally {
+      setTransferringCardId(null);
+    }
+  };
+
   // Load orders for this branch
   const fetchOrders = useCallback(
     async (isSilent = false) => {
@@ -168,16 +281,62 @@ export default function OptionalCardRequestsTab({
 
   useEffect(() => {
     fetchOrders();
-  }, [branch]);
+    fetchPairingStatus();
+  }, [branch, fetchPairingStatus]);
+
+  // Socket.IO Real-Time listeners for Pairing, Transfers, and Live Card Updates
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const onPairingUpdated = (data: any) => {
+      if (data.status === "Paired") {
+        setPairedDevice({
+          deviceId: data.deviceId,
+          deviceName: data.deviceName,
+          pairedAt: data.pairedAt
+        });
+        showToast(`NFC Writer Connected: ${data.deviceName || "Android Device"}`, "success");
+      } else if (data.status === "Revoked" || data.status === "Expired") {
+        setPairedDevice(null);
+      }
+    };
+
+    const onTransferStatus = (job: any) => {
+      if (job && job.cardId) {
+        setTransferStatuses((prev) => ({
+          ...prev,
+          [job.cardId]: { status: job.status, jobId: job.jobId, errorMessage: job.errorMessage }
+        }));
+        if (job.status === "Completed") {
+          fetchOrders(true);
+          showToast(`Card ${job.cardId} verified and written successfully!`, "success");
+        }
+      }
+    };
+
+    socket.on("nfc:pairing-updated", onPairingUpdated);
+    socket.on("nfc:transfer-status", onTransferStatus);
+    socket.on("nfc:order-updated", () => fetchOrders(true));
+    socket.on("nfc:card-updated", () => fetchOrders(true));
+
+    return () => {
+      socket.off("nfc:pairing-updated", onPairingUpdated);
+      socket.off("nfc:transfer-status", onTransferStatus);
+      socket.off("nfc:order-updated");
+      socket.off("nfc:card-updated");
+    };
+  }, [fetchOrders, showToast]);
 
   // Periodic auto-refresh every 15s
   useEffect(() => {
     if (!branch) return;
     const interval = setInterval(() => {
       fetchOrders(true);
+      fetchPairingStatus();
     }, 15000);
     return () => clearInterval(interval);
-  }, [branch, fetchOrders]);
+  }, [branch, fetchOrders, fetchPairingStatus]);
 
   // Summary Metrics
   const stats = useMemo(() => {
@@ -623,7 +782,33 @@ export default function OptionalCardRequestsTab({
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+          {/* NFC Writer Device Status / Action */}
+          {pairedDevice ? (
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <HugeiconsIcon icon={SmartPhone01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+              <span>NFC Writer: {pairedDevice.deviceName || "Paired"}</span>
+              <button
+                onClick={handleUnpair}
+                className="text-[11px] text-emerald-700 hover:text-rose-600 underline ml-1 cursor-pointer font-normal"
+                title="Disconnect paired phone"
+              >
+                Unpair
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleGeneratePairingCode}
+              disabled={pairingLoading}
+              className="px-3 py-2 bg-gradient-to-r from-[#102A43] to-blue-700 hover:from-[#1E3A8A] hover:to-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              title="Pair Android NFC Writer App"
+            >
+              <HugeiconsIcon icon={SmartPhone01Icon} className="w-3.5 h-3.5" />
+              <span>{pairingLoading ? "Generating..." : "Pair NFC Writer"}</span>
+            </button>
+          )}
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -1007,62 +1192,172 @@ export default function OptionalCardRequestsTab({
                     </div>
                   </div>
 
-                  <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
-                    {selectedOrder.issuedCards.map((card, idx) => (
-                      <div
-                        key={card.cardId || idx}
-                        className="p-3 bg-slate-50/50 hover:bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-slate-800 text-xs">
-                              {card.cardId}
-                            </span>
-                            <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                                card.status === "Available" || card.isPrepared
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-amber-50 text-amber-700 border border-amber-200"
-                              }`}
-                            >
-                              {card.status || (card.isPrepared ? "Verified" : "Pending Preparation")}
-                            </span>
-                          </div>
-                          {card.cardUrl && (
-                            <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate max-w-md">
-                              {card.cardUrl}
-                            </div>
-                          )}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
+                        <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-blue-600" />
+                        <span>Generated NFC Card Records ({selectedOrder.issuedCards.length})</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Transfer individual cards wirelessly to the SANASA NFC Writer phone or copy secure URLs.
+                      </p>
+                    </div>
+
+                    {/* Quick Device Pairing Indicator */}
+                    <div className="flex items-center gap-2">
+                      {pairedDevice ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Connected: {pairedDevice.deviceName}</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={handleGeneratePairingCode}
+                          className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={SmartPhone01Icon} className="w-3.5 h-3.5" />
+                          <span>Pair Phone to Transfer</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Preparation Progress Bar */}
+                  {(() => {
+                    const preparedCount = (selectedOrder.issuedCards || []).filter((c) => c.isPrepared).length;
+                    const totalCount = selectedOrder.quantity || selectedOrder.issuedCards.length || 1;
+                    const percent = Math.round((preparedCount / totalCount) * 100);
+
+                    return (
+                      <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold text-slate-700">
+                            Physical Preparation Progress: {preparedCount} of {totalCount} Cards Verified
+                          </span>
+                          <span className="font-bold text-blue-700">{percent}%</span>
                         </div>
-
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {card.cardUrl && (
-                            <button
-                              onClick={() => handleCopyCardUrl(card.cardId, card.cardUrl || "")}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-                                copiedCardId === card.cardId
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-white border border-slate-200 hover:bg-slate-100 text-slate-700"
-                              }`}
-                            >
-                              <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
-                              <span>{copiedCardId === card.cardId ? "Copied!" : "Copy URL"}</span>
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => {
-                              setCardToRevoke(card.cardId);
-                              setShowRevokeCardModal(true);
-                            }}
-                            className="px-2 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                            title="Revoke this card"
-                          >
-                            Revoke
-                          </button>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              percent === 100 ? "bg-emerald-500" : "bg-blue-600"
+                            }`}
+                            style={{ width: `${percent}%` }}
+                          />
                         </div>
                       </div>
-                    ))}
+                    );
+                  })()}
+
+                  <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
+                    {selectedOrder.issuedCards.map((card, idx) => {
+                      const transferState = transferStatuses[card.cardId];
+                      const isWriting = transferState?.status === "Writing";
+                      const isReceived = transferState?.status === "Received";
+                      const isPendingTransfer = transferState?.status === "Pending";
+                      const isTransferringNow = transferringCardId === card.cardId;
+
+                      return (
+                        <div
+                          key={card.cardId || idx}
+                          className="p-3 bg-slate-50/50 hover:bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-slate-800 text-xs">
+                                {card.cardId}
+                              </span>
+
+                              {/* Live Status Badge */}
+                              {card.isPrepared || card.status === "Available" ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3 h-3 text-emerald-600" />
+                                  <span>Verified on Tag</span>
+                                </span>
+                              ) : isWriting ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 animate-pulse">
+                                  <HugeiconsIcon icon={RefreshIcon} className="w-3 h-3 animate-spin" />
+                                  <span>Writing Tag on Phone...</span>
+                                </span>
+                              ) : isReceived ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-3 h-3 text-blue-600" />
+                                  <span>Received by Phone</span>
+                                </span>
+                              ) : isPendingTransfer ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                  <span>Waiting on Phone</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                  Pending Preparation
+                                </span>
+                              )}
+                            </div>
+
+                            {card.cardUrl && (
+                              <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate max-w-md">
+                                {card.cardUrl}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Transfer to NFC Writer Phone Button */}
+                            {!card.isPrepared && (
+                              <button
+                                onClick={() => handleTransferToNfcWriter(card.cardId)}
+                                disabled={isTransferringNow || isWriting}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer ${
+                                  isPendingTransfer || isReceived
+                                    ? "bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                                } disabled:opacity-50`}
+                                title="Wirelessly transfer this card URL to paired Android NFC Writer"
+                              >
+                                <HugeiconsIcon
+                                  icon={SmartPhone01Icon}
+                                  className={`w-3.5 h-3.5 ${isTransferringNow ? "animate-bounce" : ""}`}
+                                />
+                                <span>
+                                  {isTransferringNow
+                                    ? "Sending..."
+                                    : isPendingTransfer
+                                    ? "Resend to Phone"
+                                    : "Transfer to NFC Writer"}
+                                </span>
+                              </button>
+                            )}
+
+                            {card.cardUrl && (
+                              <button
+                                onClick={() => handleCopyCardUrl(card.cardId, card.cardUrl || "")}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                                  copiedCardId === card.cardId
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-white border border-slate-200 hover:bg-slate-100 text-slate-700"
+                                }`}
+                                title="Copy URL manually"
+                              >
+                                <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
+                                <span>{copiedCardId === card.cardId ? "Copied!" : "Copy"}</span>
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => {
+                                setCardToRevoke(card.cardId);
+                                setShowRevokeCardModal(true);
+                              }}
+                              className="px-2 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                              title="Revoke this card"
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1406,6 +1701,116 @@ export default function OptionalCardRequestsTab({
                 {actionLoading ? "Revoking..." : "Revoke Card"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* NFC WRITER DEVICE PAIRING MODAL */}
+      {/* ============================================================== */}
+      {showPairModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-slate-800 text-xs space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#102A43]">SANASA NFC Writer Pairing</h4>
+                  <p className="text-slate-500">{branch} Branch • Staff Session</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowPairModal(false)}
+                className="p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-400 hover:text-slate-600"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+              </button>
+            </div>
+
+            {pairedDevice ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2.5 text-emerald-800 font-bold text-sm">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs">
+                    ✓
+                  </div>
+                  <span>Phone Connected & Paired!</span>
+                </div>
+                <div className="text-xs text-emerald-900 space-y-1">
+                  <div>
+                    Device: <span className="font-bold">{pairedDevice.deviceName}</span>
+                  </div>
+                  <div className="text-[11px] text-emerald-700 font-mono">
+                    Device ID: {pairedDevice.deviceId}
+                  </div>
+                  <div className="text-[11px] text-emerald-700">
+                    Paired on: {new Date(pairedDevice.pairedAt).toLocaleTimeString()}
+                  </div>
+                </div>
+                <p className="text-[11px] text-emerald-700">
+                  You can now click <strong>"Transfer to NFC Writer"</strong> on any card to send it directly to your phone.
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={handleUnpair}
+                    className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Disconnect / Unpair Phone
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-slate-600 leading-relaxed text-xs">
+                  Enter this single-use 6-character code into the <strong>SANASA NFC Writer</strong> Android application on your phone to pair it securely with this branch session:
+                </p>
+
+                {/* Big Pairing Code Card */}
+                <div className="bg-gradient-to-br from-slate-900 to-[#102A43] text-white p-5 rounded-2xl text-center shadow-md relative overflow-hidden">
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300 block mb-1">
+                    Pairing Code
+                  </span>
+                  <div className="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 select-all my-1">
+                    {pairingCode || "------"}
+                  </div>
+                  <span className="text-[10px] text-slate-300">
+                    Valid for 5 minutes • Single-use
+                  </span>
+                </div>
+
+                {/* Instructions */}
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-2">
+                  <span className="font-bold text-slate-700 text-xs block">
+                    How to pair your Android Phone:
+                  </span>
+                  <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600 leading-normal">
+                    <li>Open <strong>SANASA NFC Writer</strong> on your phone.</li>
+                    <li>Go to the <strong>Device Pairing</strong> tab or prompt.</li>
+                    <li>Type the code <strong className="font-mono text-slate-900">{pairingCode}</strong> and tap <strong>Connect</strong>.</li>
+                  </ol>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    onClick={handleGeneratePairingCode}
+                    disabled={pairingLoading}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <HugeiconsIcon icon={RefreshIcon} className={`w-3.5 h-3.5 ${pairingLoading ? "animate-spin" : ""}`} />
+                    <span>Generate New Code</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowPairModal(false)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

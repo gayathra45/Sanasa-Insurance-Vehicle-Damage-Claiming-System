@@ -236,3 +236,60 @@ export function emitThirdPartyRequestUpdated(request) {
   }
 }
 
+/**
+ * Emit NFC Writer Pairing status update in real-time
+ */
+export function emitNfcPairingUpdated(pairing) {
+  if (!io || !pairing) return;
+  try {
+    const payload = typeof pairing.toObject === "function" ? pairing.toObject() : pairing;
+    if (payload.staffId) {
+      emitToUser("OfficeStaff", payload.staffId, "nfc:pairing-updated", payload);
+    }
+    if (payload.branch) {
+      io.to(`branch:${payload.branch}`).emit("nfc:pairing-updated", payload);
+    }
+    io.emit("nfc:pairing-updated", payload);
+  } catch (err) {
+    console.warn("[Socket.IO] emitNfcPairingUpdated error:", err.message);
+  }
+}
+
+/**
+ * Emit new NFC Card Transfer Job to paired Writer phone
+ */
+export function emitNfcTransferJob(job) {
+  if (!io || !job) return;
+  try {
+    const payload = typeof job.toObject === "function" ? job.toObject() : job;
+    if (payload.staffId) {
+      emitToUser("OfficeStaff", payload.staffId, "nfc:transfer-job:new", payload);
+    }
+    if (payload.branch) {
+      io.to(`branch:${payload.branch}`).emit("nfc:transfer-job:new", payload);
+    }
+    io.emit("nfc:transfer-job:new", payload);
+  } catch (err) {
+    console.warn("[Socket.IO] emitNfcTransferJob error:", err.message);
+  }
+}
+
+/**
+ * Emit NFC Transfer Job Status progression (Received, Writing, Verified, Completed, Failed)
+ */
+export function emitNfcTransferStatus(job) {
+  if (!io || !job) return;
+  try {
+    const payload = typeof job.toObject === "function" ? job.toObject() : job;
+    if (payload.staffId) {
+      emitToUser("OfficeStaff", payload.staffId, "nfc:transfer-status", payload);
+    }
+    if (payload.branch) {
+      io.to(`branch:${payload.branch}`).emit("nfc:transfer-status", payload);
+    }
+    io.emit("nfc:transfer-status", payload);
+  } catch (err) {
+    console.warn("[Socket.IO] emitNfcTransferStatus error:", err.message);
+  }
+}
+

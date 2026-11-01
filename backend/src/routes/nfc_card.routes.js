@@ -3,12 +3,20 @@ import crypto from "crypto";
 import Stripe from "stripe";
 import NfcCard from "../models/nfc_card.model.js";
 import NfcCardOrder from "../models/nfc_card_order.model.js";
+import NfcWriterPairing from "../models/nfc_writer_pairing.model.js";
+import NfcTransferJob from "../models/nfc_transfer_job.model.js";
 import OtpVerification from "../models/otp_verification.model.js";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import { sendSms, normalizeSriLankanPhone } from "../services/smsService.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { emitNfcOrderUpdated, emitNfcCardUpdated } from "../utils/socket.js";
+import {
+  emitNfcOrderUpdated,
+  emitNfcCardUpdated,
+  emitNfcPairingUpdated,
+  emitNfcTransferJob,
+  emitNfcTransferStatus
+} from "../utils/socket.js";
 
 const router = express.Router();
 
@@ -1455,6 +1463,512 @@ router.get("/history/:cardId", async (req, res) => {
   } catch (err) {
     console.error("GET /history/:cardId error:", err);
     return res.status(500).json({ error: "Failed to fetch card assignment history." });
+  }
+});
+
+// ==========================================
+// 5. SANASA NFC WRITER INTEGRATION APIS
+// ==========================================
+
+/**
+ * POST /api/nfc-card/writer/pairing/generate-code
+ * Web portal generates a short-lived, single-use 6-character pairing code
+ */
+router.post("/writer/pairing/generate-code", async (req, res) => {
+  try {
+    const { staffId, staffName, staffEmail, branch } = req.body;
+    if (!staffId || !branch) {
+      return res.status(400).json({ error: "staffId and branch are required to generate pairing code." });
+    }
+
+    const cleanBranch = String(branch).trim();
+    const cleanStaffId = String(staffId).trim();
+
+    // Expire any existing pending pairing sessions for this staff/branch
+    await NfcWriterPairing.deleteMany({
+      staffId: cleanStaffId,
+      branch: cleanBranch,
+      status: "Pending"
+    });
+
+    // Generate 6-character uppercase alphanumeric code (e.g. 7X3M9A)
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // excludes ambiguous 0, O, 1, I
+    let pairingCode = "";
+    const randomBytes = crypto.randomBytes(6);
+    for (let i = 0; i < 6; i++) {
+      pairingCode += chars[randomBytes[i] % chars.length];
+    }
+
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes TTL
+
+    const pairing = new NfcWriterPairing({
+      pairingCode,
+      staffId: cleanStaffId,
+      staffName: staffName || "Branch Staff",
+      staffEmail: staffEmail || "",
+      branch: cleanBranch,
+      status: "Pending",
+      expiresAt
+    });
+
+    await pairing.save();
+    emitNfcPairingUpdated(pairing);
+
+    return res.json({
+      success: true,
+      pairingCode,
+      expiresAt,
+      branch: cleanBranch,
+      staffName: pairing.staffName
+    });
+  } catch (err) {
+    console.error("POST /writer/pairing/generate-code error:", err);
+    return res.status(500).json({ error: "Failed to generate device pairing code." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/pairing/pair
+ * Android NFC Writer app submits pairing code to securely bind with branch session
+ */
+router.post("/writer/pairing/pair", async (req, res) => {
+  try {
+    const { pairingCode, deviceId, deviceName, staffId, branch } = req.body;
+    if (!pairingCode) {
+      return res.status(400).json({ error: "pairingCode is required." });
+    }
+
+    const cleanCode = String(pairingCode).trim().toUpperCase();
+    const pairing = await NfcWriterPairing.findOne({
+      pairingCode: cleanCode,
+      status: "Pending"
+    });
+
+    if (!pairing) {
+      return res.status(404).json({ error: "Invalid or expired pairing code. Please generate a new code on the portal." });
+    }
+
+    if (new Date() > pairing.expiresAt) {
+      pairing.status = "Expired";
+      await pairing.save();
+      return res.status(400).json({ error: "Pairing code has expired. Please generate a new code." });
+    }
+
+    const now = new Date();
+    pairing.status = "Paired";
+    pairing.deviceId = String(deviceId || `android-${crypto.randomBytes(4).toString("hex")}`).trim();
+    pairing.deviceName = String(deviceName || "Android NFC Device").trim();
+    pairing.pairedAt = now;
+    pairing.lastSeenAt = now;
+    pairing.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // Active for 24-hour shift
+
+    await pairing.save();
+    emitNfcPairingUpdated(pairing);
+
+    return res.json({
+      success: true,
+      message: `Device successfully paired to ${pairing.branch} branch!`,
+      pairing: {
+        pairingId: pairing._id,
+        branch: pairing.branch,
+        staffId: pairing.staffId,
+        staffName: pairing.staffName,
+        deviceId: pairing.deviceId,
+        deviceName: pairing.deviceName,
+        pairedAt: pairing.pairedAt
+      }
+    });
+  } catch (err) {
+    console.error("POST /writer/pairing/pair error:", err);
+    return res.status(500).json({ error: "Failed to pair device." });
+  }
+});
+
+/**
+ * GET /api/nfc-card/writer/pairing/status
+ * Check current pairing status for branch/staff
+ */
+router.get("/writer/pairing/status", async (req, res) => {
+  try {
+    const { branch, staffId, deviceId } = req.query;
+    if (!branch && !staffId && !deviceId) {
+      return res.status(400).json({ error: "branch, staffId, or deviceId required." });
+    }
+
+    const filter = { status: "Paired" };
+    if (deviceId) {
+      filter.deviceId = String(deviceId).trim();
+    } else if (staffId) {
+      filter.staffId = String(staffId).trim();
+    } else if (branch) {
+      filter.branch = new RegExp(`^${String(branch).trim()}$`, "i");
+    }
+
+    const pairing = await NfcWriterPairing.findOne(filter).sort({ pairedAt: -1 });
+    if (!pairing || (pairing.expiresAt && new Date() > pairing.expiresAt)) {
+      return res.json({ paired: false, message: "No active paired device found." });
+    }
+
+    return res.json({
+      paired: true,
+      pairing: {
+        pairingId: pairing._id,
+        branch: pairing.branch,
+        staffId: pairing.staffId,
+        staffName: pairing.staffName,
+        deviceId: pairing.deviceId,
+        deviceName: pairing.deviceName,
+        pairedAt: pairing.pairedAt,
+        lastSeenAt: pairing.lastSeenAt
+      }
+    });
+  } catch (err) {
+    console.error("GET /writer/pairing/status error:", err);
+    return res.status(500).json({ error: "Failed to fetch pairing status." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/pairing/unpair
+ * Safe unpair action from website or phone
+ */
+router.post("/writer/pairing/unpair", async (req, res) => {
+  try {
+    const { staffId, branch, deviceId } = req.body;
+    const filter = { status: "Paired" };
+
+    if (deviceId) filter.deviceId = String(deviceId).trim();
+    else if (staffId) filter.staffId = String(staffId).trim();
+    else if (branch) filter.branch = new RegExp(`^${String(branch).trim()}$`, "i");
+
+    const pairing = await NfcWriterPairing.findOne(filter);
+    if (pairing) {
+      pairing.status = "Revoked";
+      await pairing.save();
+      emitNfcPairingUpdated(pairing);
+    }
+
+    return res.json({ success: true, message: "Device successfully unpaired." });
+  } catch (err) {
+    console.error("POST /writer/pairing/unpair error:", err);
+    return res.status(500).json({ error: "Failed to unpair device." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/transfer-job
+ * Website initiates authenticated transfer of single card to paired NFC Writer phone
+ */
+router.post("/writer/transfer-job", async (req, res) => {
+  try {
+    const { orderId, cardId, staffId, staffName, branch } = req.body;
+    if (!orderId || !cardId) {
+      return res.status(400).json({ error: "orderId and cardId are required." });
+    }
+
+    const order = await NfcCardOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    if (branch && order.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Order belongs to another branch." });
+    }
+
+    // Find card URL from order or NfcCard collection
+    let cardUrl = "";
+    const issuedMatch = (order.issuedCards || []).find((c) => c.cardId === cardId);
+    if (issuedMatch && issuedMatch.cardUrl) {
+      cardUrl = issuedMatch.cardUrl;
+    } else {
+      const dbCard = await NfcCard.findOne({ cardId });
+      if (dbCard?.currentAssignment?.accessUrl) {
+        cardUrl = dbCard.currentAssignment.accessUrl;
+      }
+    }
+
+    if (!cardUrl) {
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      cardUrl = `${frontendUrl}/driver-access/${rawToken}`;
+    }
+
+    const jobId = `JOB-NFC-${Date.now().toString().slice(-6)}${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min TTL
+
+    // Cancel any prior pending job for this card
+    await NfcTransferJob.updateMany(
+      { cardId, status: { $in: ["Pending", "Received", "Writing"] } },
+      { $set: { status: "Cancelled" } }
+    );
+
+    const job = new NfcTransferJob({
+      jobId,
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      cardId,
+      cardUrl,
+      policyHolderName: order.policyHolderName,
+      branch: order.branch,
+      staffId: staffId || "",
+      staffName: staffName || "Branch Staff",
+      status: "Pending",
+      expiresAt
+    });
+
+    await job.save();
+
+    // Broadcast transfer job via Socket.IO directly to paired staff and branch rooms
+    emitNfcTransferJob(job);
+    emitNfcTransferStatus(job);
+
+    return res.status(201).json({
+      success: true,
+      message: `Card ${cardId} sent to paired NFC Writer phone.`,
+      job
+    });
+  } catch (err) {
+    console.error("POST /writer/transfer-job error:", err);
+    return res.status(500).json({ error: err.message || "Failed to create transfer job." });
+  }
+});
+
+/**
+ * GET /api/nfc-card/writer/pending-jobs
+ * Android NFC Writer app fetches queue of cards awaiting writing
+ */
+router.get("/writer/pending-jobs", async (req, res) => {
+  try {
+    const { branch, staffId } = req.query;
+    if (!branch && !staffId) {
+      return res.status(400).json({ error: "branch or staffId is required." });
+    }
+
+    const filter = {
+      status: { $in: ["Pending", "Received", "Writing"] },
+      expiresAt: { $gt: new Date() }
+    };
+
+    if (branch) {
+      filter.branch = new RegExp(`^${String(branch).trim()}$`, "i");
+    }
+
+    const jobs = await NfcTransferJob.find(filter).sort({ createdAt: -1 });
+    return res.json({ success: true, jobs });
+  } catch (err) {
+    console.error("GET /writer/pending-jobs error:", err);
+    return res.status(500).json({ error: "Failed to fetch pending transfer jobs." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/job-status
+ * App updates status: Received -> Writing -> Failed
+ */
+router.post("/writer/job-status", async (req, res) => {
+  try {
+    const { jobId, status, errorMessage, deviceId } = req.body;
+    if (!jobId || !status) {
+      return res.status(400).json({ error: "jobId and status are required." });
+    }
+
+    const job = await NfcTransferJob.findOne({ jobId: String(jobId).trim() });
+    if (!job) {
+      return res.status(404).json({ error: "Transfer job not found." });
+    }
+
+    job.status = status;
+    if (errorMessage) job.errorMessage = String(errorMessage);
+    if (deviceId) job.deviceId = String(deviceId);
+
+    await job.save();
+    emitNfcTransferStatus(job);
+
+    return res.json({ success: true, job });
+  } catch (err) {
+    console.error("POST /writer/job-status error:", err);
+    return res.status(500).json({ error: "Failed to update job status." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/complete
+ * Phone writes tag, reads back URI, confirms equality, and synchronizes with backend
+ */
+router.post("/writer/complete", async (req, res) => {
+  try {
+    const {
+      jobId,
+      cardId,
+      orderId,
+      readBackUrl,
+      tagUid,
+      tagTech,
+      staffId,
+      staffName,
+      branch
+    } = req.body;
+
+    if (!cardId || !readBackUrl) {
+      return res.status(400).json({ error: "cardId and readBackUrl are required." });
+    }
+
+    const cleanCardId = String(cardId).trim();
+    const cleanReadBackUrl = String(readBackUrl).trim();
+
+    // 1. Locate Card record
+    const card = await NfcCard.findOne({ cardId: cleanCardId });
+    if (!card) {
+      return res.status(404).json({ error: `NFC Card ${cleanCardId} not found.` });
+    }
+
+    // 2. Validate Read-back URL matches authorized card URL
+    const expectedUrl = card.currentAssignment?.accessUrl || "";
+    if (expectedUrl && expectedUrl !== cleanReadBackUrl) {
+      return res.status(400).json({
+        error: "Verification failed: Read-back URL from physical tag does not match authorized URL issued by backend.",
+        expectedUrl,
+        readBackUrl: cleanReadBackUrl
+      });
+    }
+
+    const now = new Date();
+
+    // 3. Update Transfer Job
+    let job = null;
+    if (jobId) {
+      job = await NfcTransferJob.findOne({ jobId: String(jobId).trim() });
+      if (job) {
+        job.status = "Completed";
+        job.readBackVerified = true;
+        job.readBackUrl = cleanReadBackUrl;
+        job.tagUid = tagUid || "";
+        job.tagTech = tagTech || "NDEF";
+        job.completedAt = now;
+        await job.save();
+        emitNfcTransferStatus(job);
+      }
+    }
+
+    // 4. Update Physical Card Record in NfcCard model
+    card.cardUid = tagUid || card.cardUid || "";
+    card.status = "Available"; // Card is verified and immediately available for assignment
+    if (!card.notes) card.notes = "";
+    card.notes += ` [Physical NFC verified on ${now.toISOString()} - Tag UID: ${tagUid || "NDEF"}]`;
+    await card.save();
+    emitNfcCardUpdated(card);
+
+    // 5. Update Order Record if orderId supplied or linked
+    let updatedOrder = null;
+    const targetOrderId = orderId || card.orderId;
+    if (targetOrderId) {
+      const order = await NfcCardOrder.findById(targetOrderId);
+      if (order) {
+        let cardFoundInOrder = false;
+        if (order.issuedCards && order.issuedCards.length > 0) {
+          order.issuedCards.forEach((c) => {
+            if (c.cardId === cleanCardId) {
+              c.isPrepared = true;
+              c.preparedAt = now;
+              c.status = "Ready for Collection";
+              cardFoundInOrder = true;
+            }
+          });
+        }
+
+        // Calculate progress: count of prepared cards
+        const preparedCount = (order.issuedCards || []).filter((c) => c.isPrepared).length;
+        const totalCount = order.quantity || order.issuedCards?.length || 1;
+
+        // If all cards in the request are verified & prepared, auto-transition order to Ready for Collection!
+        if (preparedCount >= totalCount) {
+          order.status = "Ready for Collection";
+          order.statusHistory = order.statusHistory || [];
+          order.statusHistory.push({
+            status: "Ready for Collection",
+            timestamp: now,
+            updatedBy: staffName || "NFC Writer App",
+            note: `All ${totalCount} physical cards successfully written, verified, and ready for collection.`
+          });
+
+          // Send SMS notification to policyholder
+          if (order.policyHolderPhone) {
+            sendSms({
+              phone: order.policyHolderPhone,
+              message: `[SANASA GENERAL INSURANCE]\nDear ${order.policyHolderName},\nAll ${totalCount} Optional NFC Cards (${order.orderNumber}) have been successfully prepared and verified.\nThey are now READY FOR COLLECTION at ${order.branch} branch.\nHotline: 0725 575 575`,
+              recipientType: "PolicyHolder",
+              recipientName: order.policyHolderName,
+              eventType: "nfc_cards_ready"
+            }).catch((e) => console.warn("Cards ready SMS error:", e.message));
+          }
+        } else if (order.status !== "Processing") {
+          order.status = "Processing";
+        }
+
+        await order.save();
+        emitNfcOrderUpdated(order);
+        updatedOrder = order;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Card ${cleanCardId} verified and synchronized successfully!`,
+      card,
+      order: updatedOrder,
+      job
+    });
+  } catch (err) {
+    console.error("POST /writer/complete error:", err);
+    return res.status(500).json({ error: err.message || "Failed to record write completion." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/sync-retry
+ * Idempotent retry endpoint if physical write succeeded offline but backend sync initially failed
+ */
+router.post("/writer/sync-retry", async (req, res) => {
+  try {
+    const { cardId, orderId, readBackUrl, tagUid, staffId, branch } = req.body;
+    if (!cardId || !readBackUrl) {
+      return res.status(400).json({ error: "cardId and readBackUrl are required." });
+    }
+
+    const card = await NfcCard.findOne({ cardId: String(cardId).trim() });
+    if (!card) {
+      return res.status(404).json({ error: "Card not found." });
+    }
+
+    const now = new Date();
+    card.cardUid = tagUid || card.cardUid;
+    card.status = "Available";
+    await card.save();
+    emitNfcCardUpdated(card);
+
+    if (orderId) {
+      const order = await NfcCardOrder.findById(orderId);
+      if (order && order.issuedCards) {
+        order.issuedCards.forEach((c) => {
+          if (c.cardId === cardId) {
+            c.isPrepared = true;
+            c.preparedAt = now;
+            c.status = "Ready for Collection";
+          }
+        });
+        await order.save();
+        emitNfcOrderUpdated(order);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Sync retry successful for card ${cardId}.`,
+      card
+    });
+  } catch (err) {
+    console.error("POST /writer/sync-retry error:", err);
+    return res.status(500).json({ error: "Failed to retry sync." });
   }
 });
 
