@@ -17,6 +17,7 @@ import {
   emitNfcTransferJob,
   emitNfcTransferStatus
 } from "../utils/socket.js";
+import { sendExpoPushMessages } from "../services/pushNotificationService.js";
 
 const router = express.Router();
 
@@ -1837,6 +1838,42 @@ router.post("/writer/transfer-job", async (req, res) => {
     emitNfcTransferJob(job);
     emitNfcTransferStatus(job);
 
+    // Send real Android Push Notification to paired phones if registered
+    try {
+      const activePairings = await NfcWriterPairing.find({
+        status: "Paired",
+        branch: new RegExp(`^${order.branch}$`, "i"),
+        pushToken: { $exists: true, $ne: "" }
+      }).lean();
+
+      const messages = activePairings
+        .map((p) => ({
+          to: p.pushToken,
+          title: "New NFC Card Transferred",
+          body: `Card ${cardId} is ready to write for ${job.policyHolderName || "Vehicle Claim"}.`,
+          data: {
+            jobId: job.jobId,
+            cardId: job.cardId,
+            cardUrl: job.cardUrl,
+            orderId: String(job.orderId),
+            orderNumber: job.orderNumber,
+            policyHolderName: job.policyHolderName
+          },
+          sound: "default",
+          priority: "high",
+          channelId: "default"
+        }))
+        .filter((m) => m.to && m.to.length > 0);
+
+      if (messages.length > 0) {
+        sendExpoPushMessages(messages).catch((err) =>
+          console.warn("NFC Push send error:", err.message)
+        );
+      }
+    } catch (pushErr) {
+      console.warn("NFC push notification dispatch warning:", pushErr.message);
+    }
+
     return res.status(201).json({
       success: true,
       message: `Card ${cardId} sent to paired NFC Writer phone.`,
@@ -1845,6 +1882,37 @@ router.post("/writer/transfer-job", async (req, res) => {
   } catch (err) {
     console.error("POST /writer/transfer-job error:", err);
     return res.status(500).json({ error: err.message || "Failed to create transfer job." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/writer/register-push-token
+ * Android app registers its Expo push token for paired staff device
+ */
+router.post("/writer/register-push-token", async (req, res) => {
+  try {
+    const { pushToken, staffId, branch, deviceName } = req.body;
+    if (!pushToken) {
+      return res.status(400).json({ error: "pushToken is required." });
+    }
+
+    if (staffId) {
+      await NfcWriterPairing.updateMany(
+        { staffId },
+        { $set: { pushToken, deviceName: deviceName || "Android Phone" } }
+      );
+    }
+
+    if (branch) {
+      await NfcWriterPairing.updateMany(
+        { branch: new RegExp(`^${branch}$`, "i"), status: "Paired" },
+        { $set: { pushToken, deviceName: deviceName || "Android Phone" } }
+      );
+    }
+
+    return res.json({ success: true, message: "Push token registered successfully." });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to register push token." });
   }
 });
 

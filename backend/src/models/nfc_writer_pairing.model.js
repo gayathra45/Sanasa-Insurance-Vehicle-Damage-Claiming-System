@@ -42,6 +42,10 @@ const nfcWriterPairingSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    pushToken: {
+      type: String,
+      default: ""
+    },
     pairedAt: {
       type: Date,
       default: null
