@@ -1360,6 +1360,7 @@ export default function AgentActivityPage() {
                     >
                       {/* 1. Claim Info */}
                       <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-0.5">{t.claimInfo}</span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
                           {isUrgent && (
@@ -1370,40 +1371,56 @@ export default function AgentActivityPage() {
                       </div>
 
                       {/* 2. Vehicle Plate */}
-                      <div className="text-xs md:text-sm font-semibold text-slate-800 truncate">
-                        {formatPlate(claim.vehiclePlate)}
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-0.5">{t.vehicleNo}</span>
+                        <span className="text-xs md:text-sm font-semibold text-slate-800 truncate">
+                          {formatPlate(claim.vehiclePlate)}
+                        </span>
                       </div>
 
                       {/* 3. Damage Type */}
-                      <div className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.damageType}>
-                        {claim.damageType}
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-0.5">{t.damageType}</span>
+                        <span className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.damageType}>
+                          {claim.damageType}
+                        </span>
                       </div>
 
                       {/* 4. Location */}
-                      <div className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.location}>
-                        {claim.location || "-"}
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-0.5">{t.location}</span>
+                        <span className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.location}>
+                          {claim.location || "-"}
+                        </span>
                       </div>
 
                       {/* 5. Policy Holder */}
                       <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-0.5">{t.policyHolder}</span>
                         <span className="text-xs font-semibold text-slate-800 truncate">{getPolicyHolderName(claim.userNic)}</span>
                         <span className="text-[10px] text-slate-400 font-medium mt-0.5">NIC: {claim.userNic}</span>
                       </div>
 
                       {/* 6. Assessment */}
-                      <div className="text-xs font-semibold text-slate-700 text-center">
-                        {typeof claim.amount === "number" ? (
-                          `Rs. ${claim.amount.toLocaleString()}`
-                        ) : (
-                          <span className="text-slate-400 font-normal italic text-[11px]">{lang === "en" ? "Not Assessed" : lang === "si" ? "තක්සේරු කර නැත" : "மதிப்பிடப்படவில்லை"}</span>
-                        )}
+                      <div className="flex flex-col min-w-0 md:items-center">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-0.5">{t.assessment}</span>
+                        <div className="text-xs font-semibold text-slate-700 md:text-center">
+                          {typeof claim.amount === "number" ? (
+                            `Rs. ${claim.amount.toLocaleString()}`
+                          ) : (
+                            <span className="text-slate-400 font-normal italic text-[11px]">{lang === "en" ? "Not Assessed" : lang === "si" ? "තක්සේරු කර නැත" : "மதிப்பிடப்படவில்லை"}</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* 7. Status Badge */}
-                      <div className="flex items-center justify-center min-w-0">
-                        <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
-                          {claim.status === "Pending" ? t.pending : claim.status === "In Progress" ? t.inProgress : claim.status === "Approved" ? t.approved : claim.status === "Rejected" ? t.rejected : claim.status}
-                        </span>
+                      <div className="flex flex-col min-w-0 md:items-center">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block md:hidden mb-1">{t.status}</span>
+                        <div className="flex items-center md:justify-center min-w-0">
+                          <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
+                            {claim.status === "Pending" ? t.pending : claim.status === "In Progress" ? t.inProgress : claim.status === "Approved" ? t.approved : claim.status === "Rejected" ? t.rejected : claim.status}
+                          </span>
+                        </div>
                       </div>
 
                       {/* 8. Action */}

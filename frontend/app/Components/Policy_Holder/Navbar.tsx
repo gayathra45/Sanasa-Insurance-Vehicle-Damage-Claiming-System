@@ -296,23 +296,23 @@ export default function PolicyHolderNavbar() {
         }`}
       >
         {/* Top Utility Bar (Vibrant Sky Blue background) */}
-        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-4 sm:px-6 md:px-16 flex items-center justify-between text-xs select-none w-full font-medium shadow-inner">
-          <div className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
-            <span className="text-white">
+        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-3 sm:px-6 md:px-16 flex items-center justify-between text-[11px] sm:text-xs select-none w-full font-medium shadow-inner">
+          <div className="flex items-center gap-1 sm:gap-1.5 truncate mr-2">
+            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100 shrink-0" strokeWidth={2} />
+            <span className="text-white truncate">
               <span className="hidden sm:inline">{t.hotline}</span>
               <span className="inline sm:hidden">+94 112 003 000</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
             {/* Branch Button */}
             <button
               onClick={() => {
                 setSearchQuery("");
                 setBranchesModalOpen(true);
               }}
-              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-medium"
+              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-[11px] sm:text-xs font-medium"
             >
               <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
               <span>{t.branches}</span>
@@ -325,7 +325,7 @@ export default function PolicyHolderNavbar() {
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-medium"
+                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-[11px] sm:text-xs font-medium"
               >
                 <HugeiconsIcon icon={Globe02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
                 <span className="uppercase">{lang === "si" ? "සිං" : lang === "ta" ? "தமி" : "EN"}</span>
@@ -366,7 +366,7 @@ export default function PolicyHolderNavbar() {
         </div>
 
         {/* Main Header Row */}
-        <div className="py-2.5 px-4 sm:px-6 md:px-16 flex items-center justify-between w-full">
+        <div className="py-2.5 px-3 sm:px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/Policy_Holder/Home">
@@ -375,7 +375,7 @@ export default function PolicyHolderNavbar() {
                 alt="Sanasa General Insurance"
                 width={100}
                 height={40}
-                className="object-contain h-auto"
+                className="object-contain h-auto max-w-[85px] sm:max-w-[100px]"
                 priority
               />
             </Link>
@@ -414,11 +414,11 @@ export default function PolicyHolderNavbar() {
           </div>
 
           {/* Right Action Icons (Download App, Notifications, Profile & Mobile Hamburger) */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Download Mobile App Button */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Download Mobile App Button (Desktop/Tablet, on mobile it is in the hamburger drawer) */}
             <button
               onClick={() => setAppDownloadModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-50 to-cyan-50 hover:from-sky-100 hover:to-cyan-100 border border-sky-200/90 text-[#0284c7] font-bold text-xs shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-50 to-cyan-50 hover:from-sky-100 hover:to-cyan-100 border border-sky-200/90 text-[#0284c7] font-bold text-xs shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
               title="Download Sanasa Mobile App (SClaim Go)"
             >
               <HugeiconsIcon icon={SmartPhone01Icon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.4} />

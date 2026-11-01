@@ -1202,7 +1202,7 @@ export default function MyVehicles() {
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching mockup exactly */}
-      <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-8 relative">
         {/* Absolute positioned background banner spanning to left edge of screen */}
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Mockup dark slate overlay matching other policy holder pages */}
@@ -1211,7 +1211,7 @@ export default function MyVehicles() {
         </div>
 
         {/* Text content aligned automatically with the page container */}
-        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             {t.title}
           </h1>

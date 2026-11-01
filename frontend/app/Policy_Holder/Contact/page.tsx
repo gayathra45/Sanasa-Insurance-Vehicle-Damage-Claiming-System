@@ -249,20 +249,20 @@ export default function PolicyHolderContact() {
         {/* Card 1: Hotline */}
         <a 
           href="tel:+94112003000" 
-          className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200 cursor-pointer no-underline text-inherit hover:bg-slate-50/50 group"
+          className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200 cursor-pointer no-underline text-inherit hover:bg-slate-50/50 group"
         >
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] group-hover:border-[#00ddff] transition-colors shrink-0">
-              <HugeiconsIcon icon={Call02Icon} className="w-7 h-7" strokeWidth={1.8} />
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] group-hover:border-[#00ddff] transition-colors shrink-0">
+              <HugeiconsIcon icon={Call02Icon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.8} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.hotline}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-normal mt-1.5 tracking-wide">
+              <h3 className="font-semibold text-slate-800 text-base sm:text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.hotline}</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-normal mt-1 sm:mt-1.5 tracking-wide break-all sm:break-normal">
                 {t.hotlineVal}
               </p>
             </div>
           </div>
-          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
+          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-0 sm:pl-20 select-none">
             {t.hotlineSub}
           </div>
         </a>
@@ -271,38 +271,38 @@ export default function PolicyHolderContact() {
         <button 
           type="button"
           onClick={() => setShowEmailModal(true)} 
-          className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200 cursor-pointer no-underline text-inherit hover:bg-slate-50/50 group text-left w-full border-solid font-sans"
+          className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200 cursor-pointer no-underline text-inherit hover:bg-slate-50/50 group text-left w-full border-solid font-sans"
         >
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] group-hover:border-[#00ddff] transition-colors shrink-0">
-              <HugeiconsIcon icon={Mail01Icon} className="w-7 h-7" strokeWidth={1.8} />
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] group-hover:border-[#00ddff] transition-colors shrink-0">
+              <HugeiconsIcon icon={Mail01Icon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.8} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.email}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-normal mt-1.5 tracking-wide">
+              <h3 className="font-semibold text-slate-800 text-base sm:text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.email}</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-normal mt-1 sm:mt-1.5 tracking-wide break-all sm:break-normal">
                 {t.emailVal}
               </p>
             </div>
           </div>
-          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
+          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-0 sm:pl-20 select-none">
             {t.emailSub}
           </div>
         </button>
 
         {/* Card 3: Live Chat */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200">
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-              <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7" strokeWidth={1.8} />
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+              <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.8} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-800 text-lg md:text-xl">{t.liveChat}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-normal mt-1.5 tracking-wide">
+              <h3 className="font-semibold text-slate-800 text-base sm:text-lg md:text-xl">{t.liveChat}</h3>
+              <p className="text-slate-600 text-xs sm:text-sm md:text-base font-normal mt-1 sm:mt-1.5 tracking-wide">
                 {t.liveChatVal}
               </p>
             </div>
           </div>
-          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
+          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-0 sm:pl-20 select-none">
             {t.liveChatSub}
           </div>
         </div>
@@ -325,18 +325,18 @@ export default function PolicyHolderContact() {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50/50 to-transparent" />
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 md:px-16 z-10 flex flex-col">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-16 z-10 flex flex-col">
           
           {/* Location Title */}
-          <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-md pl-4 md:pl-8 mb-8 select-none">
+          <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-md pl-2 sm:pl-4 md:pl-8 mb-8 select-none">
             {t.location}
           </h2>
 
           <div className="flex flex-col md:flex-row gap-8 lg:gap-16 items-start">
             
             {/* Map iframe overlapping bottom */}
-            <div className="w-full md:w-[60%] lg:w-[55%] -mb-16 md:-mb-24 z-20 pl-4 md:pl-8">
-              <div className="relative w-full h-[250px] md:h-[350px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl border-[6px] border-white bg-white">
+            <div className="w-full md:w-[60%] lg:w-[55%] -mb-16 md:-mb-24 z-20 pl-0 md:pl-8">
+              <div className="relative w-full h-[250px] md:h-[350px] rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl border-4 sm:border-[6px] border-white bg-white">
                 <iframe 
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.2661808899647!2d79.87076!3d6.918!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae259ab28a0b0f1%3A0x5f5b0b0b0b0b0b0b!2sSanasa%20General%20Insurance!5e0!3m2!1sen!2slk!4v1234567890"
                   width="100%" 
@@ -374,27 +374,27 @@ export default function PolicyHolderContact() {
 
       {/* Floating Chat Bubble Button */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4 sm:p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6 sm:w-7 sm:h-7 text-white" strokeWidth={2} />
       </button>
 
       <PolicyHolderFooter />
 
       {/* Email Composer Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
-          <div className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col border border-slate-100 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 transition-all duration-300">
+          <div className="bg-white rounded-[24px] sm:rounded-[32px] w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col border border-slate-100 relative">
             
             {/* Ambient background glow inside modal */}
             <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-[#00ddff]/10 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-[#004f6e]/10 blur-3xl pointer-events-none" />
 
             {/* Header */}
-            <div className="px-12 py-7 border-b border-slate-100 flex justify-between items-center relative z-10 bg-white/80 backdrop-blur-md">
+            <div className="px-5 sm:px-12 py-5 sm:py-7 border-b border-slate-100 flex justify-between items-center relative z-10 bg-white/80 backdrop-blur-md">
               <div>
-                <h3 className="text-2xl font-bold text-[#0d2a3a]">{t.modalTitle}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-[#0d2a3a]">{t.modalTitle}</h3>
                 <p className="text-xs text-slate-500 font-normal mt-1">{t.modalSubtitle}</p>
               </div>
               <button
@@ -410,7 +410,7 @@ export default function PolicyHolderContact() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSendEmail} className="p-12 flex flex-col gap-6 relative z-10">
+            <form onSubmit={handleSendEmail} className="p-5 sm:p-12 flex flex-col gap-5 sm:gap-6 relative z-10">
               
               {/* User info display block if logged in */}
               {user && (

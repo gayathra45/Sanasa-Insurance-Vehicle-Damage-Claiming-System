@@ -727,16 +727,16 @@ export default function AgentProfilePage() {
 
               {/* Quick Metrics */}
               <div className="flex items-center gap-2 w-full justify-center sm:justify-end">
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl px-3.5 py-2 text-center select-none shadow-2xs">
-                  <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider">Assigned</span>
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-center select-none shadow-2xs flex-1 sm:flex-initial min-w-0">
+                  <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider truncate">Assigned</span>
                   <span className="block text-sm font-bold text-slate-900 font-mono">{stats.totalClaims}</span>
                 </div>
-                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl px-3.5 py-2 text-center select-none shadow-2xs">
-                  <span className="block text-amber-600 text-[10px] font-bold uppercase tracking-wider">In Progress</span>
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-center select-none shadow-2xs flex-1 sm:flex-initial min-w-0">
+                  <span className="block text-amber-600 text-[10px] font-bold uppercase tracking-wider truncate">In Progress</span>
                   <span className="block text-sm font-bold text-amber-800 font-mono">{stats.activeClaims}</span>
                 </div>
-                <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl px-3.5 py-2 text-center select-none shadow-2xs">
-                  <span className="block text-blue-600 text-[10px] font-bold uppercase tracking-wider">Inspected</span>
+                <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-center select-none shadow-2xs flex-1 sm:flex-initial min-w-0">
+                  <span className="block text-blue-600 text-[10px] font-bold uppercase tracking-wider truncate">Inspected</span>
                   <span className="block text-sm font-bold text-blue-800 font-mono">{stats.completedInspections}</span>
                 </div>
               </div>

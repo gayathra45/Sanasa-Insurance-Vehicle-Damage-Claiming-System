@@ -1066,40 +1066,40 @@ export default function MyClaims() {
                 )}
 
                 {/* 2-Column Grid matching mockup inline labels */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-6 px-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-12 gap-y-3 sm:gap-y-5 text-sm font-normal text-slate-700 mb-6 px-1 sm:px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Vehicle:</span>
-                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800 break-words">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Type:</span>
-                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800 break-words">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Est. Amount:</span>
-                    <span className="font-semibold text-slate-800">
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800 break-words">
                       {selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Incident Date:</span>
-                    <span className="font-semibold text-slate-800">{selectedClaim.incidentDate} {selectedClaim.incidentTime ? `@ ${selectedClaim.incidentTime}` : ""}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Incident Date:</span>
+                    <span className="font-semibold text-slate-800 break-words">{selectedClaim.incidentDate} {selectedClaim.incidentTime ? `@ ${selectedClaim.incidentTime}` : ""}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Submitted At:</span>
-                    <span className="font-semibold text-slate-800">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Submitted At:</span>
+                    <span className="font-semibold text-slate-800 break-words">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Officer:</span>
-                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800 break-words">{selectedClaim.officer || "Agent Saman"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Branch:</span>
-                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800 break-words">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Location:</span>
-                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                    <span className="text-slate-400 font-medium w-24 sm:w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800 break-words">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
 

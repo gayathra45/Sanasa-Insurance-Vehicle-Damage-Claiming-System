@@ -641,14 +641,14 @@ function TrackClaimsContent() {
     ];
 
     return (
-      <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
+      <div className="bg-[#f8fafc] border border-slate-100 rounded-2xl sm:rounded-[24px] pt-4 sm:pt-6 pb-3 sm:pb-5 px-3 sm:px-8 mb-6 sm:mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm overflow-x-auto">
         {/* Background Grey Line */}
-        <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
+        <div className="absolute top-[32px] sm:top-[44px] -translate-y-1/2 left-[36px] sm:left-[52px] right-[36px] sm:right-[52px] h-[2.5px] sm:h-[3px] bg-slate-200 z-0 pointer-events-none" />
         
         {/* Active Blue Progress Line */}
         <div
-          className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 pointer-events-none transition-all duration-300"
-          style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
+          className="absolute top-[32px] sm:top-[44px] -translate-y-1/2 left-[36px] sm:left-[52px] h-[2.5px] sm:h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 pointer-events-none transition-all duration-300"
+          style={{ width: isFullyPaid ? "calc(100% - 72px)" : `calc((100% - 72px) * ${currentStep - 1} / 5)` }}
         />
 
         {steps.map((step, idx) => {
@@ -660,21 +660,21 @@ function TrackClaimsContent() {
           if (isCompleted) {
             circleClass = "border-blue-600 text-blue-600 bg-blue-50";
           } else if (isActive) {
-            circleClass = "border-sky-500 text-sky-600 bg-white ring-4 ring-sky-100";
+            circleClass = "border-sky-500 text-sky-600 bg-white ring-2 sm:ring-4 ring-sky-100";
           } else {
             circleClass = "border-slate-300 text-slate-400 bg-white";
           }
 
           return (
-            <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
-              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
+            <div key={step.num} className="relative z-10 flex flex-col items-center flex-1 min-w-[45px] sm:min-w-0">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center text-xs sm:text-[14px] font-bold relative z-10 ${circleClass}`}>
                 {isCompleted ? (
-                  <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-blue-600" strokeWidth={3} />
+                  <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" strokeWidth={3} />
                 ) : (
                   step.num
                 )}
               </div>
-              <span className={`text-[11px] mt-2 leading-none relative z-10 ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400 font-normal"}`}>
+              <span className={`text-[9px] sm:text-[11px] mt-1 sm:mt-2 leading-none relative z-10 truncate ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400 font-normal"}`}>
                 {step.label}
               </span>
             </div>
@@ -752,7 +752,7 @@ function TrackClaimsContent() {
             </div>
 
             {/* Tracker Panel */}
-            <div className="p-8 flex flex-col">
+            <div className="p-4 sm:p-8 flex flex-col">
               
               {/* Progress wizard */}
               {renderClaimProgress(trackedClaim.status, trackedClaim.currentStep, trackedClaim.paymentReceipt)}
@@ -1021,7 +1021,7 @@ function TrackClaimsContent() {
               )}
 
               {/* 2-Column Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-8 px-2 border-b border-slate-100 pb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-12 gap-y-3 sm:gap-y-5 text-sm font-normal text-slate-700 mb-8 px-1 sm:px-2 border-b border-slate-100 pb-8">
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-medium">{t.vehicle}</span>
                   <span className="font-semibold text-slate-800">{formatNumberPlate(trackedClaim.vehiclePlate)}</span>

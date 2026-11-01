@@ -241,25 +241,25 @@ export default function AgentNavbar() {
         }`}
       >
         {/* Top Utility Bar (Vibrant Sky Blue background) */}
-        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-4 sm:px-6 md:px-16 flex items-center justify-between text-xs select-none w-full font-medium shadow-inner">
-          <div className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
-            <span className="text-white">
+        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-3 sm:px-6 md:px-16 flex items-center justify-between text-[11px] sm:text-xs select-none w-full font-medium shadow-inner">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100 shrink-0" strokeWidth={2} />
+            <span className="text-white truncate">
               <span className="hidden sm:inline">{t.hotline}</span>
               <span className="inline sm:hidden">+94 112 003 000</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
             {/* Branch Button */}
             <button
               onClick={() => {
                 setSearchQuery("");
                 setBranchesModalOpen(true);
               }}
-              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-semibold"
+              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-[11px] sm:text-xs font-semibold"
             >
-              <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
+              <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-100 shrink-0" strokeWidth={2} />
               <span>{t.branches}</span>
             </button>
 
@@ -270,9 +270,9 @@ export default function AgentNavbar() {
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-semibold"
+                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-[11px] sm:text-xs font-semibold"
               >
-                <HugeiconsIcon icon={Globe02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
+                <HugeiconsIcon icon={Globe02Icon} className="w-3.5 h-3.5 text-sky-100 shrink-0" strokeWidth={2} />
                 <span className="uppercase">{lang === "si" ? "සිං" : lang === "ta" ? "தமி" : "EN"}</span>
                 <HugeiconsIcon
                   icon={ArrowDown01Icon}
@@ -311,7 +311,7 @@ export default function AgentNavbar() {
         </div>
 
         {/* Main Header Row */}
-        <div className="py-2.5 px-4 sm:px-6 md:px-16 flex items-center justify-between w-full">
+        <div className="py-2.5 px-3 sm:px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/Agent/Dashboard">
@@ -320,7 +320,7 @@ export default function AgentNavbar() {
                 alt="Sanasa General Insurance"
                 width={100}
                 height={40}
-                className="object-contain h-auto"
+                className="object-contain h-auto max-w-[85px] sm:max-w-[100px]"
                 priority
               />
             </Link>
@@ -359,11 +359,11 @@ export default function AgentNavbar() {
           </div>
 
           {/* Right Action Icons (Download App, Notifications, Profile & Mobile Hamburger) */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Download Mobile App Button */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Download Mobile App Button - Hidden on mobile header, prominent in hamburger drawer */}
             <button
               onClick={() => setAppDownloadModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-50 to-cyan-50 hover:from-sky-100 hover:to-cyan-100 border border-sky-200/90 text-[#0284c7] font-bold text-xs shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-50 to-cyan-50 hover:from-sky-100 hover:to-cyan-100 border border-sky-200/90 text-[#0284c7] font-bold text-xs shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
               title="Download Sanasa Mobile App (SClaim Go)"
             >
               <HugeiconsIcon icon={SmartPhone01Icon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.4} />
@@ -378,9 +378,9 @@ export default function AgentNavbar() {
               aria-label={notificationUnreadCount > 0 ? `Notifications (${notificationUnreadCount})` : "Notifications"}
               title="In-App Notifications"
             >
-              <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6" strokeWidth={1.8} />
+              <HugeiconsIcon icon={Notification01Icon} className="w-5 sm:w-6 h-5 sm:h-6" strokeWidth={1.8} />
               {notificationUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
                   {notificationUnreadCount > 9 ? "9+" : notificationUnreadCount}
                 </span>
               )}
@@ -398,10 +398,10 @@ export default function AgentNavbar() {
                   <img
                     src={getAvatarUrl(currentAgent.profilePhoto)}
                     alt="Agent Avatar"
-                    className="w-8 h-8 rounded-full object-cover border-2 border-sky-500 shadow-2xs"
+                    className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover border-2 border-sky-500 shadow-2xs"
                   />
                 ) : (
-                  <HugeiconsIcon icon={UserCircleIcon} className="w-8 h-8" strokeWidth={1.8} />
+                  <HugeiconsIcon icon={UserCircleIcon} className="w-7 sm:w-8 h-7 sm:h-8" strokeWidth={1.8} />
                 )}
               </button>
 
@@ -453,14 +453,14 @@ export default function AgentNavbar() {
             {/* Hamburger Menu Icon for Mobile View */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden flex items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-black focus:outline-none transition-all duration-200 cursor-pointer"
+              className="md:hidden flex items-center justify-center p-1.5 sm:p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-black focus:outline-none transition-all duration-200 cursor-pointer"
               aria-label="Toggle Navigation Menu"
               aria-expanded={isOpen}
             >
               {isOpen ? (
-                <HugeiconsIcon icon={Cancel01Icon} className="w-7 h-7" strokeWidth={2} />
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 sm:w-7 h-6 sm:h-7" strokeWidth={2} />
               ) : (
-                <HugeiconsIcon icon={Menu01Icon} className="w-7 h-7" strokeWidth={2} />
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 sm:w-7 h-6 sm:h-7" strokeWidth={2} />
               )}
             </button>
           </div>
@@ -468,7 +468,7 @@ export default function AgentNavbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-4 sm:px-6 flex flex-col gap-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300 max-h-[calc(100vh-95px)] overflow-y-auto">
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (

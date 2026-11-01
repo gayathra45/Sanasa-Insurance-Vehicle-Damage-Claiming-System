@@ -720,20 +720,20 @@ export default function PolicyHolderProfile() {
             </div>
 
             {/* Right: Quick Stats Summary Cards */}
-            <div className="grid grid-cols-3 gap-3 w-full md:w-auto shrink-0 select-none">
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-center min-w-[95px]">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto shrink-0 select-none">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 sm:p-3.5 text-center min-w-0">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Vehicles</span>
-                <span className="text-xl font-bold text-[#102A43] block mt-0.5">{vehicles.length}</span>
+                <span className="text-lg sm:text-xl font-bold text-[#102A43] block mt-0.5">{vehicles.length}</span>
                 <span className="text-[9px] text-slate-500 font-medium">Insured</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-center min-w-[95px]">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 sm:p-3.5 text-center min-w-0">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Coverage</span>
-                <span className="text-xl font-bold text-emerald-600 block mt-0.5">Active</span>
-                <span className="text-[9px] text-slate-500 font-medium">Full Comprehensive</span>
+                <span className="text-lg sm:text-xl font-bold text-emerald-600 block mt-0.5">Active</span>
+                <span className="text-[9px] text-slate-500 font-medium truncate block">Full Comp</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-center min-w-[95px]">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 sm:p-3.5 text-center min-w-0">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Member</span>
-                <span className="text-xs font-bold text-slate-700 block mt-1.5">{formatDate(user?.createdAt)}</span>
+                <span className="text-[11px] sm:text-xs font-bold text-slate-700 block mt-1 sm:mt-1.5 truncate">{formatDate(user?.createdAt)}</span>
                 <span className="text-[9px] text-slate-400 font-medium">Registered</span>
               </div>
             </div>

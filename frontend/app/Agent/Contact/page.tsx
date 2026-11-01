@@ -209,7 +209,7 @@ export default function AgentContactPage() {
       <Navbar />
 
       {/* Curved Header matching Document repository layout exactly */}
-      <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-8 relative">
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Dark slate overlay */}
           <div className="absolute inset-0 bg-slate-900/35" />
@@ -217,7 +217,7 @@ export default function AgentContactPage() {
         </div>
 
         {/* Header Text Content */}
-        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
             {t.title}
           </h1>
@@ -228,7 +228,7 @@ export default function AgentContactPage() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-12 relative z-20 flex flex-col lg:flex-row gap-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 py-8 sm:py-12 relative z-20 flex flex-col lg:flex-row gap-8 sm:gap-10">
         
         {/* Left Column: Contact Channels & FAQs */}
         <div className="flex-1 flex flex-col gap-8">
@@ -395,10 +395,10 @@ export default function AgentContactPage() {
       {/* Support Inquiry Email Modal */}
       {showEmailModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-slate-300 overflow-hidden transform scale-100 transition-all select-none">
+          <div className="bg-white rounded-[24px] sm:rounded-[32px] w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-300 transform scale-100 transition-all select-none">
             {/* Header */}
-            <div className="px-8 pt-6 pb-4 flex justify-between items-center bg-white border-b border-slate-100">
-              <h2 className="font-bold text-xl text-slate-800">
+            <div className="px-5 sm:px-8 pt-5 sm:pt-6 pb-4 flex justify-between items-center bg-white border-b border-slate-100">
+              <h2 className="font-bold text-lg sm:text-xl text-slate-800">
                 {t.sendSupportReq}
               </h2>
               <button
@@ -414,7 +414,7 @@ export default function AgentContactPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSendEmail} className="p-8 flex flex-col gap-5">
+            <form onSubmit={handleSendEmail} className="p-5 sm:p-8 flex flex-col gap-4 sm:gap-5">
               {modalFeedback && (
                 <div
                   className={`text-xs font-semibold px-4 py-3 rounded-xl border ${
