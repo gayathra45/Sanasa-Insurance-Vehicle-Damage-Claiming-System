@@ -7,8 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  UserIcon,
-  Shield01Icon
+  Globe02Icon
 } from "@hugeicons/core-free-icons";
 
 const pageTranslations = {
@@ -17,24 +16,21 @@ const pageTranslations = {
     appSubtitle: "Introducing Insurance App",
     appTitle: "Specifically built for our policy holders",
     appDesc: "SANASA Vehicle Insurance App makes managing your insurance simple and convenient. Policyholders can view their policies, track claims, pay premiums, upload documents, and get 24/7 support all from a secure, user-friendly mobile platform.",
-    policyHolderWebBtn: "Policyholder Portal",
-    agentWebBtn: "Agent Portal"
+    webPortalBtn: "Web Portal"
   },
   si: {
     news: "පුවත්",
     appSubtitle: "රක්‍ෂණ යෙදුම හඳුන්වා දීම",
     appTitle: "අපගේ රක්‍ෂණ හිමියන් සඳහාම විශේෂයෙන් සකසා ඇත",
     appDesc: "සනස වාහන රක්‍ෂණ යෙදුම ඔබේ රක්‍ෂණය කළමනාකරණය කිරීම සරල සහ පහසු කරයි. රක්‍ෂණ හිමියන්ට ඔවුන්ගේ රක්‍ෂණ ප්‍රතිපත්ති බැලීමට, හිමිකම් ලුහුබැඳීමට, වාරික ගෙවීමට, ලේඛන උඩුගත කිරීමට සහ 24/7 සහාය ලබා ගැනීමට ආරක්ෂිත, පරිශීලක-හිතකාමී ජංගම වේදිකාවකින් හැකියාව ඇත.",
-    policyHolderWebBtn: "ප්‍රතිපත්තිලාභී ද්වාරය",
-    agentWebBtn: "නියෝජිත ද්වාරය"
+    webPortalBtn: "වෙබ් ද්වාරය"
   },
   ta: {
     news: "செய்திகள்",
     appSubtitle: "காப்பீட்டு செயலியை அறிமுகப்படுத்துகிறோம்",
     appTitle: "எங்கள் பாலிசிதாரர்களுக்காக பிரத்யேகமாக உருவாக்கப்பட்டது",
     appDesc: "சனச வாகன காப்பீட்டு செயலி உங்கள் காப்பீட்டை நிர்வகிப்பதை எளிமையாகவும் வசதியாகவும் ஆக்குகிறது. பாலிசிதாரர்கள் தங்கள் பாலிசிகளைக் காணலாம், கோரிக்கைகளைக் கண்காணிக்கலாம், பிரீமியங்களைச் செலுத்தலாம், ஆவணங்களை பதிவேற்றலாம் மற்றும் 24/7 ஆதரவைப் பெறலாம், அனைத்தும் பாதுகாப்பான, பயனர் நட்பு மொபைல் தளத்திலிருந்து.",
-    policyHolderWebBtn: "பாலிசிதாரர் தளம்",
-    agentWebBtn: "முகவர் தளம்"
+    webPortalBtn: "வலைத்தளம்"
   }
 };
 
@@ -134,22 +130,13 @@ export default function News() {
                 </div>
               </a>
 
-              {/* Policyholder Portal Link */}
+              {/* Single Web Portal Button */}
               <Link
-                href="/Policy_Holder/Home"
+                href="/Login"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0284c7] text-slate-800 hover:text-[#0284c7] font-bold text-sm transition-all duration-200 no-underline shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
               >
-                <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.2} />
-                <span>{t.policyHolderWebBtn}</span>
-              </Link>
-
-              {/* Agent Portal Link */}
-              <Link
-                href="/Agent/Dashboard"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0f3448] text-slate-800 hover:text-[#0f3448] font-bold text-sm transition-all duration-200 no-underline shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
-              >
-                <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.2} />
-                <span>{t.agentWebBtn}</span>
+                <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.2} />
+                <span>{t.webPortalBtn}</span>
               </Link>
             </div>
           </div>

@@ -11,8 +11,7 @@ import {
   FlashIcon,
   CustomerService01Icon,
   FileCheckIcon,
-  UserIcon,
-  Shield01Icon
+  Globe02Icon
 } from "@hugeicons/core-free-icons";
 
 const pageTranslations = {
@@ -34,11 +33,7 @@ const pageTranslations = {
     appSubtitle: "Introducing Insurance App",
     appTitle: "Specifically built for our policy holders",
     appDesc: "SANASA Vehicle Insurance App makes managing your insurance simple and convenient. Policyholders can view their policies, track claims, pay premiums, upload documents, and get 24/7 support all from a secure, user-friendly mobile platform.",
-    getAppBtn: "Get SClaim Go App",
-    scanQrBtn: "Scan QR / APK",
-    policyHolderWebBtn: "Policyholder Web Portal",
-    agentWebBtn: "Agent Web Portal",
-    webPortalHeader: "Prefer using browser? Open Web Portals",
+    webPortalBtn: "Web Portal",
     featFastClaims: "Instant e-Claim Submission",
     featLiveTracking: "Live Real-time Claim Status",
     featDigitalHelp: "24/7 Dedicated Support"
@@ -61,11 +56,7 @@ const pageTranslations = {
     appSubtitle: "රක්‍ෂණ යෙදුම හඳුන්වා දීම",
     appTitle: "අපගේ රක්‍ෂණ හිමියන් සඳහාම විශේෂයෙන් සකසා ඇත",
     appDesc: "සනස වාහන රක්‍ෂණ යෙදුම ඔබේ රක්‍ෂණය කළමනාකරණය කිරීම සරල සහ පහසු කරයි. රක්‍ෂණ හිමියන්ට ඔවුන්ගේ රක්‍ෂණ ප්‍රතිපත්ති බැලීමට, හිමිකම් ලුහුබැඳීමට, වාරික ගෙවීමට, ලේඛන උඩුගත කිරීමට සහ 24/7 සහාය ලබා ගැනීමට ආරක්ෂිත, පරිශීලක-හිතකාමී ජංගම වේදිකාවකින් හැකියාව ඇත.",
-    getAppBtn: "SClaim Go යෙදුම බාගත කරන්න",
-    scanQrBtn: "QR / APK බාගත කිරීම",
-    policyHolderWebBtn: "රක්ෂණ හිමි වෙබ් ද්වාරය",
-    agentWebBtn: "නියෝජිත වෙබ් ද්වාරය",
-    webPortalHeader: "බ්‍රවුසරය භාවිත කිරීමට කැමතිද? වෙබ් ද්වාර:",
+    webPortalBtn: "වෙබ් ද්වාරය",
     featFastClaims: "ක්ෂණික ඊ-හිමිකම් ගොනු කිරීම",
     featLiveTracking: "සජීවී හිමිකම් තත්ත්ව පරීක්ෂාව",
     featDigitalHelp: "24/7 පාරිභෝගික ඩිජිටල් සහාය"
@@ -88,11 +79,7 @@ const pageTranslations = {
     appSubtitle: "காப்பீட்டு செயலியை அறிமுகப்படுத்துகிறோம்",
     appTitle: "எங்கள் பாலிசிதாரர்களுக்காக பிரத்யேகமாக உருவாக்கப்பட்டது",
     appDesc: "சனச வாகன காப்பீட்டு செயலி உங்கள் காப்பீட்டை நிர்வகிப்பதை எளிமையாகவும் வசதியாகவும் ஆக்குகிறது. பாலிசிதாரர்கள் தங்கள் பாலிசிகளைக் காணலாம், கோரிக்கைகளைக் கண்காணிக்கலாம், பிரீமியங்களைச் செலுத்தலாம், ஆவணங்களை பதிவேற்றலாம் மற்றும் 24/7 ஆதரவைப் பெறலாம், அனைத்தும் பாதுகாப்பான, பயனர் நட்பு மொபைல் தளத்திலிருந்து.",
-    getAppBtn: "SClaim Go செயலியைப் பெறுக",
-    scanQrBtn: "QR / APK பதிவிறக்கம்",
-    policyHolderWebBtn: "பாலிசிதாரர் வலைத்தளம்",
-    agentWebBtn: "முகவர் வலைத்தளம்",
-    webPortalHeader: "உலாவி மூலம் இணைய விரும்புகிறீர்களா? வலைத்தளங்கள்:",
+    webPortalBtn: "வலைத்தளம்",
     featFastClaims: "உடனடி கோரிக்கை சமர்ப்பித்தல்",
     featLiveTracking: "நேரலை இழப்பீட்டு நிலை",
     featDigitalHelp: "24/7 டிஜிட்டல் உதவி"
@@ -406,22 +393,13 @@ export default function Home() {
                   </div>
                 </a>
 
-                {/* Policyholder Portal Button */}
+                {/* Single Web Portal Button */}
                 <Link
-                  href="/Policy_Holder/Home"
+                  href="/Login"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0284c7] text-slate-800 hover:text-[#0284c7] font-bold text-sm transition-all duration-200 no-underline shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
-                  <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.2} />
-                  <span>{t.policyHolderWebBtn}</span>
-                </Link>
-
-                {/* Agent Portal Button */}
-                <Link
-                  href="/Agent/Dashboard"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0f3448] text-slate-800 hover:text-[#0f3448] font-bold text-sm transition-all duration-200 no-underline shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
-                >
-                  <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.2} />
-                  <span>{t.agentWebBtn}</span>
+                  <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.2} />
+                  <span>{t.webPortalBtn}</span>
                 </Link>
               </div>
             </div>
