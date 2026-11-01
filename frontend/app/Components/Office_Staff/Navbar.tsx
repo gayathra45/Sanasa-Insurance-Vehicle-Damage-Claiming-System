@@ -88,9 +88,9 @@ export default function OfficeStaffNavbar() {
     { name: "Home", href: "/Office_Staff/Dashboard" },
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
+    { name: "Policy Renewals", href: "/Office_Staff/Renewals" },
     { name: "Third-Party Drivers", href: "/Office_Staff/ThirdParty" },
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
-    { name: "Policy Renewals", href: "/Office_Staff/Renewals" },
     { name: "Agents", href: "/Office_Staff/Agents" },
     { name: "Reports", href: "/Office_Staff/Reports" },
     { name: "Notifications", href: "/Office_Staff/Notifications" },
@@ -108,18 +108,21 @@ export default function OfficeStaffNavbar() {
       case "claims":
         return <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "registrations":
+      case "registartions":
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "policy renewals":
+      case "renewals":
+        return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "third-party drivers":
       case "third party drivers":
       case "third-party":
       case "third party":
         return <HugeiconsIcon icon={Car01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
+      case "policy holder":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
-      case "policy renewals":
-      case "renewals":
-        return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "agents":
+      case "agent":
         return <HugeiconsIcon icon={Briefcase01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "staff":
         return <HugeiconsIcon icon={UserGroupIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
@@ -192,7 +195,7 @@ export default function OfficeStaffNavbar() {
                 <button
                   key={item.name}
                   onClick={() => openChat()}
-                  className="mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-[calc(100%-32px)] text-left focus:outline-none"
+                  className="mx-4 my-0.5 px-4 py-2.5 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-[calc(100%-32px)] text-left focus:outline-none"
                 >
                   {content}
                 </button>
@@ -203,7 +206,7 @@ export default function OfficeStaffNavbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
+                className={`mx-4 my-0.5 px-4 py-2.5 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
                   isActive
                     ? "bg-[#1b75e0] text-white shadow-sm font-semibold"
                     : "text-slate-100 hover:bg-white/10 hover:text-white"
