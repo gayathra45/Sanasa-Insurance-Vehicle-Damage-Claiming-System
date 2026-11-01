@@ -13,14 +13,17 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
-  Dimensions
+  Dimensions,
+  Linking
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import * as WebBrowser from "expo-web-browser";
 import { API_BASE_URL } from "../_config";
+import AIChatBot, { openMobileSupportChat, openMobileAIChat } from "../Components/AIChatBot";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -129,6 +132,21 @@ export default function MobileDriverPortalScreen() {
   const [chatSending, setChatSending] = useState(false);
 
   const driverId = profile?.driverNicRaw || profile?.driverNicMasked || profile?.reference || "driver";
+
+  const handleOpenPdfPass = async () => {
+    const certToken = token || profile?.verificationToken || profile?.reference || "";
+    const url = `${API_BASE_URL}/api/third-party/authorization-certificate/${encodeURIComponent(certToken)}?print=true`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch (err) {
+      console.warn("WebBrowser error, falling back to Linking:", err);
+      try {
+        await Linking.openURL(url);
+      } catch (linkErr) {
+        Alert.alert("Unable to open pass", "Could not open official PDF pass in browser.");
+      }
+    }
+  };
 
   const fetchChatRecipients = async (ref: string) => {
     try {
@@ -520,6 +538,24 @@ export default function MobileDriverPortalScreen() {
                   <Text style={styles.badgeBranchText}>{profile?.branch || "Galle"}</Text>
                 </View>
 
+                {/* Normal Live Chat Button */}
+                <TouchableOpacity
+                  style={styles.headerIconBtn}
+                  onPress={openMobileSupportChat}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="chatbubble-ellipses" size={19} color="#00ddff" />
+                </TouchableOpacity>
+
+                {/* AI Chat Bot Button */}
+                <TouchableOpacity
+                  style={styles.headerIconBtn}
+                  onPress={openMobileAIChat}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons name="robot" size={20} color="#38bdf8" />
+                </TouchableOpacity>
+
                 {/* Notification Bell */}
                 <TouchableOpacity
                   style={[styles.headerIconBtn, claims.length > 0 && styles.headerIconBtnAlert]}
@@ -602,9 +638,17 @@ export default function MobileDriverPortalScreen() {
                   Authorized vehicles under policyholder {profile?.policyHolderName || "Policy Holder"}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                  <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                  <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </LinearGradient>
         </ImageBackground>
@@ -628,9 +672,17 @@ export default function MobileDriverPortalScreen() {
                   All authorized driver insurance claims in one place
                 </Text>
               </View>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                  <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                  <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </LinearGradient>
         </ImageBackground>
@@ -649,9 +701,17 @@ export default function MobileDriverPortalScreen() {
                 Report an accident or damage incident for authorized vehicles
               </Text>
             </View>
-            <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-              <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </LinearGradient>
       )}
@@ -669,9 +729,17 @@ export default function MobileDriverPortalScreen() {
                 Direct live chat with assigned adjuster & branch staff
               </Text>
             </View>
-            <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-              <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </LinearGradient>
       )}
@@ -694,9 +762,17 @@ export default function MobileDriverPortalScreen() {
                   Official credentials verified by Sanasa General Insurance
                 </Text>
               </View>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                  <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                  <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </LinearGradient>
         </ImageBackground>
@@ -945,18 +1021,8 @@ export default function MobileDriverPortalScreen() {
                   { label: "Track Claim", icon: "locate-outline", action: () => setActiveTab("claims") },
                   { label: "My Vehicles", icon: "car-outline", action: () => setActiveTab("vehicles") },
                   { label: "Digital Pass", icon: "shield-checkmark-outline", action: () => setActiveTab("pass") },
-                  {
-                    label: "Live Chat",
-                    icon: "chatbubbles-outline",
-                    action: () => {
-                      const initialRef = claims[0]?.claimNumber || profile?.reference || "";
-                      setSelectedChatRef(initialRef);
-                      fetchChatRecipients(initialRef).then((recs) => {
-                        if (recs && recs[0]) loadConversation(initialRef, recs[0]);
-                      });
-                      setActiveTab("chat");
-                    }
-                  },
+                  { label: "Live Support", icon: "chatbubbles-outline", action: () => openMobileSupportChat() },
+                  { label: "AI Assistant", icon: "hardware-chip-outline", action: () => openMobileAIChat() },
                 ].map((action, idx) => (
                   <TouchableOpacity
                     key={idx}
@@ -1431,51 +1497,126 @@ export default function MobileDriverPortalScreen() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 5: DIGITAL PASS */}
+        {/* TAB 5: DIGITAL PASS (Matched to Web Driver Pass Design) */}
         {/* ========================================================================= */}
         {activeTab === "pass" && (
-          <View style={styles.section}>
-            <View style={styles.contentCard}>
-              <View style={styles.passTopBar}>
+          <View style={styles.webPassWrapper}>
+            <View style={styles.webPassCard}>
+              {/* Header with Sanasa Logo & Verified Pill */}
+              <View style={styles.webPassHeader}>
+                <View style={styles.webPassBrandRow}>
+                  <Image
+                    source={require("../../assets/images/logo.png")}
+                    style={styles.webPassLogo}
+                  />
+                  <View style={styles.webPassBrandDivider} />
+                  <View style={styles.webPassTitleWrap}>
+                    <Text style={styles.webPassTitle}>Digital Driver Pass</Text>
+                    <Text style={styles.webPassSubtitle}>Official Authorization • Sri Lanka</Text>
+                  </View>
+                </View>
+
+                <View style={styles.webPassVerifiedBadge}>
+                  <View style={styles.webPassVerifiedDotPulse}>
+                    <View style={styles.webPassVerifiedDot} />
+                  </View>
+                  <Text style={styles.webPassVerifiedText}>VERIFIED PASS</Text>
+                </View>
+              </View>
+
+              {/* Driver Details Body */}
+              <View style={styles.webPassBody}>
+                {/* Authorized Driver Full Name */}
                 <View>
-                  <Text style={styles.passHeaderTitle}>SANASA GENERAL INSURANCE</Text>
-                  <Text style={styles.passHeaderSub}>Official Digital Driver Pass</Text>
+                  <Text style={styles.webPassFieldCaps}>AUTHORIZED DRIVER</Text>
+                  <Text style={styles.webPassDriverName}>
+                    {profile?.driverName || "Authorized Driver"}
+                  </Text>
                 </View>
-                <View style={styles.activeTag}>
-                  <Text style={styles.activeTagText}>VERIFIED</Text>
+
+                {/* 2-Column Grid: Masked NIC & Phone Number */}
+                <View style={styles.webPassTwoCol}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={styles.webPassFieldCaps}>MASKED NIC</Text>
+                    <Text style={styles.webPassValueMonoBold}>
+                      {profile?.driverNicMasked || "—"}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, paddingLeft: 8 }}>
+                    <Text style={styles.webPassFieldCaps}>PHONE NUMBER</Text>
+                    <Text style={styles.webPassValueMono}>
+                      {profile?.driverPhone || "—"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Structured Verification Details Grey Box */}
+                <View style={styles.webPassDetailsBox}>
+                  <View style={styles.webPassMetaRow}>
+                    <Text style={styles.webPassMetaKey}>Vehicle Owner (Policyholder):</Text>
+                    <Text style={styles.webPassMetaValBold} numberOfLines={1}>
+                      {profile?.policyHolderName || "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.webPassMetaRow}>
+                    <Text style={styles.webPassMetaKey}>Regional Branch Office:</Text>
+                    <Text style={styles.webPassMetaValBold} numberOfLines={1}>
+                      {profile?.branch || "Head Office"}
+                    </Text>
+                  </View>
+                  <View style={styles.webPassMetaRow}>
+                    <Text style={styles.webPassMetaKey}>Pass Reference:</Text>
+                    <Text style={styles.webPassMetaValRef} numberOfLines={1}>
+                      {profile?.reference || "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.webPassMetaRow}>
+                    <Text style={styles.webPassMetaKey}>Verification Token:</Text>
+                    <Text style={styles.webPassMetaValMono} numberOfLines={1}>
+                      {profile?.verificationToken || token || "—"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Authorized Operating Vehicles Section */}
+                <View>
+                  <Text style={[styles.webPassFieldCaps, { marginBottom: 8 }]}>
+                    AUTHORIZED OPERATING VEHICLES
+                  </Text>
+                  <View style={styles.webPassVehiclePillsWrap}>
+                    {vehicles.length > 0 ? (
+                      vehicles.map((v) => (
+                        <View key={v.numberPlate} style={styles.webPassVehiclePill}>
+                          <View style={styles.webPassVehicleDot} />
+                          <Text style={styles.webPassVehiclePlateText}>
+                            {formatPlate(v.numberPlate)}
+                          </Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.webPassNoVehiclesText}>No assigned vehicle found</Text>
+                    )}
+                  </View>
                 </View>
               </View>
 
-              <View style={{ marginTop: 14 }}>
-                <Text style={styles.passFieldLabel}>Authorized Driver</Text>
-                <Text style={styles.passDriverName}>{profile?.driverName}</Text>
+              {/* Footer Section & PDF Download Action */}
+              <View style={styles.webPassFooter}>
+                <TouchableOpacity
+                  style={styles.webPassPdfBtn}
+                  onPress={handleOpenPdfPass}
+                  activeOpacity={0.88}
+                >
+                  <Ionicons name="document-text-outline" size={17} color="#ffffff" />
+                  <Text style={styles.webPassPdfBtnText}>Download / Print Official PDF Pass</Text>
+                </TouchableOpacity>
 
-                <View style={styles.passRow}>
-                  <View>
-                    <Text style={styles.passFieldLabel}>Masked NIC</Text>
-                    <Text style={styles.passFieldVal}>{profile?.driverNicMasked}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.passFieldLabel}>Branch</Text>
-                    <Text style={styles.passFieldVal}>{profile?.branch}</Text>
-                  </View>
+                <View style={styles.webPassRegistryRow}>
+                  <Ionicons name="shield-checkmark" size={13} color="#10b981" />
+                  <Text style={styles.webPassRegistryText}>
+                    Sanasa Central Cryptographic Registry • Valid Across Sri Lanka
+                  </Text>
                 </View>
-
-                <Text style={styles.passFieldLabel}>Pass Reference</Text>
-                <Text style={styles.passRef}>{profile?.reference}</Text>
-
-                <Text style={[styles.passFieldLabel, { marginTop: 12 }]}>Permitted Operating Vehicles</Text>
-                <View style={styles.passPillsWrap}>
-                  {vehicles.map((v) => (
-                    <View key={v.numberPlate} style={styles.passPlatePill}>
-                      <Text style={styles.passPlatePillText}>{formatPlate(v.numberPlate)}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.passFooter}>
-                <Text style={styles.passFooterText}>Valid under Sanasa Central Insurance Registry</Text>
               </View>
             </View>
           </View>
@@ -1562,6 +1703,15 @@ export default function MobileDriverPortalScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Floating Support Chat & AI Chat Bot Component */}
+      <AIChatBot
+        userRole="third_party"
+        bottomOffset={96}
+        thirdPartyProfile={profile}
+        thirdPartyVehicles={vehicles}
+        thirdPartyClaims={claims}
+      />
     </View>
   );
 }
@@ -2474,81 +2624,239 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2
   },
-  passTopBar: {
+  /* ── Web Show Pass Match Design ── */
+  webPassWrapper: {
+    marginBottom: 24,
+  },
+  webPassCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 20,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 3,
+    overflow: "hidden",
+  },
+  webPassHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    paddingBottom: 10
+    borderBottomColor: "#f1f5f9",
+    gap: 8,
   },
-  passHeaderTitle: {
-    color: "#0d2a3a",
-    fontSize: 13,
-    fontWeight: "900"
+  webPassBrandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
   },
-  passHeaderSub: {
-    color: "#64748B",
-    fontSize: 11
+  webPassLogo: {
+    width: 82,
+    height: 34,
+    resizeMode: "contain",
   },
-  passFieldLabel: {
-    color: "#94A3B8",
+  webPassBrandDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "#e2e8f0",
+  },
+  webPassTitleWrap: {
+    flex: 1,
+  },
+  webPassTitle: {
+    color: "#0f172a",
+    fontSize: 13.5,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+  webPassSubtitle: {
+    color: "#94a3b8",
+    fontSize: 10.5,
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  webPassVerifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+  },
+  webPassVerifiedDotPulse: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "rgba(16, 185, 129, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  webPassVerifiedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#10b981",
+  },
+  webPassVerifiedText: {
+    color: "#047857",
+    fontSize: 9.5,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  webPassBody: {
+    paddingVertical: 18,
+    gap: 16,
+  },
+  webPassFieldCaps: {
+    color: "#94a3b8",
     fontSize: 10,
     textTransform: "uppercase",
-    fontWeight: "bold"
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
-  passDriverName: {
-    color: "#0F172A",
-    fontSize: 17,
-    fontWeight: "bold",
-    marginTop: 2,
-    marginBottom: 10
+  webPassDriverName: {
+    color: "#0f172a",
+    fontSize: 20,
+    fontWeight: "800",
+    marginTop: 3,
+    letterSpacing: -0.3,
   },
-  passRow: {
+  webPassTwoCol: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10
   },
-  passFieldVal: {
-    color: "#0F172A",
+  webPassValueMonoBold: {
+    color: "#1e293b",
+    fontSize: 13,
+    fontWeight: "700",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    marginTop: 3,
+  },
+  webPassValueMono: {
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: "600",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    marginTop: 3,
+  },
+  webPassDetailsBox: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 14,
+    gap: 8,
+  },
+  webPassMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  webPassMetaKey: {
+    color: "#64748b",
+    fontSize: 11.5,
+    fontWeight: "500",
+    flex: 1,
+    paddingRight: 6,
+  },
+  webPassMetaValBold: {
+    color: "#0f172a",
     fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 2
+    fontWeight: "700",
+    textAlign: "right",
   },
-  passRef: {
+  webPassMetaValRef: {
     color: "#0d2a3a",
     fontSize: 12,
-    fontWeight: "bold",
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
+    fontWeight: "800",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    textAlign: "right",
   },
-  passPillsWrap: {
+  webPassMetaValMono: {
+    color: "#0f172a",
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    textAlign: "right",
+  },
+  webPassVehiclePillsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
+    gap: 8,
+  },
+  webPassVehiclePill: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    marginTop: 6
+    backgroundColor: "#0f172a",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
   },
-  passPlatePill: {
-    backgroundColor: "#0F172A",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6
+  webPassVehicleDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#fbbf24",
   },
-  passPlatePillText: {
+  webPassVehiclePlateText: {
     color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "bold",
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
+    fontSize: 12,
+    fontWeight: "800",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
-  passFooter: {
-    marginTop: 14,
+  webPassNoVehiclesText: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  webPassFooter: {
     borderTopWidth: 1,
-    borderTopColor: "#F1F5F9",
-    paddingTop: 8
+    borderTopColor: "#f1f5f9",
+    paddingTop: 16,
+    gap: 12,
   },
-  passFooterText: {
-    color: "#94A3B8",
-    fontSize: 10,
-    textAlign: "center"
+  webPassPdfBtn: {
+    backgroundColor: "#185a37",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#185a37",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  webPassPdfBtnText: {
+    color: "#ffffff",
+    fontSize: 12.5,
+    fontWeight: "800",
+  },
+  webPassRegistryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 6,
+  },
+  webPassRegistryText: {
+    color: "#94a3b8",
+    fontSize: 10.5,
+    fontWeight: "500",
+    textAlign: "center",
   },
   headerBackground: {
     width: "100%",

@@ -80,8 +80,11 @@ interface ChatMessage {
 }
 
 interface AIChatBotProps {
-  userRole?: "policy_holder" | "agent";
+  userRole?: "policy_holder" | "agent" | "third_party";
   bottomOffset?: number;
+  thirdPartyProfile?: any;
+  thirdPartyVehicles?: any[];
+  thirdPartyClaims?: any[];
 }
 
 const POLICYHOLDER_PROMPTS = [
@@ -167,8 +170,57 @@ const AGENT_PROMPTS = [
   },
 ];
 
-export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 90 }: AIChatBotProps) {
-  const quickPrompts = userRole === "agent" ? AGENT_PROMPTS : POLICYHOLDER_PROMPTS;
+const THIRDPARTY_PROMPTS = [
+  {
+    label: "📋 My Lodged Claims",
+    text: "What claims have I submitted as an authorized driver?",
+    bgColor: "#f0f9ff",
+    borderColor: "#bae6fd",
+    textColor: "#0369a1",
+  },
+  {
+    label: "🚗 My Authorized Vehicles",
+    text: "What vehicles am I authorized to drive?",
+    bgColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+    textColor: "#047857",
+  },
+  {
+    label: "🛡️ Digital Driver Pass",
+    text: "What are my driver pass credentials and verification status?",
+    bgColor: "#f5f3ff",
+    borderColor: "#ddd6fe",
+    textColor: "#6d28d9",
+  },
+  {
+    label: "🚨 Emergency Towing Hotline",
+    text: "What is the 24/7 Sanasa emergency accident assistance hotline?",
+    bgColor: "#fff1f2",
+    borderColor: "#fecdd3",
+    textColor: "#be123c",
+  },
+  {
+    label: "📝 How to Report Accident",
+    text: "How do I file an accident claim for an authorized vehicle?",
+    bgColor: "#fff7ed",
+    borderColor: "#fed7aa",
+    textColor: "#c2410c",
+  },
+];
+
+export default function AIChatBot({
+  userRole = "policy_holder",
+  bottomOffset = 90,
+  thirdPartyProfile,
+  thirdPartyVehicles = [],
+  thirdPartyClaims = [],
+}: AIChatBotProps) {
+  const quickPrompts =
+    userRole === "agent"
+      ? AGENT_PROMPTS
+      : userRole === "third_party"
+      ? THIRDPARTY_PROMPTS
+      : POLICYHOLDER_PROMPTS;
   const [modalVisible, setModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -184,7 +236,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     profilePhoto?: string;
   }>({
     userId: "",
-    userType: userRole === "agent" ? "Agent" : "PolicyHolder",
+    userType: userRole === "agent" ? "Agent" : userRole === "third_party" ? "ThirdParty" : "PolicyHolder",
     name: "",
     email: "",
     branch: "",
@@ -201,6 +253,8 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       sender: "ai",
       text: userRole === "agent"
         ? "Hello! I am **Sanasa Field AI**, your dedicated Agent Inspection Assistant.\n\nI can assist you with:\n• On-site physical vehicle inspection checklist\n• Required photo evidence standards\n• Reviewing repair garage quotations\n• Emergency claims desk contact\n\nHow can I help you today?"
+        : userRole === "third_party"
+        ? `Hello ${thirdPartyProfile?.driverName ? thirdPartyProfile.driverName.split(" ")[0] : "Driver"}! I am **Sanasa Driver AI**, your authorized third-party driver assistant.\n\nI can help you with:\n• Checking your authorized operating vehicles\n• Checking claims you have lodged\n• Digital driver pass credentials & verification\n• Step-by-step accident claim guidance & 24/7 emergency hotline\n\n*Note: Your access is strictly limited to your authorized vehicles and personal driver records.*\n\nHow can I help you today?`
         : "Hello! I am **Sanasa AI**, your vehicle insurance assistant.\n\nI can help you with:\n• Claim details (enter your Claim ID like `CLM-0000-0014`)\n• Checking your registered claims & vehicles\n• Step-by-step accident claims & required documents\n• 24/7 emergency roadside assistance across Sri Lanka\n\nHow can I help you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
@@ -214,8 +268,8 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     },
   ]);
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const supportScrollRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
+  const supportScrollRef = useRef<any>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Register instance in activeInstances on mount
@@ -242,6 +296,18 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
   useEffect(() => {
     const fetchSession = async () => {
       try {
+        if (userRole === "third_party") {
+          setCurrentUserSession({
+            userId: String(thirdPartyProfile?.driverNicRaw || thirdPartyProfile?.driverNicMasked || thirdPartyProfile?.reference || "driver"),
+            userType: "ThirdParty",
+            name: thirdPartyProfile?.driverName || "Authorized Driver",
+            email: thirdPartyProfile?.driverPhone || "",
+            branch: thirdPartyProfile?.branch || "Head Office",
+            profilePhoto: "",
+          });
+          return;
+        }
+
         const userStr = await AsyncStorage.getItem("logged_in_user");
         const agentStr = await AsyncStorage.getItem("logged_in_agent");
         if (userRole === "agent" && agentStr) {
@@ -270,7 +336,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       }
     };
     fetchSession();
-  }, [userRole]);
+  }, [userRole, thirdPartyProfile]);
 
   // Periodic unread count check
   useEffect(() => {
@@ -334,20 +400,27 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     setIsLoading(true);
     scrollToBottom();
 
-    // Retrieve logged in user info from AsyncStorage
+    // Retrieve logged in user info
     let userNic = "";
     let userEmail = "";
     let userName = "";
-    try {
-      const userStr = await AsyncStorage.getItem("logged_in_user");
-      if (userStr) {
-        const u = JSON.parse(userStr);
-        userNic = u.nic || "";
-        userEmail = u.email || "";
-        userName = u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "";
+
+    if (userRole === "third_party") {
+      userNic = thirdPartyProfile?.driverNicRaw || thirdPartyProfile?.driverNicMasked || "";
+      userEmail = thirdPartyProfile?.reference || "";
+      userName = thirdPartyProfile?.driverName || "";
+    } else {
+      try {
+        const userStr = await AsyncStorage.getItem("logged_in_user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          userNic = u.nic || "";
+          userEmail = u.email || "";
+          userName = u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "";
+        }
+      } catch (e) {
+        console.warn("Could not read logged_in_user from AsyncStorage", e);
       }
-    } catch (e) {
-      console.warn("Could not read logged_in_user from AsyncStorage", e);
     }
 
     try {
@@ -366,6 +439,19 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
           userNic,
           userEmail,
           userName,
+          branch: userRole === "third_party" ? (thirdPartyProfile?.branch || "") : "",
+          thirdPartyData: userRole === "third_party" ? {
+            driverName: thirdPartyProfile?.driverName,
+            driverNicMasked: thirdPartyProfile?.driverNicMasked,
+            driverPhone: thirdPartyProfile?.driverPhone,
+            driverAddress: thirdPartyProfile?.driverAddress,
+            reference: thirdPartyProfile?.reference,
+            verificationToken: thirdPartyProfile?.verificationToken,
+            branch: thirdPartyProfile?.branch,
+            policyHolderName: thirdPartyProfile?.policyHolderName,
+            vehicles: thirdPartyVehicles,
+            claims: thirdPartyClaims
+          } : undefined
         }),
       });
 
@@ -724,12 +810,12 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 <View>
                   <View style={styles.headerTitleRow}>
                     <Text style={styles.headerTitle}>
-                      {userRole === "agent" ? "Sanasa Field AI" : "Sanasa AI Assistant"}
+                      {userRole === "agent" ? "Sanasa Field AI" : userRole === "third_party" ? "Sanasa Driver AI" : "Sanasa AI Assistant"}
                     </Text>
                     <Ionicons name="checkmark-circle" size={13} color="#00ddff" style={styles.verifiedBadge} />
                   </View>
                   <Text style={styles.headerSubtitle}>
-                    {userRole === "agent" ? "Agent Field Assistant • Online" : "Vehicle Insurance Specialist • Online"}
+                    {userRole === "agent" ? "Agent Field Assistant • Online" : userRole === "third_party" ? "Driver Authorized Assistant • Online" : "Vehicle Insurance Specialist • Online"}
                   </Text>
                 </View>
               </View>
@@ -882,6 +968,9 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         onClose={closeMobileSupportChat}
         userRole={userRole}
         onUnreadCountChange={handleUnreadCountChange}
+        thirdPartyProfile={thirdPartyProfile}
+        thirdPartyVehicles={thirdPartyVehicles}
+        thirdPartyClaims={thirdPartyClaims}
       />
     </>
   );

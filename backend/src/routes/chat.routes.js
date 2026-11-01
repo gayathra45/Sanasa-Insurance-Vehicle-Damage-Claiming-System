@@ -486,7 +486,8 @@ router.post("/message", async (req, res) => {
       userEmail = "",
       userName = "",
       branch = "",
-      userBranch = ""
+      userBranch = "",
+      thirdPartyData = null
     } = req.body;
 
     if (!message || typeof message !== "string" || message.trim() === "") {
@@ -496,7 +497,7 @@ router.post("/message", async (req, res) => {
     const cleanMsg = message.trim();
     const lowerMsg = cleanMsg.toLowerCase();
     const isGuest = userRole === "guest" || userRole === "public" || !userRole;
-    const isDriver = userRole === "third_party_driver" || userRole === "driver";
+    const isDriver = userRole === "third_party_driver" || userRole === "driver" || userRole === "third_party";
     const isStaffOrAdmin = userRole === "office_staff" || userRole === "admin";
     const staffBranch = (branch || userBranch || "").trim();
 
@@ -896,9 +897,9 @@ router.post("/message", async (req, res) => {
 
     // ── 9.1 THIRD-PARTY AUTHORIZED DRIVER INQUIRIES ──────────────────────────
     if (isDriver) {
-      const driverNic = (userNic || "").trim();
-      const driverName = (userName || "").trim();
-      const driverRef = (userEmail || "").trim();
+      const driverNic = (userNic || thirdPartyData?.driverNicRaw || thirdPartyData?.driverNicMasked || "").trim();
+      const driverName = (userName || thirdPartyData?.driverName || "").trim();
+      const driverRef = (userEmail || thirdPartyData?.reference || "").trim();
 
       const regDoc = await ThirdPartyRegistration.findOne({
         $or: [
@@ -907,6 +908,39 @@ router.post("/message", async (req, res) => {
           ...(driverName ? [{ "driverDetails.fullName": new RegExp(`^${driverName}$`, "i") }] : [])
         ]
       });
+
+      // Compile allowed vehicles list
+      const allowedVehicles = (thirdPartyData?.vehicles && thirdPartyData.vehicles.length > 0)
+        ? thirdPartyData.vehicles
+        : (regDoc?.selectedVehicles || []);
+      const allowedPlates = allowedVehicles.map(v => (v.numberPlate || "").trim().toUpperCase()).filter(Boolean);
+
+      // STRICT LIMITATION 1: Querying an unauthorized vehicle plate
+      const plateInQuery = cleanMsg.match(/\b([A-Z]{2,3}[-\s]?\d{4}|\d{2,3}[-\s]?\d{4})\b/i);
+      if (plateInQuery && allowedPlates.length > 0) {
+        const rawQueriedPlate = plateInQuery[1].replace(/[\s-]/g, "").toUpperCase();
+        const isAllowedPlate = allowedPlates.some(p => p.replace(/[\s-]/g, "").toUpperCase() === rawQueriedPlate);
+        if (!isAllowedPlate) {
+          return res.json({
+            reply: `🔒 **Driver Access Limitation Notice**\n\nFor security and data privacy, your third-party driver access is strictly limited to your authorized vehicles (${allowedPlates.map(p => `**${formatPlate(p)}**`).join(", ")}).\n\nYou cannot access or query insurance details for vehicle **${formatPlate(rawQueriedPlate)}** as it is not assigned to your driver authorization pass.`,
+            source: "driver_unauthorized_vehicle_guardrail"
+          });
+        }
+      }
+
+      // STRICT LIMITATION 2: Querying an external policyholder NIC
+      const nicInQuery = cleanMsg.match(/\b(\d{9}[vVxX]|\d{12})\b/);
+      if (nicInQuery) {
+        const queriedNic = nicInQuery[1].toUpperCase();
+        const myNic = (driverNic || "").toUpperCase();
+        const myPolicyholderNic = (thirdPartyData?.policyHolderNicMasked || regDoc?.policyHolderNic || "").toUpperCase();
+        if (myNic && queriedNic !== myNic && !queriedNic.includes(myPolicyholderNic)) {
+          return res.json({
+            reply: `🔒 **Driver Access Limitation Notice**\n\nAs an authorized third-party driver, you can only query your own driver pass records and assigned vehicles. Access to external policyholder records or personal details under NIC **${queriedNic}** is strictly restricted under Sanasa data governance policies.`,
+            source: "driver_unauthorized_nic_guardrail"
+          });
+        }
+      }
 
       // A. Driver asks about their claims
       const isAskingDriverClaims =
@@ -921,14 +955,19 @@ router.post("/message", async (req, res) => {
         (lowerMsg.includes("claim") && (lowerMsg.includes("i lodged") || lowerMsg.includes("i submitted") || lowerMsg.includes("for me") || lowerMsg.includes("driver")));
 
       if (isAskingDriverClaims) {
-        const queryConditions = [];
-        if (regDoc) queryConditions.push({ "submittedByDriver.registrationId": regDoc._id });
-        if (driverNic) queryConditions.push({ "submittedByDriver.driverNic": driverNic });
-        if (driverName) queryConditions.push({ "submittedByDriver.driverName": new RegExp(driverName, "i") });
+        let driverClaims = [];
+        if (Array.isArray(thirdPartyData?.claims) && thirdPartyData.claims.length > 0) {
+          driverClaims = thirdPartyData.claims;
+        } else {
+          const queryConditions = [];
+          if (regDoc) queryConditions.push({ "submittedByDriver.registrationId": regDoc._id });
+          if (driverNic) queryConditions.push({ "submittedByDriver.driverNic": driverNic });
+          if (driverName) queryConditions.push({ "submittedByDriver.driverName": new RegExp(driverName, "i") });
 
-        const driverClaims = queryConditions.length > 0
-          ? await Claim.find({ $or: queryConditions }).sort({ _id: -1 }).limit(10)
-          : [];
+          driverClaims = queryConditions.length > 0
+            ? await Claim.find({ $or: queryConditions }).sort({ _id: -1 }).limit(10)
+            : [];
+        }
 
         if (driverClaims && driverClaims.length > 0) {
           const reply = formatDriverClaimsList(driverClaims, driverName || regDoc?.driverDetails?.fullName);
@@ -953,9 +992,13 @@ router.post("/message", async (req, res) => {
         lowerMsg.includes("allowed to drive");
 
       if (isAskingDriverVehicles) {
-        if (regDoc && Array.isArray(regDoc.selectedVehicles) && regDoc.selectedVehicles.length > 0) {
-          const reply = formatDriverVehiclesList(regDoc.selectedVehicles, driverName || regDoc.driverDetails.fullName, regDoc.policyHolderName);
-          return res.json({ reply, source: "database_driver_vehicles", count: regDoc.selectedVehicles.length });
+        if (allowedVehicles.length > 0) {
+          const reply = formatDriverVehiclesList(
+            allowedVehicles,
+            driverName || regDoc?.driverDetails?.fullName,
+            thirdPartyData?.policyHolderName || regDoc?.policyHolderName
+          );
+          return res.json({ reply, source: "database_driver_vehicles", count: allowedVehicles.length });
         } else {
           return res.json({
             reply: `🚗 No authorized vehicles found for this driver access pass. Please check your digital pass status or contact your sponsoring policyholder.`,
@@ -974,9 +1017,26 @@ router.post("/message", async (req, res) => {
         lowerMsg.includes("about me") ||
         lowerMsg.includes("pass detail");
 
-      if (isAskingDriverPass && regDoc) {
-        const reply = formatDriverPassDetails(regDoc);
-        return res.json({ reply, source: "database_driver_pass_details" });
+      if (isAskingDriverPass) {
+        if (regDoc) {
+          const reply = formatDriverPassDetails(regDoc);
+          return res.json({ reply, source: "database_driver_pass_details" });
+        } else if (thirdPartyData) {
+          let reply = `🪪 **Sanasa Authorized Driver Pass Details**\n\n`;
+          reply += `• **Authorized Driver**: **${thirdPartyData.driverName || driverName}**\n`;
+          reply += `• **NIC Number**: \`${thirdPartyData.driverNicMasked || driverNic || "On File"}\`\n`;
+          reply += `• **Contact Phone**: 📞 ${thirdPartyData.driverPhone || "On File"}\n`;
+          reply += `• **Residential Address**: ${thirdPartyData.driverAddress || "On File"}\n`;
+          reply += `• **Policyholder (Owner)**: **${thirdPartyData.policyHolderName || "Sponsoring Policyholder"}**\n`;
+          reply += `• **Sanasa Branch**: ${thirdPartyData.branch || "Head Office"} Branch\n`;
+          reply += `• **Pass Reference**: \`${thirdPartyData.reference || driverRef}\`\n`;
+          reply += `• **Pass Status**: 🟢 **Active / Verified**\n\n`;
+          reply += `🚗 **Authorized Operating Vehicles (${allowedVehicles.length}):**\n`;
+          allowedVehicles.forEach((v, i) => {
+            reply += `${i + 1}. **${formatPlate(v.numberPlate)}** — ${v.company || ""} ${v.model || ""} (${v.vehicleType || "Vehicle"})\n`;
+          });
+          return res.json({ reply, source: "database_driver_pass_details" });
+        }
       }
     }
 
@@ -1051,6 +1111,17 @@ router.post("/message", async (req, res) => {
       } catch (dbErr) {
         console.warn("Context fetch error:", dbErr.message);
       }
+    } else if (isDriver) {
+      const allowedPlates = (thirdPartyData?.vehicles || []).map(v => v.numberPlate).filter(Boolean);
+      dynamicContext += `\n[ROLE: THIRD-PARTY AUTHORIZED DRIVER ASSISTANT - ${userName || "Driver"}]:\n`;
+      dynamicContext += `Driver Name: ${userName || "Authorized Driver"} | Masked NIC: ${userNic || "On File"} | Pass Reference: ${userEmail || "On File"}\n`;
+      dynamicContext += `Sponsoring Policyholder: ${thirdPartyData?.policyHolderName || "Vehicle Owner"} | Branch: ${branch || thirdPartyData?.branch || "Head Office"}\n`;
+      dynamicContext += `Authorized Operating Vehicles ONLY: ${allowedPlates.length > 0 ? allowedPlates.join(", ") : "Assigned Vehicles"}\n`;
+      dynamicContext += `Driver Lodged Claims Count: ${Array.isArray(thirdPartyData?.claims) ? thirdPartyData.claims.length : 0}\n`;
+      dynamicContext += `\nCRITICAL SECURITY & DATA SCOPE LIMITATIONS FOR THIRD-PARTY DRIVER:\n`;
+      dynamicContext += `1. The user is an authorized third-party driver, NOT a policyholder or staff member.\n`;
+      dynamicContext += `2. You may ONLY answer questions regarding this driver's authorized operating vehicles, claims submitted by this driver, digital pass validity, accident reporting steps, and 24/7 Sanasa emergency roadside assistance (011-2303300).\n`;
+      dynamicContext += `3. STRICT DATA PRIVACY: Under no circumstance disclose details of unauthorized vehicles, other policyholders' private profiles, or internal records. If asked, politely refuse stating driver authorization scope limitations.\n`;
     }
 
     if (matchedClaim && !isGuest) {

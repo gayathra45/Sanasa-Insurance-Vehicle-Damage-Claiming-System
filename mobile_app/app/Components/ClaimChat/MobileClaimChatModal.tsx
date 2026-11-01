@@ -29,16 +29,19 @@ const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 export interface MobileClaimChatModalProps {
   visible: boolean;
   onClose: () => void;
-  userRole?: "policy_holder" | "agent";
+  userRole?: "policy_holder" | "agent" | "third_party";
   initialClaimNumber?: string;
   onUnreadCountChange?: (count: number) => void;
+  thirdPartyProfile?: any;
+  thirdPartyVehicles?: any[];
+  thirdPartyClaims?: any[];
 }
 
 type MainCategory = "recent" | "claims" | "branches" | "agents";
 
 interface UserSession {
   userId: string;
-  userType: "PolicyHolder" | "Agent" | "OfficeStaff" | "Admin";
+  userType: "PolicyHolder" | "Agent" | "OfficeStaff" | "Admin" | "ThirdParty";
   name: string;
   email: string;
   branch: string;
@@ -88,6 +91,7 @@ interface ClaimItem {
   status?: string;
   branch?: string;
   assignedAgent?: string;
+  userNic?: string;
 }
 
 interface DirectoryItem {
@@ -105,17 +109,23 @@ export default function MobileClaimChatModal({
   userRole = "policy_holder",
   initialClaimNumber,
   onUnreadCountChange,
+  thirdPartyProfile,
+  thirdPartyVehicles = [],
+  thirdPartyClaims = [],
 }: MobileClaimChatModalProps) {
   const [activeCategory, setActiveCategory] = useState<MainCategory>("recent");
   const [activeView, setActiveView] = useState<"list" | "chat">("list");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [userSession, setUserSession] = useState<UserSession>({
-    userId: "",
-    userType: userRole === "agent" ? "Agent" : "PolicyHolder",
-    name: "",
-    email: "",
-    branch: "",
+    userId:
+      userRole === "third_party"
+        ? String(thirdPartyProfile?.driverNicRaw || thirdPartyProfile?.driverNicMasked || thirdPartyProfile?.reference || "driver")
+        : "",
+    userType: userRole === "agent" ? "Agent" : userRole === "third_party" ? "ThirdParty" : "PolicyHolder",
+    name: userRole === "third_party" ? (thirdPartyProfile?.driverName || "Authorized Driver") : "",
+    email: userRole === "third_party" ? (thirdPartyProfile?.driverPhone || "") : "",
+    branch: userRole === "third_party" ? (thirdPartyProfile?.branch || "Head Office") : "",
     profilePhoto: "",
   });
 
@@ -135,7 +145,7 @@ export default function MobileClaimChatModal({
   const [isSending, setIsSending] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<any>(null);
   const onUnreadCountChangeRef = useRef(onUnreadCountChange);
   const lastUnreadCountRef = useRef<number>(-1);
 
@@ -147,6 +157,18 @@ export default function MobileClaimChatModal({
   useEffect(() => {
     const fetchSession = async () => {
       try {
+        if (userRole === "third_party") {
+          setUserSession({
+            userId: String(thirdPartyProfile?.driverNicRaw || thirdPartyProfile?.driverNicMasked || thirdPartyProfile?.reference || "driver"),
+            userType: "ThirdParty",
+            name: thirdPartyProfile?.driverName || "Authorized Driver",
+            email: thirdPartyProfile?.driverPhone || "",
+            branch: thirdPartyProfile?.branch || "Head Office",
+            profilePhoto: "",
+          });
+          return;
+        }
+
         const userStr = await AsyncStorage.getItem("logged_in_user");
         const agentStr = await AsyncStorage.getItem("logged_in_agent");
         if (userRole === "agent" && agentStr) {
@@ -175,7 +197,7 @@ export default function MobileClaimChatModal({
       }
     };
     fetchSession();
-  }, [userRole]);
+  }, [userRole, thirdPartyProfile]);
 
   // 2. Load conversations, claims, directory
   const loadData = useCallback(async (isInitial = false) => {
@@ -204,7 +226,29 @@ export default function MobileClaimChatModal({
 
       if (claimRes.ok) {
         const cd = await claimRes.json();
-        setClaims(cd.claims || []);
+        let loadedClaims: ClaimItem[] = cd.claims || [];
+        if (loadedClaims.length === 0 && Array.isArray(thirdPartyClaims) && thirdPartyClaims.length > 0) {
+          loadedClaims = thirdPartyClaims.map((c: any) => ({
+            claimNumber: c.claimNumber,
+            vehiclePlate: c.vehiclePlate,
+            incidentDate: c.incidentDate,
+            status: c.status,
+            branch: thirdPartyProfile?.branch,
+            assignedAgent: "",
+          }));
+        } else if (loadedClaims.length === 0 && thirdPartyProfile?.reference) {
+          loadedClaims = [
+            {
+              claimNumber: thirdPartyProfile.reference,
+              vehiclePlate: thirdPartyVehicles?.[0]?.numberPlate || "Authorized Vehicle",
+              incidentDate: new Date().toISOString().split("T")[0],
+              status: "Authorized Pass",
+              branch: thirdPartyProfile.branch,
+              assignedAgent: "",
+            },
+          ];
+        }
+        setClaims(loadedClaims);
       }
 
       if (dirRes.ok) {
@@ -519,7 +563,7 @@ export default function MobileClaimChatModal({
       }}
     >
       <SafeAreaView style={styles.safeContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#0a192f" />
+        <StatusBar barStyle="light-content" {...(Platform.OS === "android" ? { backgroundColor: "#0a192f" } : {})} />
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* VIEW 1: CATEGORIES & DIRECTORY (INBOX) LIST                        */}
@@ -677,6 +721,44 @@ export default function MobileClaimChatModal({
                 {/* ─── TAB 1: RECENT CONVERSATIONS ─── */}
                 {activeCategory === "recent" && (
                   <>
+                    {/* ─── THIRD-PARTY DRIVER: DIRECT POLICYHOLDER QUICK CONTACT ─── */}
+                    {userRole === "third_party" && thirdPartyProfile?.policyHolderName && (
+                      <View style={styles.policyholderDirectCard}>
+                        <View style={styles.policyholderDirectLeft}>
+                          <View style={styles.policyholderAvatarCircle}>
+                            <Ionicons name="shield-checkmark" size={18} color="#ffffff" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.policyholderDirectLabel}>VEHICLE OWNER (POLICYHOLDER)</Text>
+                            <Text style={styles.policyholderDirectName}>{thirdPartyProfile.policyHolderName}</Text>
+                            <Text style={styles.policyholderDirectSub}>
+                              {thirdPartyProfile.branch || "Galle"} Branch • Ref: {thirdPartyProfile.reference || "Pass"}
+                            </Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.policyholderDirectChatBtn}
+                          onPress={() =>
+                            openDirectChat(
+                              {
+                                userId: thirdPartyProfile?.policyHolderNicRaw || "OWNER",
+                                userType: "PolicyHolder",
+                                name: thirdPartyProfile.policyHolderName,
+                                role: "Vehicle Owner (Policyholder)",
+                                branch: thirdPartyProfile.branch || "Head Office",
+                              },
+                              thirdPartyProfile.reference || "DIRECT-PASS",
+                              thirdPartyVehicles?.[0]?.numberPlate || "Authorized Vehicle"
+                            )
+                          }
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons name="chatbubble-ellipses" size={14} color="#ffffff" />
+                          <Text style={styles.policyholderDirectChatBtnText}>Chat Owner</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
                     {filteredConversations.length === 0 ? (
                       <View style={styles.emptyCard}>
                         <Ionicons name="chatbubbles-outline" size={48} color="#cbd5e1" />
@@ -813,6 +895,29 @@ export default function MobileClaimChatModal({
                                 <Ionicons name="business" size={14} color="#0284c7" />
                                 <Text style={styles.claimChatBtnText}>Chat Branch Staff</Text>
                               </TouchableOpacity>
+
+                              {userRole === "third_party" && (
+                                <TouchableOpacity
+                                  style={[styles.claimChatBtn, { borderColor: "#c7d2fe", backgroundColor: "#eef2ff" }]}
+                                  onPress={() =>
+                                    openDirectChat(
+                                      {
+                                        userId: thirdPartyProfile?.policyHolderNicRaw || cl.userNic || "OWNER",
+                                        userType: "PolicyHolder",
+                                        name: thirdPartyProfile?.policyHolderName || "Vehicle Owner (Policyholder)",
+                                        role: "Vehicle Owner (Policyholder)",
+                                        branch: cl.branch || thirdPartyProfile?.branch || "Head Office",
+                                      },
+                                      cl.claimNumber,
+                                      cl.vehiclePlate
+                                    )
+                                  }
+                                  activeOpacity={0.8}
+                                >
+                                  <Ionicons name="person" size={14} color="#4338ca" />
+                                  <Text style={[styles.claimChatBtnText, { color: "#4338ca" }]}>Chat Owner</Text>
+                                </TouchableOpacity>
+                              )}
 
                               {!!cl.assignedAgent && (
                                 <TouchableOpacity
@@ -1958,5 +2063,67 @@ const styles = StyleSheet.create({
   fullScreenImage: {
     width: SCREEN_W,
     height: SCREEN_H * 0.8,
+  },
+  policyholderDirectCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: "#c7d2fe",
+    shadowColor: "#4338ca",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    gap: 10,
+  },
+  policyholderDirectLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  policyholderAvatarCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#4338ca",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  policyholderDirectLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#6366f1",
+    letterSpacing: 0.5,
+  },
+  policyholderDirectName: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginTop: 1,
+  },
+  policyholderDirectSub: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 1,
+  },
+  policyholderDirectChatBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#4338ca",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+  },
+  policyholderDirectChatBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });
