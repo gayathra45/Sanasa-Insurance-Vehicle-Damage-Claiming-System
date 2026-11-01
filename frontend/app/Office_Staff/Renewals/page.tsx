@@ -586,153 +586,175 @@ export default function OfficeStaffRenewalsPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-[24px] shadow-xs overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-200 select-none text-left">
-                    <thead className="bg-slate-50/80">
-                      <tr>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Vehicle & Model
-                        </th>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Vehicle Number
-                        </th>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Policy Number
-                        </th>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Policy Holder (Owner)
-                        </th>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Expiration Date
-                        </th>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Renewal Fee
-                        </th>
-                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider text-right">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {filteredVehicles.map((item, idx) => {
-                        const hasQuote = !!item.renewalQuote;
-                        const isPaid = item.renewalQuote?.status === "Fully_Paid";
-                        const isPartial = item.renewalQuote?.status === "Partially_Paid";
+              <div className="overflow-x-auto pb-3 -mx-2 px-2">
+                <div className="min-w-[1080px] flex flex-col gap-3">
+                  {/* Proportional Grid Header */}
+                  <div className="hidden md:grid md:grid-cols-[minmax(210px,1.9fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(140px,1.2fr)_minmax(120px,1fr)_minmax(160px,1.3fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
+                    <div>Vehicle & Model</div>
+                    <div>Vehicle Number</div>
+                    <div>Policy Number</div>
+                    <div>Policy Holder (Owner)</div>
+                    <div>Expiration Date</div>
+                    <div>Renewal Fee</div>
+                    <div className="text-right">Actions</div>
+                  </div>
 
-                        return (
-                          <tr
-                            key={`${item.vehicle.numberPlate}-${idx}`}
-                            onClick={() => handleOpenDetails(item)}
-                            className="hover:bg-slate-50/60 transition-colors cursor-pointer group"
-                          >
-                            {/* Col 1: Vehicle & Model */}
-                            <td className="px-5 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0">
-                                  {getVehicleIconSvg(item.vehicle.vehicleType, "w-4 h-4 text-blue-600")}
-                                </div>
-                                <div>
-                                  <h4 className="font-bold text-slate-800 text-sm leading-tight">
-                                    {item.vehicle.company} {item.vehicle.model}
-                                  </h4>
-                                  <span className="text-[11px] text-slate-400">
-                                    Year: {item.vehicle.year} | {item.vehicle.vehicleType}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
+                  {/* Card Rows with Colored Left Accent */}
+                  {filteredVehicles.map((item, idx) => {
+                    const hasQuote = !!item.renewalQuote;
+                    const isPaid = item.renewalQuote?.status === "Fully_Paid";
+                    const isPartial = item.renewalQuote?.status === "Partially_Paid";
+                    const isExpiringSoon = item.vehicle.daysRemaining <= 45;
 
-                            {/* Col 2: Number Plate */}
-                            <td className="px-5 py-4 font-bold text-slate-800 tracking-wide text-xs">
-                              {item.vehicle.numberPlate}
-                            </td>
+                    let borderAccentClass = "border-l-slate-300";
+                    let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
 
-                            {/* Col 3: Policy Number */}
-                            <td className="px-5 py-4 font-semibold text-slate-700 text-xs">
-                              {item.vehicle.policyNumber || "N/A"}
-                            </td>
+                    if (isPaid) {
+                      borderAccentClass = "border-l-emerald-500";
+                      gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
+                    } else if (isPartial) {
+                      borderAccentClass = "border-l-teal-500";
+                      gradientBgClass = "from-teal-50/30 via-transparent to-transparent";
+                    } else if (isExpiringSoon) {
+                      borderAccentClass = "border-l-amber-500";
+                      gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
+                    } else if (hasQuote) {
+                      borderAccentClass = "border-l-blue-500";
+                      gradientBgClass = "from-blue-50/30 via-transparent to-transparent";
+                    }
 
-                            {/* Col 4: Owner & NIC */}
-                            <td className="px-5 py-4">
-                              <div className="font-semibold text-slate-800">{item.owner.name}</div>
-                              <div className="text-[10px] text-slate-400">
-                                NIC: {item.owner.nic} | {item.owner.mobile}
-                              </div>
-                            </td>
+                    return (
+                      <div
+                        key={`${item.vehicle.numberPlate}-${idx}`}
+                        onClick={() => handleOpenDetails(item)}
+                        className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(210px,1.9fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(140px,1.2fr)_minmax(120px,1fr)_minmax(160px,1.3fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group cursor-pointer`}
+                      >
+                        {/* Col 1: Vehicle & Model */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
+                            {getVehicleIconSvg(item.vehicle.vehicleType, "w-4 h-4 text-blue-600")}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-800 text-sm leading-tight truncate">
+                              {item.vehicle.company} {item.vehicle.model}
+                            </h4>
+                            <span className="text-[11px] text-slate-400 block mt-0.5 truncate">
+                              Year: {item.vehicle.year} | {item.vehicle.vehicleType}
+                            </span>
+                          </div>
+                        </div>
 
-                            {/* Col 5: Expiration Date & Status */}
-                            <td className="px-5 py-4">
-                              <div className="font-bold text-slate-800">
-                                {formatDate(item.vehicle.calculatedExpiryDate)}
-                              </div>
-                              <span
-                                className={`text-[9px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                                  isPaid
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : isPartial
-                                    ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                    : hasQuote
-                                    ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                    : item.vehicle.daysRemaining <= 45
-                                    ? "bg-rose-50 text-rose-700 border border-rose-200"
-                                    : "bg-slate-100 text-slate-600"
-                                }`}
-                              >
-                                {isPaid
-                                  ? "Fully Paid"
+                        {/* Col 2: Vehicle Number */}
+                        <div>
+                          <span className="font-bold text-slate-800 tracking-wide text-xs">
+                            {item.vehicle.numberPlate}
+                          </span>
+                        </div>
+
+                        {/* Col 3: Policy Number */}
+                        <div className="min-w-0">
+                          <span className="font-semibold text-slate-700 text-xs block truncate">
+                            {item.vehicle.policyNumber || "N/A"}
+                          </span>
+                        </div>
+
+                        {/* Col 4: Policy Holder (Owner) */}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-800 text-xs truncate">{item.owner.name}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5 truncate">
+                            NIC: {item.owner.nic} | {item.owner.mobile}
+                          </div>
+                        </div>
+
+                        {/* Col 5: Expiration Date & Status */}
+                        <div>
+                          <div className="font-bold text-slate-800 text-xs">
+                            {formatDate(item.vehicle.calculatedExpiryDate)}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                            <span
+                              className={`text-[9px] font-bold px-2 py-0.5 rounded-full inline-block ${
+                                isPaid
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                   : isPartial
-                                  ? "Partially Paid"
+                                  ? "bg-amber-50 text-amber-700 border border-amber-200"
                                   : hasQuote
-                                  ? "Quote Ready"
-                                  : `Expiring in ${item.vehicle.daysRemaining}d`}
+                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                  : item.vehicle.daysRemaining <= 45
+                                  ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {isPaid
+                                ? "Fully Paid"
+                                : isPartial
+                                ? "Partially Paid"
+                                : hasQuote
+                                ? "Quote Ready"
+                                : `Expiring in ${item.vehicle.daysRemaining}d`}
+                            </span>
+                            {item.latestPaymentDate && (
+                              <span className="text-[10px] text-emerald-600 font-semibold block">
+                                Paid: {new Date(item.latestPaymentDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                               </span>
-                              {item.latestPaymentDate && (
-                                <span className="block text-[10px] text-emerald-600 font-semibold mt-0.5">
-                                  Paid: {new Date(item.latestPaymentDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                                </span>
-                              )}
-                            </td>
+                            )}
+                          </div>
+                        </div>
 
-                            {/* Col 6: Renewal Fee */}
-                            <td className="px-5 py-4">
-                              {hasQuote ? (
-                                <div>
-                                  <span className="font-black text-xs text-emerald-600 block">
-                                    LKR {item.renewalQuote?.calculation?.totalRenewalAmount?.toLocaleString()}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {isPaid ? "Settled" : isPartial ? item.renewalQuote?.selectedPlan || "Installments" : "Calculated"}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-[11px] text-slate-400 italic">Not Calculated</span>
-                              )}
-                            </td>
+                        {/* Col 6: Renewal Fee */}
+                        <div>
+                          {hasQuote ? (
+                            <div>
+                              <span className="font-black text-xs text-emerald-600 block">
+                                LKR {item.renewalQuote?.calculation?.totalRenewalAmount?.toLocaleString()}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                {isPaid ? "Settled" : isPartial ? item.renewalQuote?.selectedPlan || "Installments" : "Calculated"}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">Not Calculated</span>
+                          )}
+                        </div>
 
-                            {/* Col 7: Actions */}
-                            <td className="px-5 py-4 text-right">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenDetails(item);
-                                }}
-                                className={`${
-                                  isPaid || isPartial
-                                    ? "bg-emerald-700 hover:bg-emerald-800"
-                                    : "bg-[#102A43] hover:bg-[#1C3E63]"
-                                } text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 active:scale-95`}
-                              >
-                                <HugeiconsIcon icon={isPaid || isPartial ? ViewIcon : File01Icon} className="w-3.5 h-3.5" />
-                                <span>{isPaid || isPartial ? "View Details & Plan" : "View & Calculate"}</span>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        {/* Col 7: Actions */}
+                        <div className="text-right flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDetails(item);
+                            }}
+                            className={`${
+                              isPaid || isPartial
+                                ? "bg-emerald-700 hover:bg-emerald-800"
+                                : "bg-[#102A43] hover:bg-[#1C3E63]"
+                            } text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 active:scale-95`}
+                          >
+                            <HugeiconsIcon icon={isPaid || isPartial ? ViewIcon : File01Icon} className="w-3.5 h-3.5" />
+                            <span>{isPaid || isPartial ? "View Details & Plan" : "View & Calculate"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Bottom Summary Bar */}
+                  <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-700">
+                        Showing {filteredVehicles.length} of {vehicles.length} vehicle policies
+                      </span>
+                      {filterMode !== "all" && (
+                        <span className="text-[11px] text-slate-400">
+                          (filtered by: <strong className="text-slate-600 capitalize">{filterMode === "expiring_soon" ? "Expiring Soon" : "Already Paid / Renewed"}</strong>)
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-400">
+                      Click any policy card or action button to review & calculate renewal
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
