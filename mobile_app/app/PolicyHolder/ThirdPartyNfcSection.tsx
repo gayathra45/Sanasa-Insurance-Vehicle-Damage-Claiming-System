@@ -2155,13 +2155,18 @@ export default function ThirdPartyNfcSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingBottom: 24
   },
   heroBanner: {
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 18,
-    marginBottom: 16
+    marginBottom: 16,
+    shadowColor: "#102A43",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4
   },
   heroBadge: {
     flexDirection: "row",
