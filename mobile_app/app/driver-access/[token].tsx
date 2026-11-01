@@ -14,7 +14,9 @@ import {
   Platform,
   StatusBar,
   Dimensions,
-  Linking
+  Linking,
+  Modal,
+  Share
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -120,6 +122,7 @@ export default function MobileDriverPortalScreen() {
   const [claimDesc, setClaimDesc] = useState("");
   const [accidentPhotoBase64, setAccidentPhotoBase64] = useState("");
   const [submittingClaim, setSubmittingClaim] = useState(false);
+  const [claimSearchQuery, setClaimSearchQuery] = useState("");
 
   // Chat States & Logic
   const [chatRecipients, setChatRecipients] = useState<any[]>([]);
@@ -133,11 +136,23 @@ export default function MobileDriverPortalScreen() {
 
   const driverId = profile?.driverNicRaw || profile?.driverNicMasked || profile?.reference || "driver";
 
-  const handleOpenPdfPass = async () => {
+  const [downloadModalVisible, setDownloadModalVisible] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const getPassCertificateUrl = (autoPrint = true) => {
     const certToken = token || profile?.verificationToken || profile?.reference || "";
-    const url = `${API_BASE_URL}/api/third-party/authorization-certificate/${encodeURIComponent(certToken)}?print=true`;
+    return `${API_BASE_URL}/api/third-party/authorization-certificate/${encodeURIComponent(certToken)}${autoPrint ? "?print=true" : ""}`;
+  };
+
+  const handleOpenPdfPass = async (autoPrint = true) => {
+    setDownloadingPdf(true);
+    const url = getPassCertificateUrl(autoPrint);
     try {
-      await WebBrowser.openBrowserAsync(url);
+      await WebBrowser.openBrowserAsync(url, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+        toolbarColor: "#0B1E32",
+        controlsColor: "#38bdf8"
+      });
     } catch (err) {
       console.warn("WebBrowser error, falling back to Linking:", err);
       try {
@@ -145,6 +160,32 @@ export default function MobileDriverPortalScreen() {
       } catch (linkErr) {
         Alert.alert("Unable to open pass", "Could not open official PDF pass in browser.");
       }
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  const handleSharePass = async () => {
+    const url = getPassCertificateUrl(true);
+    const vehicleList = vehicles.map((v) => formatPlate(v.numberPlate)).join(", ");
+    const textMsg =
+      `SANASA GENERAL INSURANCE - OFFICIAL DIGITAL DRIVER PASS\n` +
+      `-----------------------------------------\n` +
+      `Authorized Driver: ${profile?.driverName || "Authorized Driver"}\n` +
+      `Masked NIC: ${profile?.driverNicMasked || "Verified"}\n` +
+      `Pass Reference: ${profile?.reference || "—"}\n` +
+      `Regional Branch: ${profile?.branch || "Sri Lanka"}\n` +
+      `Authorized Vehicles: ${vehicleList || "All Permitted Vehicles"}\n` +
+      `\nOfficial Verification & Download Link:\n${url}`;
+
+    try {
+      await Share.share({
+        title: `Sanasa Driver Pass - ${profile?.driverName || "Driver"}`,
+        message: textMsg,
+        url: url
+      });
+    } catch (err) {
+      console.warn("Share error:", err);
     }
   };
 
@@ -506,6 +547,17 @@ export default function MobileDriverPortalScreen() {
 
   const pendingCount = claims.filter(c => c.status !== "Approved" && c.status !== "Settled" && c.status !== "Rejected").length;
   const approvedCount = claims.filter(c => c.status === "Approved" || c.status === "Settled").length;
+  const filteredClaims = claims.filter((c) => {
+    if (!claimSearchQuery.trim()) return true;
+    const q = claimSearchQuery.toLowerCase();
+    return (
+      (c.claimNumber && c.claimNumber.toLowerCase().includes(q)) ||
+      (c.vehiclePlate && c.vehiclePlate.toLowerCase().includes(q)) ||
+      (c.damageType && c.damageType.toLowerCase().includes(q)) ||
+      (c.status && c.status.toLowerCase().includes(q)) ||
+      (c.location && c.location.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <View style={styles.container}>
@@ -620,7 +672,7 @@ export default function MobileDriverPortalScreen() {
         </ImageBackground>
       )}
 
-      {/* VEHICLES TAB: Policyholder MyVehicles Signature Header */}
+      {/* VEHICLES TAB: Policyholder MyVehicles Signature Header (Exact Image 2) */}
       {activeTab === "vehicles" && (
         <ImageBackground
           source={require("../../assets/images/policy1.jpg")}
@@ -629,23 +681,23 @@ export default function MobileDriverPortalScreen() {
         >
           <LinearGradient
             colors={["rgba(15, 23, 42, 0.95)", "rgba(15, 23, 42, 0.82)", "rgba(15, 23, 42, 0.5)"]}
-            style={styles.headerGradientInner}
+            style={styles.headerGradient}
           >
-            <View style={styles.mobileTabHeaderRow}>
+            <View style={styles.headerTopRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.mobileTabHeaderTitle}>My Vehicles</Text>
-                <Text style={styles.mobileTabHeaderSubtitle}>
-                  Authorized vehicles under policyholder {profile?.policyHolderName || "Policy Holder"}
+                <Text style={styles.headerTitle}>My Vehicles</Text>
+                <Text style={styles.headerSubtitle}>
+                  Registered vehicles and active insurance policies
                 </Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
-                  <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#38bdf8" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileAIChat} activeOpacity={0.85}>
                   <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={handleLogout} activeOpacity={0.85}>
                   <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
                 </TouchableOpacity>
               </View>
@@ -654,8 +706,95 @@ export default function MobileDriverPortalScreen() {
         </ImageBackground>
       )}
 
-      {/* CLAIMS TAB: Policyholder My_claims Signature Header */}
+      {/* CLAIMS TAB: Policyholder My_claims Signature Header (Exact Image 1) */}
       {activeTab === "claims" && (
+        <View style={{ zIndex: 10 }}>
+          <ImageBackground
+            source={require("../../assets/images/myclaim.png")}
+            style={styles.headerBackground}
+            imageStyle={styles.headerImageStyle}
+          >
+            <LinearGradient
+              colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
+              style={styles.headerGradient}
+            >
+              <View style={styles.headerTopRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.headerTitle}>My Claims</Text>
+                  <Text style={styles.headerSubtitle}>
+                    All your insurance claims in one place
+                  </Text>
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                  <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                    <Ionicons name="chatbubble-ellipses" size={17} color="#38bdf8" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileAIChat} activeOpacity={0.85}>
+                    <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.frostedHeaderBtn} onPress={handleLogout} activeOpacity={0.85}>
+                    <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </LinearGradient>
+          </ImageBackground>
+
+          {/* Search Input Bar (Overlapping Header Curved Cutout - Exact Image 1) */}
+          <View style={styles.searchBarContainer}>
+            <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Search claim vehicle number or description..."
+              placeholderTextColor="#94a3b8"
+              value={claimSearchQuery}
+              onChangeText={setClaimSearchQuery}
+              style={styles.searchInput}
+            />
+            {claimSearchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setClaimSearchQuery("")}>
+                <Ionicons name="close-circle" size={18} color="#94a3b8" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* NEW CLAIM TAB: Policyholder New_Claim Signature Header */}
+      {activeTab === "submit" && (
+        <ImageBackground
+          source={require("../../assets/images/newclaim1.webp")}
+          style={styles.headerBackground}
+          imageStyle={styles.headerImageStyle}
+        >
+          <LinearGradient
+            colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
+            style={styles.headerGradient}
+          >
+            <View style={styles.headerTopRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.headerTitle}>New Claim</Text>
+                <Text style={styles.headerSubtitle}>
+                  Report an accident or damage incident for authorized vehicles
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#38bdf8" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileAIChat} activeOpacity={0.85}>
+                  <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={handleLogout} activeOpacity={0.85}>
+                  <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+      )}
+
+      {/* LIVE CHAT TAB: Communication Header */}
+      {activeTab === "chat" && (
         <ImageBackground
           source={require("../../assets/images/myclaim.png")}
           style={styles.headerBackground}
@@ -663,85 +802,29 @@ export default function MobileDriverPortalScreen() {
         >
           <LinearGradient
             colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
-            style={styles.headerGradientInner}
+            style={styles.headerGradient}
           >
-            <View style={styles.mobileTabHeaderRow}>
+            <View style={styles.headerTopRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.mobileTabHeaderTitle}>My Claims</Text>
-                <Text style={styles.mobileTabHeaderSubtitle}>
-                  All authorized driver insurance claims in one place
+                <Text style={styles.headerTitle}>Claim Support</Text>
+                <Text style={styles.headerSubtitle}>
+                  Direct live chat with assigned adjuster & branch staff
                 </Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
-                  <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#38bdf8" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileAIChat} activeOpacity={0.85}>
                   <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={handleLogout} activeOpacity={0.85}>
                   <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </LinearGradient>
         </ImageBackground>
-      )}
-
-      {/* NEW CLAIM TAB: Policyholder New_Claim Signature Header */}
-      {activeTab === "submit" && (
-        <LinearGradient
-          colors={["#0f172a", "#1e293b"]}
-          style={styles.headerGradientInner}
-        >
-          <View style={styles.mobileTabHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.mobileTabHeaderTitle}>File New Claim</Text>
-              <Text style={styles.mobileTabHeaderSubtitle}>
-                Report an accident or damage incident for authorized vehicles
-              </Text>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
-                <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
-                <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </LinearGradient>
-      )}
-
-      {/* LIVE CHAT TAB: Communication Header */}
-      {activeTab === "chat" && (
-        <LinearGradient
-          colors={["#0f172a", "#1e293b"]}
-          style={styles.headerGradientInner}
-        >
-          <View style={styles.mobileTabHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.mobileTabHeaderTitle}>Claim Support Chat</Text>
-              <Text style={styles.mobileTabHeaderSubtitle}>
-                Direct live chat with assigned adjuster & branch staff
-              </Text>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
-                <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
-                <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </LinearGradient>
       )}
 
       {/* DIGITAL PASS TAB: Digital Pass Signature Header */}
@@ -752,24 +835,31 @@ export default function MobileDriverPortalScreen() {
           imageStyle={styles.headerImageStyle}
         >
           <LinearGradient
-            colors={["rgba(12, 74, 110, 0.95)", "rgba(7, 89, 133, 0.82)", "rgba(3, 105, 161, 0.5)"]}
-            style={styles.headerGradientInner}
+            colors={["rgba(15, 23, 42, 0.95)", "rgba(15, 23, 42, 0.82)", "rgba(15, 23, 42, 0.5)"]}
+            style={styles.headerGradient}
           >
-            <View style={styles.mobileTabHeaderRow}>
+            <View style={styles.headerTopRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.mobileTabHeaderTitle}>Digital Driver Pass</Text>
-                <Text style={styles.mobileTabHeaderSubtitle}>
+                <Text style={styles.headerTitle}>Digital Driver Pass</Text>
+                <Text style={styles.headerSubtitle}>
                   Official credentials verified by Sanasa General Insurance
                 </Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileSupportChat} activeOpacity={0.85}>
-                  <Ionicons name="chatbubble-ellipses" size={17} color="#00ddff" />
+                <TouchableOpacity
+                  style={[styles.frostedHeaderBtn, { backgroundColor: "rgba(16, 185, 129, 0.35)", borderColor: "#10b981" }]}
+                  onPress={() => setDownloadModalVisible(true)}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="download-outline" size={17} color="#ffffff" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={openMobileAIChat} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileSupportChat} activeOpacity={0.85}>
+                  <Ionicons name="chatbubble-ellipses" size={17} color="#38bdf8" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={openMobileAIChat} activeOpacity={0.85}>
                   <MaterialCommunityIcons name="robot" size={18} color="#38bdf8" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.frostedHeaderBtn} onPress={handleLogout} activeOpacity={0.85}>
                   <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
                 </TouchableOpacity>
               </View>
@@ -821,18 +911,18 @@ export default function MobileDriverPortalScreen() {
 
             {/* ── DIGITAL DRIVER PASS CARD (Exact Policyholder MyDocs Gradient Card) ── */}
             <View style={{ paddingHorizontal: 16, marginTop: 22 }}>
-              <TouchableOpacity
-                style={styles.myDocsCard}
-                onPress={() => setActiveTab("pass")}
-                activeOpacity={0.88}
-              >
+              <View style={styles.myDocsCard}>
                 <LinearGradient
                   colors={["#1e3a8a", "#2563eb"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.myDocsGradient}
                 >
-                  <View style={styles.myDocsLeft}>
+                  <TouchableOpacity
+                    style={styles.myDocsLeft}
+                    onPress={() => setActiveTab("pass")}
+                    activeOpacity={0.88}
+                  >
                     <View style={styles.myDocsIconWrap}>
                       <Ionicons name="shield-checkmark" size={26} color="#ffffff" />
                     </View>
@@ -840,12 +930,27 @@ export default function MobileDriverPortalScreen() {
                       <Text style={styles.myDocsLabel}>Official Digital Driver Pass</Text>
                       <Text style={styles.myDocsSub}>Verified credentials • Sanasa ({profile?.branch || "Galle"} Branch)</Text>
                     </View>
-                  </View>
-                  <View style={styles.myDocsArrow}>
-                    <Ionicons name="arrow-forward" size={16} color="#ffffff" />
+                  </TouchableOpacity>
+
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                    <TouchableOpacity
+                      style={styles.myDocsDownloadBtn}
+                      onPress={() => setDownloadModalVisible(true)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="download-outline" size={13} color="#ffffff" />
+                      <Text style={styles.myDocsDownloadText}>Download</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.myDocsArrow}
+                      onPress={() => setActiveTab("pass")}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="arrow-forward" size={16} color="#ffffff" />
+                    </TouchableOpacity>
                   </View>
                 </LinearGradient>
-              </TouchableOpacity>
+              </View>
             </View>
 
             {/* ── RECENT NOTIFICATIONS & REQUESTS ── */}
@@ -1021,6 +1126,7 @@ export default function MobileDriverPortalScreen() {
                   { label: "Track Claim", icon: "locate-outline", action: () => setActiveTab("claims") },
                   { label: "My Vehicles", icon: "car-outline", action: () => setActiveTab("vehicles") },
                   { label: "Digital Pass", icon: "shield-checkmark-outline", action: () => setActiveTab("pass") },
+                  { label: "Download Pass", icon: "download-outline", action: () => setDownloadModalVisible(true) },
                   { label: "Live Support", icon: "chatbubbles-outline", action: () => openMobileSupportChat() },
                   { label: "AI Assistant", icon: "hardware-chip-outline", action: () => openMobileAIChat() },
                 ].map((action, idx) => (
@@ -1195,16 +1301,15 @@ export default function MobileDriverPortalScreen() {
         {/* TAB 4: CLAIMS HISTORY */}
         {/* ========================================================================= */}
         {activeTab === "claims" && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeaderTitle}>Lodged Claims</Text>
-            <Text style={styles.sectionHeaderSubtitle}>All claims filed for authorized vehicles</Text>
-
-            {claims.length === 0 ? (
+          <View style={[styles.section, { paddingTop: 4 }]}>
+            {filteredClaims.length === 0 ? (
               <View style={styles.contentCard}>
-                <Text style={styles.emptyNotice}>No claims found for this driver.</Text>
+                <Text style={styles.emptyNotice}>
+                  {claimSearchQuery ? "No claims matching your search." : "No claims found for this driver."}
+                </Text>
               </View>
             ) : (
-              claims.map((c) => (
+              filteredClaims.map((c) => (
                 <View key={c.claimNumber} style={styles.contentCard}>
                   <View style={styles.cardTopRow}>
                     <Text style={styles.claimNumberText}>{c.claimNumber}</Text>
@@ -1516,11 +1621,22 @@ export default function MobileDriverPortalScreen() {
                   </View>
                 </View>
 
-                <View style={styles.webPassVerifiedBadge}>
-                  <View style={styles.webPassVerifiedDotPulse}>
-                    <View style={styles.webPassVerifiedDot} />
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <TouchableOpacity
+                    style={styles.webPassDownloadPill}
+                    onPress={() => setDownloadModalVisible(true)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="download-outline" size={12} color="#ffffff" />
+                    <Text style={styles.webPassDownloadPillText}>DOWNLOAD</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.webPassVerifiedBadge}>
+                    <View style={styles.webPassVerifiedDotPulse}>
+                      <View style={styles.webPassVerifiedDot} />
+                    </View>
+                    <Text style={styles.webPassVerifiedText}>VERIFIED PASS</Text>
                   </View>
-                  <Text style={styles.webPassVerifiedText}>VERIFIED PASS</Text>
                 </View>
               </View>
 
@@ -1602,14 +1718,24 @@ export default function MobileDriverPortalScreen() {
 
               {/* Footer Section & PDF Download Action */}
               <View style={styles.webPassFooter}>
-                <TouchableOpacity
-                  style={styles.webPassPdfBtn}
-                  onPress={handleOpenPdfPass}
-                  activeOpacity={0.88}
-                >
-                  <Ionicons name="document-text-outline" size={17} color="#ffffff" />
-                  <Text style={styles.webPassPdfBtnText}>Download / Print Official PDF Pass</Text>
-                </TouchableOpacity>
+                <View style={styles.webPassActionRow}>
+                  <TouchableOpacity
+                    style={styles.webPassPdfBtn}
+                    onPress={() => setDownloadModalVisible(true)}
+                    activeOpacity={0.88}
+                  >
+                    <Ionicons name="download-outline" size={17} color="#ffffff" />
+                    <Text style={styles.webPassPdfBtnText}>Download / Print Official PDF Pass</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.webPassShareBtn}
+                    onPress={handleSharePass}
+                    activeOpacity={0.88}
+                  >
+                    <Ionicons name="share-social-outline" size={17} color="#0284c7" />
+                  </TouchableOpacity>
+                </View>
 
                 <View style={styles.webPassRegistryRow}>
                   <Ionicons name="shield-checkmark" size={13} color="#10b981" />
@@ -1703,6 +1829,141 @@ export default function MobileDriverPortalScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* ── DOWNLOAD DIGITAL PASS OPTIONS MODAL ── */}
+      <Modal
+        visible={downloadModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDownloadModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.downloadModalCard}>
+            {/* Modal Drag Indicator */}
+            <View style={{ alignItems: "center", marginBottom: 12 }}>
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#cbd5e1" }} />
+            </View>
+
+            {/* Header */}
+            <View style={styles.downloadModalHeader}>
+              <View style={styles.downloadModalIconWrap}>
+                <Ionicons name="shield-checkmark" size={24} color="#10b981" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.downloadModalTitle}>Download Digital Pass</Text>
+                <Text style={styles.downloadModalSub}>Official Sanasa Authorized Driver Certificate</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setDownloadModalVisible(false)}
+                style={styles.downloadModalCloseBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Quick Driver Summary Banner */}
+            <View style={styles.downloadDriverBanner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.downloadDriverName} numberOfLines={1}>
+                  {profile?.driverName || "Authorized Driver"}
+                </Text>
+                <Text style={styles.downloadDriverMeta}>
+                  Ref: <Text style={{ color: "#0284c7", fontWeight: "bold" }}>{profile?.reference || "—"}</Text> • {vehicles.length} Vehicle(s) Authorized
+                </Text>
+              </View>
+              <View style={styles.downloadVerifiedTag}>
+                <Ionicons name="checkmark-circle" size={13} color="#10b981" />
+                <Text style={styles.downloadVerifiedTagText}>VERIFIED</Text>
+              </View>
+            </View>
+
+            {/* Download Options List */}
+            <View style={{ gap: 11, marginTop: 14 }}>
+              {/* Option 1: PDF Download / Print */}
+              <TouchableOpacity
+                style={styles.downloadOptionCard}
+                onPress={() => {
+                  setDownloadModalVisible(false);
+                  setTimeout(() => handleOpenPdfPass(true), 250);
+                }}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={["#15803d", "#166534"]}
+                  style={styles.downloadOptionIconBox}
+                >
+                  <Ionicons name="download-outline" size={20} color="#ffffff" />
+                </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.downloadOptionTitle}>Download / Print Official PDF Pass</Text>
+                  <Text style={styles.downloadOptionDesc}>
+                    Print-ready certified PDF document accepted by Sri Lanka Police & Surveyors
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+              </TouchableOpacity>
+
+              {/* Option 2: Browser Preview */}
+              <TouchableOpacity
+                style={styles.downloadOptionCard}
+                onPress={() => {
+                  setDownloadModalVisible(false);
+                  setTimeout(() => handleOpenPdfPass(false), 250);
+                }}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={["#0369a1", "#075985"]}
+                  style={styles.downloadOptionIconBox}
+                >
+                  <Ionicons name="globe-outline" size={20} color="#ffffff" />
+                </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.downloadOptionTitle}>View Certificate in Browser</Text>
+                  <Text style={styles.downloadOptionDesc}>
+                    Open full digital security certificate with live QR verification seal
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+              </TouchableOpacity>
+
+              {/* Option 3: Share Pass */}
+              <TouchableOpacity
+                style={styles.downloadOptionCard}
+                onPress={() => {
+                  setDownloadModalVisible(false);
+                  setTimeout(() => handleSharePass(), 250);
+                }}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={["#0d9488", "#0f766e"]}
+                  style={styles.downloadOptionIconBox}
+                >
+                  <Ionicons name="share-social-outline" size={20} color="#ffffff" />
+                </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.downloadOptionTitle}>Share Pass Credentials & Link</Text>
+                  <Text style={styles.downloadOptionDesc}>
+                    Send authorization link & details via WhatsApp, Email, or SMS
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Cancel Button */}
+            <TouchableOpacity
+              style={styles.downloadCancelBtn}
+              onPress={() => setDownloadModalVisible(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.downloadCancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Floating Support Chat & AI Chat Bot Component */}
       <AIChatBot
@@ -2825,7 +3086,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 12,
   },
+  webPassActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   webPassPdfBtn: {
+    flex: 1,
     backgroundColor: "#185a37",
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -2845,6 +3112,31 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: "800",
   },
+  webPassShareBtn: {
+    backgroundColor: "#e0f2fe",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  webPassDownloadPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#10b981",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  webPassDownloadPillText: {
+    color: "#ffffff",
+    fontSize: 9.5,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
   webPassRegistryRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -2858,40 +3150,77 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textAlign: "center",
   },
+  /* Policyholder Signature Curved Headers (Parity with My_claims & MyVehicles) */
   headerBackground: {
     width: "100%",
-    minHeight: 125,
+    height: 190,
     backgroundColor: "#0F172A",
-    overflow: "hidden"
   },
   headerImageStyle: {
     resizeMode: "cover",
-    opacity: 0.35
+    borderBottomRightRadius: 50,
   },
-  headerGradientInner: {
+  headerGradient: {
+    flex: 1,
+    borderBottomRightRadius: 50,
+    paddingTop: Platform.OS === "ios" ? 54 : 42,
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 18,
-    minHeight: 110,
-    justifyContent: "center"
+    justifyContent: "center",
   },
-  mobileTabHeaderRow: {
+  headerTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  headerTitle: {
+    fontSize: 28,
+    color: "#ffffff",
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#e2e8f0",
+    fontWeight: "600",
+    marginTop: 4,
+  },
+  frostedHeaderBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.28)",
+  },
+  searchBarContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12
+    backgroundColor: "#ffffff",
+    marginHorizontal: 16,
+    marginTop: -22,
+    marginBottom: 16,
+    borderRadius: 99,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === "ios" ? 12 : 8,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    zIndex: 10,
   },
-  mobileTabHeaderTitle: {
-    color: "#ffffff",
-    fontSize: 22,
-    fontWeight: "bold",
-    letterSpacing: -0.5
+  searchIcon: {
+    marginRight: 10,
   },
-  mobileTabHeaderSubtitle: {
-    color: "#94a3b8",
-    fontSize: 12,
-    fontWeight: "500",
-    marginTop: 3
+  searchInput: {
+    flex: 1,
+    color: "#0f172a",
+    fontSize: 14,
+    fontWeight: "600",
   },
   avatarButtonSmall: {
     width: 38,
@@ -2907,5 +3236,152 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 15,
     fontWeight: "bold"
+  },
+  myDocsDownloadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.35)",
+  },
+  myDocsDownloadText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
+    justifyContent: "flex-end",
+  },
+  downloadModalCard: {
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === "ios" ? 36 : 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 20,
+  },
+  downloadModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+  },
+  downloadModalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#d1fae5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  downloadModalTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: "#0f172a",
+  },
+  downloadModalSub: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  downloadModalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  downloadDriverBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    marginTop: 14,
+    gap: 8,
+  },
+  downloadDriverName: {
+    fontSize: 13.5,
+    fontWeight: "bold",
+    color: "#0f172a",
+  },
+  downloadDriverMeta: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  downloadVerifiedTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+  },
+  downloadVerifiedTagText: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: "#059669",
+    letterSpacing: 0.4,
+  },
+  downloadOptionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 16,
+    padding: 12,
+  },
+  downloadOptionIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  downloadOptionTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#0f172a",
+  },
+  downloadOptionDesc: {
+    fontSize: 10.5,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  downloadCancelBtn: {
+    marginTop: 16,
+    paddingVertical: 13,
+    borderRadius: 14,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  downloadCancelBtnText: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: "#475569",
   }
 });
