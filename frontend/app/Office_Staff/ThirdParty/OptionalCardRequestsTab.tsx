@@ -1044,23 +1044,26 @@ export default function OptionalCardRequestsTab({
       {/* ORDER DETAILS MODAL */}
       {/* ============================================================== */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-100 overflow-hidden my-8 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="px-6 py-5 bg-[#102A43] text-white flex items-center justify-between flex-shrink-0">
+            <div className="p-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
-                  <HugeiconsIcon icon={CreditCardIcon} className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-xl bg-[#102A43] text-white flex items-center justify-center shadow-md">
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold flex items-center gap-2">
-                    <span>Order {selectedOrder.orderNumber}</span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 text-white font-medium">
-                      {selectedOrder.quantity} Cards
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-[#102A43]">
+                      Order: {selectedOrder.orderNumber}
+                    </h2>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#102A43]/10 text-[#102A43] font-semibold">
+                      {selectedOrder.quantity} {selectedOrder.quantity === 1 ? "Card" : "Cards"}
                     </span>
-                  </h3>
-                  <p className="text-xs text-white/70">
-                    Requested for {selectedOrder.branch} Branch • Placed on{" "}
+                    {getStatusBadge(selectedOrder.status)}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Branch: <span className="font-semibold text-slate-700">{selectedOrder.branch}</span> • Placed:{" "}
                     {new Date(selectedOrder.createdAt).toLocaleDateString("en-LK", {
                       timeZone: "Asia/Colombo",
                       month: "short",
@@ -1073,7 +1076,7 @@ export default function OptionalCardRequestsTab({
 
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer text-white/80 hover:text-white"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
               </button>
@@ -1082,11 +1085,14 @@ export default function OptionalCardRequestsTab({
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 text-xs">
               {/* Status Workflow Progression */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">
+              <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-4">
                   Request Issuance Lifecycle
                 </span>
                 <div className="flex items-center justify-between relative">
+                  {/* Connecting line */}
+                  <div className="absolute top-3.5 left-8 right-8 h-0.5 bg-slate-200" />
+
                   {/* Stepper items */}
                   {[
                     "Request Submitted",
@@ -1094,7 +1100,7 @@ export default function OptionalCardRequestsTab({
                     "Processing",
                     "Ready for Collection",
                     "Collected"
-                  ].map((step, idx, arr) => {
+                  ].map((step, idx) => {
                     const stepOrder = [
                       "Request Submitted",
                       "Approved",
@@ -1113,7 +1119,7 @@ export default function OptionalCardRequestsTab({
                         className="flex flex-col items-center text-center relative z-10 flex-1"
                       >
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ring-4 ring-slate-50 ${
                             isRejected
                               ? "bg-rose-100 text-rose-700 border border-rose-300"
                               : isCompleted
@@ -1124,7 +1130,7 @@ export default function OptionalCardRequestsTab({
                           {isCompleted ? "✓" : idx + 1}
                         </div>
                         <span
-                          className={`text-[10px] mt-1.5 font-medium leading-tight max-w-[70px] ${
+                          className={`text-[10px] mt-2 font-medium leading-tight max-w-[80px] ${
                             isCurrent
                               ? "text-blue-700 font-bold"
                               : isCompleted
@@ -1142,7 +1148,7 @@ export default function OptionalCardRequestsTab({
 
               {/* Rejection Alert if rejected */}
               {selectedOrder.status === "Rejected" && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800">
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800">
                   <div className="flex items-center gap-2 font-bold text-sm">
                     <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-rose-600" />
                     <span>Request Rejected by Branch</span>
@@ -1155,44 +1161,54 @@ export default function OptionalCardRequestsTab({
 
               {/* Policyholder & Payment Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                    Policy Holder Information
-                  </span>
-                  <div className="text-sm font-bold text-slate-800">
+                <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+                      <HugeiconsIcon icon={UserIcon} className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Policy Holder Information
+                    </span>
+                  </div>
+                  <div className="text-sm font-bold text-slate-900">
                     {selectedOrder.policyHolderName}
                   </div>
-                  <div className="space-y-1 text-slate-600">
-                    <div>NIC: <span className="font-mono font-medium">{selectedOrder.policyHolderNic}</span></div>
+                  <div className="space-y-1 text-slate-600 text-xs">
+                    <div>NIC: <span className="font-mono font-medium text-slate-800">{selectedOrder.policyHolderNic}</span></div>
                     {selectedOrder.policyHolderPhone && (
-                      <div>Phone: <span className="font-medium">{selectedOrder.policyHolderPhone}</span></div>
+                      <div>Phone: <span className="font-medium text-slate-800">{selectedOrder.policyHolderPhone}</span></div>
                     )}
                     {selectedOrder.policyHolderEmail && (
-                      <div>Email: <span className="font-medium">{selectedOrder.policyHolderEmail}</span></div>
+                      <div>Email: <span className="font-medium text-slate-800">{selectedOrder.policyHolderEmail}</span></div>
                     )}
-                    <div>Branch: <span className="font-semibold text-slate-800">{selectedOrder.branch}</span></div>
+                    <div>Branch: <span className="font-semibold text-slate-900">{selectedOrder.branch}</span></div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                    Payment Verification
-                  </span>
-                  <div className="text-sm font-bold text-slate-800">
-                    LKR {selectedOrder.totalAmount?.toLocaleString()}
-                    <span className="text-xs text-slate-400 font-normal ml-1">
-                      ({selectedOrder.quantity} cards @ LKR {selectedOrder.unitPrice || 500})
+                <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Payment Verification
                     </span>
                   </div>
-                  <div className="space-y-1 text-slate-600">
-                    <div>
-                      Payment Status:{" "}
+                  <div className="text-sm font-bold text-slate-900">
+                    LKR {selectedOrder.totalAmount?.toLocaleString()}
+                    <span className="text-xs text-slate-400 font-normal ml-1">
+                      ({selectedOrder.quantity} {selectedOrder.quantity === 1 ? "card" : "cards"} @ LKR {selectedOrder.unitPrice || 500})
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-slate-600 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span>Payment Status:</span>
                       {getPaymentBadge(selectedOrder.payment?.status, selectedOrder.totalAmount)}
                     </div>
                     {selectedOrder.payment?.paidAt && (
                       <div>
                         Paid On:{" "}
-                        <span className="font-medium">
+                        <span className="font-medium text-slate-800">
                           {new Date(selectedOrder.payment.paidAt).toLocaleString("en-LK", {
                             timeZone: "Asia/Colombo"
                           })}
@@ -1210,19 +1226,7 @@ export default function OptionalCardRequestsTab({
 
               {/* Physical NFC Cards Preparation & URLs Section */}
               {selectedOrder.issuedCards && selectedOrder.issuedCards.length > 0 && (
-                <div className="border border-slate-200 rounded-xl p-4 bg-white shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
-                        <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-blue-600" />
-                        <span>Generated NFC Card Records ({selectedOrder.issuedCards.length})</span>
-                      </h4>
-                      <p className="text-[11px] text-slate-500">
-                        Copy these secure digital URLs to encode/write onto the physical NFC cards.
-                      </p>
-                    </div>
-                  </div>
-
+                <div className="border border-slate-200 rounded-xl p-5 bg-white shadow-2xs space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
@@ -1230,14 +1234,14 @@ export default function OptionalCardRequestsTab({
                         <span>Generated NFC Card Records ({selectedOrder.issuedCards.length})</span>
                       </h4>
                       <p className="text-[11px] text-slate-500">
-                        Transfer individual cards wirelessly to the SANASA NFC Writer phone or copy secure URLs.
+                        Transfer individual cards wirelessly to the SANASA NFC Writer phone or copy secure URLs to encode onto physical tags.
                       </p>
                     </div>
 
                     {/* Quick Device Pairing Indicator */}
                     <div className="flex items-center gap-2">
                       {pairedDevice ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           <span>Connected: {pairedDevice.deviceName}</span>
                         </span>
@@ -1475,10 +1479,10 @@ export default function OptionalCardRequestsTab({
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+            <div className="p-5 bg-slate-50 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl font-semibold text-xs text-slate-700 transition-colors cursor-pointer"
+                className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl font-semibold text-xs text-slate-700 transition-colors cursor-pointer shadow-2xs"
               >
                 Close
               </button>
@@ -1488,7 +1492,7 @@ export default function OptionalCardRequestsTab({
                   <>
                     <button
                       onClick={() => setShowRejectModal(true)}
-                      className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                      className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
                     >
                       Reject Request
                     </button>
@@ -1544,49 +1548,59 @@ export default function OptionalCardRequestsTab({
       {/* APPROVE CONFIRMATION MODAL */}
       {/* ============================================================== */}
       {showApproveModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-slate-800 text-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-slate-800 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#102A43]">Approve Card Request</h4>
+                  <p className="text-slate-500">Order {selectedOrder.orderNumber}</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowApproveModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-slate-600 leading-relaxed">
+                You are approving the request for <strong>{selectedOrder.quantity} Optional NFC Cards</strong> for{" "}
+                <strong>{selectedOrder.policyHolderName}</strong>. This will generate {selectedOrder.quantity} unique card
+                records and secure tokens ready for physical NFC writing.
+              </p>
+
               <div>
-                <h4 className="font-bold text-sm text-slate-900">Approve Card Request</h4>
-                <p className="text-slate-500">Order {selectedOrder.orderNumber}</p>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Approval Notes (Optional):
+                </label>
+                <textarea
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                  placeholder="e.g. Cards prepared for Galle branch pickup"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43] resize-none"
+                  rows={2}
+                />
               </div>
             </div>
 
-            <p className="text-slate-600 leading-relaxed">
-              You are approving the request for <strong>{selectedOrder.quantity} Optional NFC Cards</strong> for{" "}
-              <strong>{selectedOrder.policyHolderName}</strong>. This will generate {selectedOrder.quantity} unique card
-              records and secure tokens ready for physical NFC writing.
-            </p>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Approval Notes (Optional):
-              </label>
-              <textarea
-                value={approvalNotes}
-                onChange={(e) => setApprovalNotes(e.target.value)}
-                placeholder="e.g. Cards prepared for Galle branch pickup"
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43] resize-none"
-                rows={2}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
               <button
                 onClick={() => setShowApproveModal(false)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleApprove}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {actionLoading ? "Generating Cards..." : "Confirm Approval"}
               </button>
@@ -1599,48 +1613,58 @@ export default function OptionalCardRequestsTab({
       {/* REJECT CONFIRMATION MODAL */}
       {/* ============================================================== */}
       {showRejectModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-slate-800 text-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
-                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-slate-800 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#102A43]">Reject Card Request</h4>
+                  <p className="text-slate-500">Order {selectedOrder.orderNumber}</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-slate-600 leading-relaxed">
+                Please enter the mandatory reason for rejecting this card request. The Policyholder will be notified.
+              </p>
+
               <div>
-                <h4 className="font-bold text-sm text-slate-900">Reject Card Request</h4>
-                <p className="text-slate-500">Order {selectedOrder.orderNumber}</p>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Rejection Reason <span className="text-rose-500">*</span>:
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="e.g. Ineligible policy status or branch quota reached"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
+                  rows={3}
+                  required
+                />
               </div>
             </div>
 
-            <p className="text-slate-600 leading-relaxed">
-              Please enter the mandatory reason for rejecting this card request. The Policyholder will be notified.
-            </p>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Rejection Reason <span className="text-rose-500">*</span>:
-              </label>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="e.g. Ineligible policy status or branch quota reached"
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
-                rows={3}
-                required
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
               <button
                 onClick={() => setShowRejectModal(false)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleReject}
                 disabled={actionLoading || !rejectionReason.trim()}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {actionLoading ? "Rejecting..." : "Confirm Rejection"}
               </button>
@@ -1653,52 +1677,62 @@ export default function OptionalCardRequestsTab({
       {/* RECORD COLLECTION MODAL */}
       {/* ============================================================== */}
       {showCollectModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-slate-800 text-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-50 text-[#102A43] flex items-center justify-center">
-                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-slate-800 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#102A43] flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#102A43]">Record Physical Handover</h4>
+                  <p className="text-slate-500">Order {selectedOrder.orderNumber}</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowCollectModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
               <div>
-                <h4 className="font-bold text-sm text-slate-900">Record Physical Handover</h4>
-                <p className="text-slate-500">Order {selectedOrder.orderNumber}</p>
+                <label className="block font-semibold text-slate-700 mb-1.5">Collected By:</label>
+                <input
+                  type="text"
+                  value={collectorName}
+                  onChange={(e) => setCollectorName(e.target.value)}
+                  placeholder="Full name of person collecting"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1.5">Handover Notes:</label>
+                <textarea
+                  value={collectionNotes}
+                  onChange={(e) => setCollectionNotes(e.target.value)}
+                  placeholder="e.g. Identity verified via NIC card and signature obtained"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43] resize-none"
+                  rows={2}
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Collected By:</label>
-              <input
-                type="text"
-                value={collectorName}
-                onChange={(e) => setCollectorName(e.target.value)}
-                placeholder="Full name of person collecting"
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43]"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Handover Notes:</label>
-              <textarea
-                value={collectionNotes}
-                onChange={(e) => setCollectionNotes(e.target.value)}
-                placeholder="e.g. Identity verified via NIC card and signature obtained"
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43] resize-none"
-                rows={2}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
               <button
                 onClick={() => setShowCollectModal(false)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRecordCollection}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-[#102A43] hover:bg-[#1E3A8A] text-white rounded-xl font-semibold cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-4 py-2 bg-[#102A43] hover:bg-[#1E3A8A] text-white rounded-lg font-semibold text-xs cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {actionLoading ? "Recording..." : "Confirm Handover"}
               </button>
@@ -1711,46 +1745,56 @@ export default function OptionalCardRequestsTab({
       {/* REVOKE CARD MODAL */}
       {/* ============================================================== */}
       {showRevokeCardModal && cardToRevoke && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-slate-800 text-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
-                <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-slate-800 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#102A43]">Revoke Individual NFC Card</h4>
+                  <p className="text-slate-500 font-mono text-[11px]">{cardToRevoke}</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowRevokeCardModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-slate-600 leading-relaxed">
+                Revoking this card will immediately invalidate its access URL and disable any active driver assignment
+                associated with it.
+              </p>
+
               <div>
-                <h4 className="font-bold text-sm text-slate-900">Revoke Individual NFC Card</h4>
-                <p className="text-slate-500 font-mono">{cardToRevoke}</p>
+                <label className="block font-semibold text-slate-700 mb-1.5">Reason for Revocation:</label>
+                <input
+                  type="text"
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder="e.g. Card damaged or lost"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
               </div>
             </div>
 
-            <p className="text-slate-600 leading-relaxed">
-              Revoking this card will immediately invalidate its access URL and disable any active driver assignment
-              associated with it.
-            </p>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Reason for Revocation:</label>
-              <input
-                type="text"
-                value={revokeReason}
-                onChange={(e) => setRevokeReason(e.target.value)}
-                placeholder="e.g. Card damaged or lost"
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
               <button
                 onClick={() => setShowRevokeCardModal(false)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRevokeCard}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-semibold cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold text-xs cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {actionLoading ? "Revoking..." : "Revoke Card"}
               </button>
@@ -1763,11 +1807,11 @@ export default function OptionalCardRequestsTab({
       {/* NFC WRITER DEVICE PAIRING MODAL */}
       {/* ============================================================== */}
       {showPairModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-slate-800 text-xs space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-slate-800 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shadow-xs">
                   <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5" />
                 </div>
                 <div>
@@ -1778,93 +1822,95 @@ export default function OptionalCardRequestsTab({
 
               <button
                 onClick={() => setShowPairModal(false)}
-                className="p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-400 hover:text-slate-600"
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
               </button>
             </div>
 
-            {pairedDevice ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-2.5 text-emerald-800 font-bold text-sm">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs">
-                    ✓
+            <div className="p-6">
+              {pairedDevice ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2.5 text-emerald-800 font-bold text-sm">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs">
+                      ✓
+                    </div>
+                    <span>Phone Connected & Paired!</span>
                   </div>
-                  <span>Phone Connected & Paired!</span>
+                  <div className="text-xs text-emerald-900 space-y-1">
+                    <div>
+                      Device: <span className="font-bold">{pairedDevice.deviceName}</span>
+                    </div>
+                    <div className="text-[11px] text-emerald-700 font-mono">
+                      Device ID: {pairedDevice.deviceId}
+                    </div>
+                    <div className="text-[11px] text-emerald-700">
+                      Paired on: {new Date(pairedDevice.pairedAt).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-emerald-700">
+                    You can now click <strong>"Transfer to NFC Writer"</strong> on any card to send it directly to your phone.
+                  </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={handleUnpair}
+                      className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Disconnect / Unpair Phone
+                    </button>
+                  </div>
                 </div>
-                <div className="text-xs text-emerald-900 space-y-1">
-                  <div>
-                    Device: <span className="font-bold">{pairedDevice.deviceName}</span>
-                  </div>
-                  <div className="text-[11px] text-emerald-700 font-mono">
-                    Device ID: {pairedDevice.deviceId}
-                  </div>
-                  <div className="text-[11px] text-emerald-700">
-                    Paired on: {new Date(pairedDevice.pairedAt).toLocaleTimeString()}
-                  </div>
-                </div>
-                <p className="text-[11px] text-emerald-700">
-                  You can now click <strong>"Transfer to NFC Writer"</strong> on any card to send it directly to your phone.
-                </p>
-                <div className="pt-2">
-                  <button
-                    onClick={handleUnpair}
-                    className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    Disconnect / Unpair Phone
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-slate-600 leading-relaxed text-xs">
-                  Enter this single-use 6-character code into the <strong>SANASA NFC Writer</strong> Android application on your phone to pair it securely with this branch session:
-                </p>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-slate-600 leading-relaxed text-xs">
+                    Enter this single-use 6-character code into the <strong>SANASA NFC Writer</strong> Android application on your phone to pair it securely with this branch session:
+                  </p>
 
-                {/* Big Pairing Code Card */}
-                <div className="bg-gradient-to-br from-slate-900 to-[#102A43] text-white p-5 rounded-2xl text-center shadow-md relative overflow-hidden">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300 block mb-1">
-                    Pairing Code
-                  </span>
-                  <div className="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 select-all my-1">
-                    {pairingCode || "------"}
+                  {/* Big Pairing Code Card */}
+                  <div className="bg-gradient-to-br from-slate-900 to-[#102A43] text-white p-5 rounded-2xl text-center shadow-md relative overflow-hidden">
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300 block mb-1">
+                      Pairing Code
+                    </span>
+                    <div className="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 select-all my-1">
+                      {pairingCode || "------"}
+                    </div>
+                    <span className="text-[10px] text-slate-300">
+                      Valid for 5 minutes • Single-use
+                    </span>
                   </div>
-                  <span className="text-[10px] text-slate-300">
-                    Valid for 5 minutes • Single-use
-                  </span>
-                </div>
 
-                {/* Instructions */}
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-2">
-                  <span className="font-bold text-slate-700 text-xs block">
-                    How to pair your Android Phone:
-                  </span>
-                  <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600 leading-normal">
-                    <li>Open <strong>SANASA NFC Writer</strong> on your phone.</li>
-                    <li>Go to the <strong>Device Pairing</strong> tab or prompt.</li>
-                    <li>Type the code <strong className="font-mono text-slate-900">{pairingCode}</strong> and tap <strong>Connect</strong>.</li>
-                  </ol>
-                </div>
+                  {/* Instructions */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-2">
+                    <span className="font-bold text-slate-700 text-xs block">
+                      How to pair your Android Phone:
+                    </span>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600 leading-normal">
+                      <li>Open <strong>SANASA NFC Writer</strong> on your phone.</li>
+                      <li>Go to the <strong>Device Pairing</strong> tab or prompt.</li>
+                      <li>Type the code <strong className="font-mono text-slate-900">{pairingCode}</strong> and tap <strong>Connect</strong>.</li>
+                    </ol>
+                  </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    onClick={handleGeneratePairingCode}
-                    disabled={pairingLoading}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    <HugeiconsIcon icon={RefreshIcon} className={`w-3.5 h-3.5 ${pairingLoading ? "animate-spin" : ""}`} />
-                    <span>Generate New Code</span>
-                  </button>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <button
+                      onClick={handleGeneratePairingCode}
+                      disabled={pairingLoading}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <HugeiconsIcon icon={RefreshIcon} className={`w-3.5 h-3.5 ${pairingLoading ? "animate-spin" : ""}`} />
+                      <span>Generate New Code</span>
+                    </button>
 
-                  <button
-                    onClick={() => setShowPairModal(false)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs cursor-pointer"
-                  >
-                    Done
-                  </button>
+                    <button
+                      onClick={() => setShowPairModal(false)}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
