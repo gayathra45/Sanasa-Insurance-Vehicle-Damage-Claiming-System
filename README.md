@@ -152,7 +152,7 @@ graph TB
     NFC_APP --> SOCKET
     NFC_APP --> API
     NFC_APP --> SMART_CARD
-    SMART_CARD -.->|Tap on Roadside Phone| DRIVER_PORTAL
+    SMART_CARD -.->|"Tap on Roadside Phone"| DRIVER_PORTAL
     AGENT_WEB --> API
     STAFF_WEB --> API
     STAFF_WEB --> SOCKET
@@ -224,7 +224,7 @@ sequenceDiagram
     
     Note over Card, Driver: Roadside Use During Inspection / Accident
     Driver->>Card: Tap Card to Smartphone
-    Card-->>Driver: Launch https://.../driver-access/[token] in Browser
+    Card-->>Driver: Launch Driver Pass Portal in Mobile Browser
 ```
 
 ---
