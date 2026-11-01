@@ -717,9 +717,10 @@ export default function OfficeStaffThirdPartyPage() {
               <p className="text-[11px] text-slate-500 mt-0.5">Revoked passes</p>
             </button>
           </div>          {/* Filtering and Search Controls */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Filtering and Search Controls */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
             {/* Status Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+            <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
               {[
                 { key: "all", label: "All" },
                 { key: "Pending Branch Approval", label: "Pending Approval", count: stats.pending },
@@ -737,9 +738,9 @@ export default function OfficeStaffThirdPartyPage() {
                 <button
                   key={tab.key}
                   onClick={() => setStatusFilter(tab.key as any)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer select-none ${
                     statusFilter === tab.key
-                      ? "bg-[#102A43] text-white shadow-sm"
+                      ? "bg-[#102A43] text-white shadow-xs font-bold"
                       : tab.alert && tab.count && tab.count > 0
                       ? "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                       : "text-slate-600 hover:bg-slate-100"
@@ -764,7 +765,7 @@ export default function OfficeStaffThirdPartyPage() {
             </div>
 
             {/* Right: View Mode Toggle & Search Input */}
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2.5 w-full lg:w-auto flex-shrink-0">
               {/* View Switcher: Grid vs Table */}
               <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80 flex-shrink-0">
                 <button
@@ -794,7 +795,7 @@ export default function OfficeStaffThirdPartyPage() {
               </div>
 
               {/* Search Input */}
-              <div className="relative flex-1 md:w-72">
+              <div className="relative flex-1 lg:w-64">
                 <HugeiconsIcon
                   icon={Search01Icon}
                   className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
