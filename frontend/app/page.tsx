@@ -11,13 +11,9 @@ import {
   FlashIcon,
   CustomerService01Icon,
   FileCheckIcon,
-  SmartPhone01Icon,
-  Download01Icon,
   UserIcon,
-  Shield01Icon,
-  CheckmarkCircle02Icon
+  Shield01Icon
 } from "@hugeicons/core-free-icons";
-import AppDownloadModal from "./Components/AppDownloadModal";
 
 const pageTranslations = {
   en: {
@@ -105,7 +101,6 @@ const pageTranslations = {
 
 export default function Home() {
   const [lang, setLang] = useState<"en" | "si" | "ta">("en");
-  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
 
   // Load language from localStorage on mount
   useEffect(() => {
@@ -320,204 +315,119 @@ export default function Home() {
           </div>
         </section>
 
-        {/* --- Redesigned Insurance App Section --- */}
-        <section className="relative w-full min-h-[640px] flex items-center justify-center mt-14 overflow-hidden bg-slate-950">
-          {/* Background Image with Dark Vignette & Mesh Overlay */}
+        {/* --- Insurance App Section --- */}
+        <section className="relative w-full min-h-[500px] md:min-h-[560px] flex items-center justify-center mt-12 overflow-hidden bg-slate-900">
+          {/* Background Photo with Dark Tint */}
           <div className="absolute inset-0 w-full h-full z-[1]">
             <Image
               src="/Home_3.jpg"
               alt="Insurance App background"
               fill
               sizes="100vw"
-              className="object-cover opacity-35 scale-105"
+              className="object-cover opacity-60"
             />
-            {/* Cinematic Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-[#072436]/90" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/70" />
+            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
           </div>
 
-          {/* Ambient Glowing Blobs */}
-          <div className="absolute top-1/4 left-10 w-96 h-96 rounded-full bg-cyan-500/15 blur-3xl pointer-events-none z-[1]" />
-          <div className="absolute bottom-10 right-20 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl pointer-events-none z-[1]" />
-
-          {/* Main Container */}
-          <div className="relative z-[2] w-full max-w-[1240px] px-6 sm:px-10 lg:px-16 py-16 sm:py-20 flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-14">
-            {/* Left Side: Floating Phone Showcase with Interactive Badges */}
-            <div className="flex-none lg:flex-1 w-full max-w-[460px] flex flex-col items-center justify-center relative group">
-              <div className="relative w-full flex items-center justify-center">
-                {/* Ambient glow behind phone */}
-                <div className="absolute w-72 h-72 sm:w-80 sm:h-80 rounded-full bg-cyan-400/20 blur-2xl group-hover:bg-cyan-400/30 transition-all duration-700 pointer-events-none" />
-
-                {/* The Phone + Car Image */}
-                <Image
-                  src="/Home_3.1.png"
-                  alt="Sanasa Insurance Mobile App"
-                  width={460}
-                  height={540}
-                  priority
-                  className="object-contain relative z-10 drop-shadow-[0_25px_50px_rgba(0,0,0,0.7)] group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-
-                {/* Floating Micro-Badge Top: Fast Claim */}
-                <div className="absolute -top-3 right-0 sm:right-4 z-20 bg-slate-900/90 backdrop-blur-md border border-white/20 text-white rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-2.5 animate-in fade-in duration-500">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <div className="text-left">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Status</p>
-                    <p className="text-xs font-bold text-white">Instant Claim Filing</p>
-                  </div>
-                </div>
-
-                {/* Floating Micro-Badge Bottom: 24/7 Support */}
-                <div className="absolute -bottom-4 left-0 sm:left-4 z-20 bg-white/95 backdrop-blur-md border border-slate-200 text-slate-900 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                    <HugeiconsIcon icon={SecurityCheckIcon} className="w-4 h-4" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Sanasa Verified</p>
-                    <p className="text-xs font-bold text-slate-800">24/7 Digital Support</p>
-                  </div>
-                </div>
-              </div>
+          {/* Main Content Container */}
+          <div className="relative z-[2] flex flex-col md:flex-row items-center justify-center md:justify-between w-full max-w-[1240px] p-6 sm:p-10 md:px-16 md:py-14 gap-8 md:gap-14">
+            {/* Left Side: Phone Mockup */}
+            <div className="flex-none md:flex-1 flex justify-center items-center">
+              <Image
+                src="/Home_3.1.png"
+                alt="Insurance app with phone, car and shield"
+                width={420}
+                height={520}
+                priority
+                className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.55)] max-w-full h-auto"
+              />
             </div>
 
-            {/* Right Side: Redesigned Content Card */}
-            <div className="flex-1 w-full bg-white/95 backdrop-blur-2xl p-7 sm:p-10 lg:p-12 rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.45)] border border-white/80 text-slate-900 text-left relative overflow-hidden">
-              {/* Top Accent Gradient Bar */}
-              <div className="h-1.5 w-28 bg-gradient-to-r from-[#0284c7] via-cyan-400 to-emerald-400 rounded-full mb-6" />
+            {/* Right Side: Re-designed Content Card */}
+            <div className="flex-1 bg-white/98 p-8 sm:p-10 md:p-12 rounded-[2.5rem] text-slate-900 shadow-2xl text-left">
+              {/* Category / Subtitle */}
+              <p className="text-xs font-bold tracking-[0.16em] uppercase text-slate-500 mb-3">
+                {t.appSubtitle}
+              </p>
 
-              {/* Subtitle Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-50 border border-sky-200/80 text-[#0284c7] text-xs font-bold tracking-wider uppercase mb-3">
-                <HugeiconsIcon icon={SmartPhone01Icon} className="w-3.5 h-3.5" strokeWidth={2.4} />
-                <span>{t.appSubtitle}</span>
-              </div>
-
-              {/* Card Title */}
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight mb-4">
+              {/* Title */}
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-[1.2] mb-4">
                 {t.appTitle}
               </h2>
 
-              {/* Card Description */}
-              <p className="text-[0.98rem] sm:text-base leading-[1.75] text-slate-600 font-normal mb-6">
+              {/* Description */}
+              <p className="text-[0.95rem] md:text-base leading-[1.75] text-slate-600 mb-6 font-normal">
                 {t.appDesc}
               </p>
 
-              {/* Micro Benefits Pills */}
-              <div className="flex flex-wrap gap-2.5 mb-8">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-semibold">
-                  <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
-                  {t.featFastClaims}
+              {/* Micro Benefits Strip */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-8 text-xs sm:text-sm font-semibold text-slate-700">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="text-emerald-600 font-bold">✓</span> {t.featFastClaims}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-semibold">
-                  <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
-                  {t.featLiveTracking}
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="text-emerald-600 font-bold">✓</span> {t.featLiveTracking}
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-semibold">
-                  <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
-                  {t.featDigitalHelp}
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="text-emerald-600 font-bold">✓</span> {t.featDigitalHelp}
                 </span>
               </div>
 
-              {/* SECTION 1: Mobile App Download Buttons */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  {/* Google Play Button */}
-                  <a
-                    href="https://play.google.com/store/apps"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 no-underline group"
-                  >
-                    <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M3.6 1.4C3.3 1.7 3.1 2.2 3.1 2.8V21.2C3.1 21.8 3.3 22.3 3.6 22.6L3.7 22.7L14.7 11.7V11.3L3.7 0.3L3.6 1.4Z"
-                        fill="#00E5FF"
-                      />
-                      <path
-                        d="M18.4 15.4L14.7 11.7V11.3L18.4 7.6L18.5 7.7L22.9 10.2C24.1 10.9 24.1 12.1 22.9 12.8L18.5 15.3L18.4 15.4Z"
-                        fill="#FFD600"
-                      />
-                      <path
-                        d="M18.5 15.3L14.7 11.5L3.6 22.6C4.1 23.1 4.9 23.2 5.8 22.7L18.5 15.3Z"
-                        fill="#FF3D00"
-                      />
-                      <path
-                        d="M18.5 7.7L5.8 0.3C4.9 -0.2 4.1 -0.1 3.6 0.4L14.7 11.5L18.5 7.7Z"
-                        fill="#00E676"
-                      />
-                    </svg>
-                    <div className="flex flex-col text-left">
-                      <span className="text-[9px] uppercase tracking-wider text-slate-300 font-medium">GET IT ON</span>
-                      <span className="text-sm font-bold text-white leading-tight">Google Play</span>
-                    </div>
-                  </a>
-
-                  {/* App Store Button */}
-                  <a
-                    href="https://www.apple.com/app-store/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 no-underline group"
-                  >
-                    <svg className="w-6 h-6 flex-shrink-0 fill-white" viewBox="0 0 24 24">
-                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.78 1.06-1.85.94-2.94-.93.04-2.02.63-2.67 1.4-.58.68-1.09 1.77-.96 2.83 1.04.08 2.06-.51 2.69-1.29" />
-                    </svg>
-                    <div className="flex flex-col text-left">
-                      <span className="text-[9px] uppercase tracking-wider text-slate-300 font-medium">Download on</span>
-                      <span className="text-sm font-bold text-white leading-tight">App Store</span>
-                    </div>
-                  </a>
-
-                  {/* Scan QR / Direct APK Button */}
-                  <button
-                    onClick={() => setDownloadModalOpen(true)}
-                    className="flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#0284c7] to-[#00a8cc] hover:from-[#0369a1] hover:to-[#0284c7] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer border-none hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
-                    title="Scan QR Code or Download APK directly"
-                  >
-                    <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" strokeWidth={2.5} />
-                    <span>{t.scanQrBtn}</span>
-                  </button>
-                </div>
-
-                {/* SECTION 2: Policyholder & Agent Web Portals */}
-                <div className="pt-4 border-t border-slate-100">
-                  <p className="text-xs font-semibold text-slate-500 mb-2.5">
-                    {t.webPortalHeader}
-                  </p>
-                  <div className="flex flex-wrap gap-2.5">
-                    {/* Policyholder Web Portal */}
-                    <Link
-                      href="/Policy_Holder/Home"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-[#0d2a3a] hover:text-[#0284c7] font-semibold text-xs sm:text-sm transition-all duration-150 no-underline shadow-2xs hover:shadow-xs hover:-translate-y-0.5"
-                    >
-                      <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.2} />
-                      <span>{t.policyHolderWebBtn}</span>
-                      <span className="text-slate-400 font-bold ml-0.5">→</span>
-                    </Link>
-
-                    {/* Agent Web Portal */}
-                    <Link
-                      href="/Agent/Dashboard"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-[#0d2a3a] hover:text-[#0284c7] font-semibold text-xs sm:text-sm transition-all duration-150 no-underline shadow-2xs hover:shadow-xs hover:-translate-y-0.5"
-                    >
-                      <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.2} />
-                      <span>{t.agentWebBtn}</span>
-                      <span className="text-slate-400 font-bold ml-0.5">→</span>
-                    </Link>
+              {/* Action Buttons Row */}
+              <div className="flex flex-wrap items-center gap-3.5 pt-1">
+                {/* Google Play / SClaim Go Download Button */}
+                <a
+                  href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/5fef7f9d-cecd-46d3-9191-3e6ccf35841d"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-slate-950 hover:bg-slate-800 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 no-underline group"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M3.6 1.4C3.3 1.7 3.1 2.2 3.1 2.8V21.2C3.1 21.8 3.3 22.3 3.6 22.6L3.7 22.7L14.7 11.7V11.3L3.7 0.3L3.6 1.4Z"
+                      fill="#00E5FF"
+                    />
+                    <path
+                      d="M18.4 15.4L14.7 11.7V11.3L18.4 7.6L18.5 7.7L22.9 10.2C24.1 10.9 24.1 12.1 22.9 12.8L18.5 15.3L18.4 15.4Z"
+                      fill="#FFD600"
+                    />
+                    <path
+                      d="M18.5 15.3L14.7 11.5L3.6 22.6C4.1 23.1 4.9 23.2 5.8 22.7L18.5 15.3Z"
+                      fill="#FF3D00"
+                    />
+                    <path
+                      d="M18.5 7.7L5.8 0.3C4.9 -0.2 4.1 -0.1 3.6 0.4L14.7 11.5L18.5 7.7Z"
+                      fill="#00E676"
+                    />
+                  </svg>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[9px] uppercase tracking-wider text-slate-300 font-medium leading-none">GET IT ON</span>
+                    <span className="text-sm font-bold text-white leading-tight">Google Play</span>
                   </div>
-                </div>
+                </a>
+
+                {/* Policyholder Portal Button */}
+                <Link
+                  href="/Policy_Holder/Home"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0284c7] text-slate-800 hover:text-[#0284c7] font-bold text-sm transition-all duration-200 no-underline shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                >
+                  <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.2} />
+                  <span>{t.policyHolderWebBtn}</span>
+                </Link>
+
+                {/* Agent Portal Button */}
+                <Link
+                  href="/Agent/Dashboard"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-slate-50 border-2 border-slate-300 hover:border-[#0f3448] text-slate-800 hover:text-[#0f3448] font-bold text-sm transition-all duration-200 no-underline shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                >
+                  <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.2} />
+                  <span>{t.agentWebBtn}</span>
+                </Link>
               </div>
             </div>
           </div>
         </section>
       </main>
-
-      {/* Reusable Mobile App Download Modal */}
-      <AppDownloadModal
-        isOpen={downloadModalOpen}
-        onClose={() => setDownloadModalOpen(false)}
-        lang={lang}
-        portalType="all"
-      />
 
       <Footer className="mt-0" />
     </div>

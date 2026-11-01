@@ -112,21 +112,10 @@ export default function AppDownloadModal({
   if (!isOpen) return null;
 
   const handleDownloadApk = () => {
-    // Generate simulated APK download file or direct download
-    const blob = new Blob(
-      [
-        "SANASA SClaim Go - Official Mobile Application Package (Release v1.0.0)\n\nPackage: com.sanasainsurance.mobileapp\nTo install, open this file on your Android device and enable 'Install from unknown sources' if prompted."
-      ],
-      { type: "application/vnd.android.package-archive" }
+    window.open(
+      "https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/5fef7f9d-cecd-46d3-9191-3e6ccf35841d",
+      "_blank"
     );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Sanasa_SClaim_Go_v1.0.0.apk";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -296,7 +285,7 @@ export default function AppDownloadModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Google Play Button */}
               <a
-                href="https://play.google.com/store/apps"
+                href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/5fef7f9d-cecd-46d3-9191-3e6ccf35841d"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 no-underline group"
