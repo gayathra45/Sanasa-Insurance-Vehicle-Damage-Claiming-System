@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🛡️ SANASA General Insurance — SClaim Go
-### Enterprise Motor Claim, Policy Renewal & Fleet Management Ecosystem
+### Enterprise Motor Claim, Policy Renewal, Fleet Management & Smart NFC Ecosystem
 
 <br/>
 
@@ -11,8 +11,16 @@
     <img src="https://img.shields.io/badge/🚀_LAUNCH_WEB_PORTAL-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Launch Web Portal" />
   </a>
   &nbsp;
-  <a href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/41208bee-c580-4736-8c07-aeea1a2267bd" target="_blank">
-    <img src="https://img.shields.io/badge/📲_DOWNLOAD_ANDROID_APK-10b981?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  <a href="https://expo.dev/artifacts/eas/s4TXp2v686487RuygP7EmwNWwfV59IdjhFDWxos-REQ.apk" target="_blank">
+    <img src="https://img.shields.io/badge/📱_DOWNLOAD_SCLAIM_GO_APK-10b981?style=for-the-badge&logo=android&logoColor=white" alt="Download SClaim Go APK" />
+  </a>
+  &nbsp;
+  <a href="https://expo.dev/artifacts/eas/9MZiZQmaqUOeg9vAiVoMKB-lYP_PA3yLlkIsk6k2anA.apk" target="_blank">
+    <img src="https://img.shields.io/badge/💳_DOWNLOAD_S--NFC_WRITER_APK-3b82f6?style=for-the-badge&logo=nfc&logoColor=white" alt="Download S-NFC Writer APK" />
+  </a>
+  &nbsp;
+  <a href="https://github.com/gayathra45/SNFC-App" target="_blank">
+    <img src="https://img.shields.io/badge/📦_S--NFC_APP_REPO-181717?style=for-the-badge&logo=github&logoColor=white" alt="S-NFC App Repo" />
   </a>
 </p>
 
@@ -20,7 +28,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/System_Status-100%25_Operational-22c55e?style=flat-square&logo=statuspage&logoColor=white" alt="Operational Status" />
   &nbsp;
-  <img src="https://img.shields.io/badge/Version-2.0.0_Enterprise-102A43?style=flat-square" alt="Version 2.0.0" />
+  <img src="https://img.shields.io/badge/Version-2.1.0_Enterprise-102A43?style=flat-square" alt="Version 2.1.0" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/NFC_Engine-ISO_14443--A_NDEF-0284c7?style=flat-square&logo=contactlesspayment&logoColor=white" alt="NFC Engine" />
   &nbsp;
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
   &nbsp;
@@ -35,9 +45,20 @@
 
 ## 📌 Executive Overview
 
-**SANASA SClaim Go** is a full-stack, enterprise-grade motor vehicle insurance claims, policy underwriting, and driver fleet governance platform built for **SANASA General Insurance PLC (Sri Lanka)**. The platform connects **Policyholders**, **Field Insurance Assessors**, **Branch Officers**, and **System Administrators** into a synchronized, real-time ecosystem.
+**SANASA SClaim Go** is a full-stack, enterprise-grade motor vehicle insurance claims, policy underwriting, driver fleet governance, and smart hardware NFC platform built for **SANASA General Insurance PLC (Sri Lanka)**. The platform seamlessly unifies **Policyholders**, **Field Insurance Assessors**, **Branch Officers**, **System Administrators**, and **Hardware NFC Operators** into a single synchronized, real-time ecosystem.
 
-By replacing manual paperwork with automated on-site incident capture, **SClaim Go** shortens claim lifecycle turnaround from **14 days down to 45 minutes**, enables secondary driver onboarding with branch-controlled termination sign-offs, automates SMS customer alerts, and features an integrated **Sanasa AI Assistant**.
+By replacing manual paperwork with automated on-site incident capture and digital/hardware driver credentials, **SClaim Go** shortens claim lifecycle turnaround from **14 days down to 45 minutes**, enables secondary driver onboarding with branch-controlled termination sign-offs, provisions reusable physical NFC driver cards, automates SMS customer alerts, and features an integrated **Sanasa AI Assistant**.
+
+---
+
+## 📲 Mobile Applications Hub & Direct Download Links
+
+The ecosystem provides two dedicated mobile applications tailored for different operational roles:
+
+| Application | Target Audience | Primary Functionality | Build & Download Links |
+| :--- | :--- | :--- | :--- |
+| **SClaim Go** | Policyholders & Vehicle Owners | Scene-of-accident claim filing, policy renewals, multi-installment payments, vehicle portfolio, and third-party driver hub. | • **[Download APK (v1.0.1)](https://expo.dev/artifacts/eas/s4TXp2v686487RuygP7EmwNWwfV59IdjhFDWxos-REQ.apk)**<br/>• [EAS Build Details](https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/41208bee-c580-4736-8c07-aeea1a2267bd) |
+| **SANASA S-NFC Writer** | Branch Staff & Hardware Operators | Wirelessly receive encoding jobs from branch portal, encode physical NTAG213/215/216 cards, execute 2-stage verification, and manage card inventory. | • **[Download APK (v1.0.0)](https://expo.dev/artifacts/eas/9MZiZQmaqUOeg9vAiVoMKB-lYP_PA3yLlkIsk6k2anA.apk)**<br/>• [EAS Build Details](https://expo.dev/accounts/gayathra45/projects/s-nfc-writer/builds/c616d569-a872-4596-97c3-e2b18c873767)<br/>• [GitHub Repository](https://github.com/gayathra45/SNFC-App) |
 
 ---
 
@@ -52,8 +73,8 @@ By replacing manual paperwork with automated on-site incident capture, **SClaim 
 │ 58 App Routes        │ 27 Branch Network    │ 8-Stage Claim Lifecycle       │
 │ Next.js 16 AppRouter │ All 9 Sri Lankan Prov│ Scene-to-Settlement Pipeline  │
 ├──────────────────────┼──────────────────────┼───────────────────────────────┤
-│ < 45 Min Total TAT   │ 100% Tokenized Pass  │ Tri-Party Live Chat           │
-│ -98.5% Speed Gain    │ Instant 403 Lockout  │ WebSocket Bidirectional Sync  │
+│ < 45 Min Total TAT   │ 100% Tokenized Pass  │ Smart Physical NFC Cards      │
+│ -98.5% Speed Gain    │ Instant 403 Lockout  │ Reusable Card Hardware Engine │
 └──────────────────────┴──────────────────────┴───────────────────────────────┘
 ```
 
@@ -63,6 +84,7 @@ By replacing manual paperwork with automated on-site incident capture, **SClaim 
 | **Field Assessor Dispatch** | Manual Telephone Queue | **Spatial GPS Routing** (`MapRoute`) | 🛵 **Instant Match** |
 | **Damage Photo Verification** | Physical Camera Prints | **Client-Compressed Live Capture** | 📸 **Zero Loss** |
 | **Driver Authorization Pass** | In-Branch Endorsements | **Instant Tokenized Web Pass** | 🔑 **Real-Time** |
+| **Physical Driver Cards** | Inflexible Plastic Laminates | **Reusable Over-the-Air Physical NFC Cards** | 💳 **Cost-Neutral** |
 | **Driver Termination Sign-Off** | Manual Delays / Unknown | **Branch Sign-Off + Instant 403 Lockout** | 🛡️ **Zero Latency** |
 | **Claim Settlement Approval** | 2 - 3 Weeks | **Same-Day Approval Workflow** | 💳 **95% Reduction** |
 
@@ -92,45 +114,54 @@ SClaim Go Digital Workflow [█░░░░░░░░░░░░░░░░�
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ Comprehensive System Architecture
 
 ```mermaid
 graph TB
     subgraph Client Applications & Portals
         PH_WEB["💻 Policyholder Web Portal<br/>(Next.js 16 App Router)"]
-        PH_APP["📱 SClaim Go Mobile App<br/>(React Native / Expo SDK 57)"]
+        PH_APP["📱 SClaim Go Mobile App<br/>(React Native / Expo SDK 58)"]
+        NFC_APP["💳 SANASA S-NFC Writer App<br/>(Standalone Android / Expo SDK 58)"]
         AGENT_WEB["🛵 Field Agent Portal<br/>(Mobile & Tablet Optimized)"]
-        STAFF_WEB["🏢 Branch Staff Claims Desk<br/>(Adjudication & Dispatch)"]
+        STAFF_WEB["🏢 Branch Staff Claims Desk<br/>(Adjudication & Card Issuance)"]
         ADMIN_WEB["⚙️ Executive Admin Portal<br/>(System Governance & Audit)"]
         DRIVER_PORTAL["🔑 Tokenized Driver Pass<br/>(/driver-access/[token])"]
+        SMART_CARD["🪪 Reusable Physical NFC Card<br/>(NTAG213 / ISO 14443-A)"]
     end
 
     subgraph API Gateway & Micro-Services Layer
         API["Node.js / Express REST Engine"]
-        SOCKET["Socket.io Real-Time Event Hub"]
+        SOCKET["Socket.io Real-Time Event Hub<br/>(NFC Device Pairing & Job Dispatch)"]
         AUTH_MW["Stateless JWT Authentication & RBAC Guard"]
         DRIVER_MW["Driver Token Cryptographic Validator"]
+        NFC_MW["NFC Card Security & State Machine Guard"]
         GEO_SVC["OpenStreetMap & Photon Reverse-Geocoding"]
         PDF_SVC["Vector-Accurate Official Claim Dossier Engine"]
         HEALTH_SVC["Health & Uptime Monitoring Service (/health)"]
     end
 
     subgraph Cloud Storage & Integrated Services
-        DB[("MongoDB Atlas Database<br/>(GeoJSON Spatial Indexes)")]
-        STRIPE["Stripe Payment Gateway<br/>(Renewals & LKR 300 Fees)"]
-        SMS["TextBee SMS Gateway<br/>(24/7 Hotline Alerts)"]
+        DB[("MongoDB Atlas Database<br/>(Spatial Indexes & Card Inventory)")]
+        STRIPE["Stripe Payment Gateway<br/>(Renewals, LKR 300 & Card Fees)"]
+        SMS["TextBee SMS Gateway<br/>(24/7 Hotline Alerts & Driver OTPs)"]
         ANALYTICS["Vercel Analytics & Speed Insights"]
     end
 
     PH_WEB --> API
     PH_APP --> API
+    NFC_APP --> SOCKET
+    NFC_APP --> API
+    NFC_APP --> SMART_CARD
+    SMART_CARD -.->|Tap on Roadside Phone| DRIVER_PORTAL
     AGENT_WEB --> API
     STAFF_WEB --> API
+    STAFF_WEB --> SOCKET
     ADMIN_WEB --> API
     DRIVER_PORTAL --> API
 
     API --> AUTH_MW
     API --> DRIVER_MW
+    API --> NFC_MW
     API --> SOCKET
     API --> GEO_SVC
     API --> PDF_SVC
@@ -139,6 +170,61 @@ graph TB
     API --> STRIPE
     API --> SMS
     PH_WEB --> ANALYTICS
+```
+
+---
+
+## 💳 Hardware Ecosystem: SANASA S-NFC Writer & Smart Cards
+
+The SANASA NFC ecosystem introduces a physical hardware layer into motor insurance, allowing policyholders to purchase reusable physical NFC smart cards that can be dynamically assigned to authorized drivers.
+
+> 📦 **Dedicated Repository:** [https://github.com/gayathra45/SNFC-App](https://github.com/gayathra45/SNFC-App)  
+> 📲 **Download Android APK:** [S-NFC Writer v1.0.0 APK](https://expo.dev/artifacts/eas/9MZiZQmaqUOeg9vAiVoMKB-lYP_PA3yLlkIsk6k2anA.apk)
+
+### 1. Hardware Architecture & Specifications
+- **Supported NFC Silicon**: NXP NTAG213, NTAG215, NTAG216, Mifare Ultralight, and ISO 14443-A contactless cards.
+- **Payload Format**: Standard NDEF URI record (e.g., `https://sanasa-insurance-vehicle-damage-cla.vercel.app/driver-access/[token]`).
+- **Zero-App Roadside Verification**: Any modern smartphone (Android or iOS) can simply tap the physical card to immediately open the driver's verified credentials and claim reporting screen in their browser—no app installation required.
+
+### 2. Physical Card Lifecycle & Reusability Engine
+Unlike traditional static plastic badges, SANASA NFC cards are **100% reusable and cloud-managed**:
+1. **Order & Issuance**: Policyholders order blank cards via the mobile app (LKR 500 per card).
+2. **Branch Inventory Management**: Branch officers track card stock, allocate serials, and prepare cards for pickup or postal dispatch.
+3. **Hardware Encoding via S-NFC Writer**:
+   - The Branch Staff Web Desk pairs with an Android smartphone running the **SANASA S-NFC Writer App** via a **6-digit pairing PIN** or **QR Code** over real-time WebSockets.
+   - When a card write job is triggered on the web desk, the job is pushed instantly to the mobile app.
+   - The operator taps the physical card to the phone's NFC reader.
+4. **Two-Stage Hardware & Cryptographic Verification**:
+   - **Stage 1 (Physical Read-Back)**: The app immediately re-reads the card's NDEF memory to guarantee zero bit-corruption.
+   - **Stage 2 (Backend Validation)**: The encoded URL is submitted to the backend API to verify the cryptographic token against database state.
+   - **In-App WebView Preview**: The operator can preview the live driver portal inside an embedded half-screen WebView before handing the card over.
+5. **Dynamic Assignment & Instant Revocation**:
+   - When employment ends or a driver is terminated, the policyholder can unassign or block the card from their mobile app.
+   - The physical card can then be reassigned to another driver or sanitized for future use without replacing the hardware.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Staff as Branch Officer Desk
+    participant Socket as WebSocket Event Hub
+    actor NFCApp as S-NFC Writer Android App
+    actor Card as Physical NFC Card (NTAG213)
+    actor Driver as Driver's Phone (Any NFC Device)
+    participant API as SANASA Cloud REST API
+
+    Staff->>Socket: Dispatch Card Write Job (Driver Pass URL)
+    Socket->>NFCApp: Push Encoding Request
+    NFCApp-->>Staff: Acknowledge Ready to Write
+    NFCApp->>Card: Write NDEF URI Record via Contactless RF
+    Card-->>NFCApp: Hardware Write Confirmed
+    NFCApp->>Card: Read Back & Verify Memory Integrity (Stage 1)
+    NFCApp->>API: Validate Token Integrity Against Backend (Stage 2)
+    API-->>NFCApp: Validation Confirmed (Status: Active)
+    NFCApp-->>Staff: Real-time UI Checkmark Sync via Socket.io
+    
+    Note over Card, Driver: Roadside Use During Inspection / Accident
+    Driver->>Card: Tap Card to Smartphone
+    Card-->>Driver: Launch https://.../driver-access/[token] in Browser
 ```
 
 ---
@@ -154,9 +240,10 @@ graph TB
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Turbopack](https://img.shields.io/badge/Turbopack-000000?style=for-the-badge&logo=turbopack&logoColor=white)
 
-### 2. Native Mobile Architecture (SClaim Go)
+### 2. Native Mobile Architecture (SClaim Go & S-NFC Writer)
 ![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Expo](https://img.shields.io/badge/Expo_SDK_57-000020?style=for-the-badge&logo=expo&logoColor=white)
+![Expo](https://img.shields.io/badge/Expo_SDK_58-000020?style=for-the-badge&logo=expo&logoColor=white)
+![NFC Manager](https://img.shields.io/badge/NFC_Manager-ISO_14443--A-0284c7?style=for-the-badge&logoColor=white)
 ![EAS Build](https://img.shields.io/badge/EAS_Cloud_Build-4630EB?style=for-the-badge&logo=expo&logoColor=white)
 ![Android](https://img.shields.io/badge/Android_APK-22C55E?style=for-the-badge&logo=android&logoColor=white)
 
@@ -179,20 +266,22 @@ graph TB
 
 ## 🎯 Stakeholder Role & Permission Matrix
 
-| Operational Capability | Policyholder | Field Agent | Branch Staff | System Admin | Third-Party Driver |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **View Insured Vehicles & Plates** | ✅ | ❌ | ✅ | ✅ | 🔍 (Assigned Only) |
-| **Submit Scene-of-Accident Claim** | ✅ | ❌ | ❌ | ❌ | ✅ |
-| **On-Site Forensic Damage Assessment** | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Turn-by-Turn GPS Navigation (`MapRoute`)** | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Authorize Third-Party Driver** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Approve / Reject Driver KYC** | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **Request Driver Termination** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Approve Termination & Revoke Token** | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **Tri-Party Live Claim Chat** | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Policy Renewal & Multi-Installments** | ✅ | ❌ | ✅ | ✅ | ❌ |
-| **Branch Geographic Claim Inbox** | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **Global Analytics & User Management** | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Operational Capability | Policyholder | Field Agent | Branch Staff | System Admin | Third-Party Driver | NFC Hardware Operator |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **View Insured Vehicles & Plates** | ✅ | ❌ | ✅ | ✅ | 🔍 (Assigned Only) | ❌ |
+| **Submit Scene-of-Accident Claim** | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **On-Site Forensic Damage Assessment** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Turn-by-Turn GPS Navigation (`MapRoute`)** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Authorize Third-Party Driver (Permanent/Temp)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Approve / Reject Driver KYC** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Order Physical NFC Cards** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Encode & Verify Physical NFC Cards** | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ |
+| **Request Driver Termination** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Approve Termination & Revoke Token** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Tri-Party Live Claim Chat** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Policy Renewal & Multi-Installments** | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Branch Geographic Claim Inbox** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Global Analytics & User Management** | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
 ---
 
@@ -316,6 +405,8 @@ SANASA General Insurance maintains an active branch presence across all 9 provin
 
 ## 💻 Local Development & Installation
 
+### 1. Main Insurance Platform
+
 ```bash
 # 1. Clone repository
 git clone https://github.com/gayathra45/SanasaInsuarance.git
@@ -331,10 +422,27 @@ cd ../frontend
 npm install
 npm run dev    # Next.js running on http://localhost:3000
 
-# 4. Launch Mobile Application
+# 4. Launch SClaim Go Mobile App
 cd ../mobile_app
 npm install
 npx expo start -c   # Auto-syncs IP; scan QR with Expo Go app
+```
+
+### 2. Standalone SANASA S-NFC Writer Android Application
+
+```bash
+# 1. Clone dedicated repository
+git clone https://github.com/gayathra45/SNFC-App.git
+cd SNFC-App
+
+# 2. Install dependencies & launch
+npm install
+npx expo start -c
+
+# 3. Generate Android APK locally
+npx expo prebuild --platform android
+cd android
+.\gradlew assembleDebug
 ```
 
 ---
@@ -343,6 +451,7 @@ npx expo start -c   # Auto-syncs IP; scan QR with Expo Go app
 - **Password Protection**: Passwords hashed using industry-standard **bcrypt** (salt rounds: 10).
 - **Stateless RBAC**: Stateless JSON Web Tokens (JWT) scoped with role claims.
 - **Cryptographic Driver Tokens**: Single-purpose, cryptographically random, revocable tokens validated on every request.
+- **Hardware NFC Memory Locking**: Optional NDEF write-protect locking preventing unauthorized memory alteration on the roadside.
 - **Zero Plaintext Secrets**: No plaintext passwords or production keys are committed to this repository.
 
 ---
@@ -350,5 +459,6 @@ npx expo start -c   # Auto-syncs IP; scan QR with Expo Go app
 ## 📄 License & Ownership
 - **Software License**: This project is licensed under the **[MIT License](./LICENSE)**.
 - **Client Organization**: SANASA General Insurance PLC (Sri Lanka)
-- **Platform Name**: SClaim Go Motor Claim, Policy Renewal & Fleet Management System
+- **Platform Name**: SClaim Go Motor Claim, Policy Renewal, Fleet Management & Smart NFC System
 - **Engineering Lead & Author**: Gayathra Samuditha ([@gayathra45](https://github.com/gayathra45))
+- **Dedicated NFC App Repository**: [https://github.com/gayathra45/SNFC-App](https://github.com/gayathra45/SNFC-App)
