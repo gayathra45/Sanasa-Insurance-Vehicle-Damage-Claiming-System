@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -155,23 +155,49 @@ export default function ThirdPartyNfcSection({
   // Card History Modal
   const [selectedHistoryCard, setSelectedHistoryCard] = useState<NfcCardItem | null>(null);
 
+  // Permanent Driver View More Modal & Edit States
+  const [selectedDriverForViewMore, setSelectedDriverForViewMore] = useState<any | null>(null);
+  const [isEditingPermanentDriver, setIsEditingPermanentDriver] = useState(false);
+  const [editPermanentPhone, setEditPermanentPhone] = useState("");
+  const [editPermanentAddress, setEditPermanentAddress] = useState("");
+  const [savingPermanentEdit, setSavingPermanentEdit] = useState(false);
+  const [blockingPermanentLoading, setBlockingPermanentLoading] = useState(false);
+
+  // Optional NFC Card View More Modal
+  const [selectedCardForViewMore, setSelectedCardForViewMore] = useState<NfcCardItem | null>(null);
+
+  // Stable refs to prevent unnecessary re-fetches and re-renders
+  const cardsRef = useRef(cards);
+  cardsRef.current = cards;
+
+  const ordersRef = useRef(orders);
+  ordersRef.current = orders;
+
   // 1. Fetch Cards
   const fetchCards = useCallback(
     async (silent = false) => {
       if (!userInfo?.nic) return;
-      if (!silent) setLoadingCards(true);
+      // Only show full loader if there are no cards currently displayed
+      if (!silent && cardsRef.current.length === 0) {
+        setLoadingCards(true);
+      }
       try {
         const res = await fetch(
           `${API_BASE_URL}/api/nfc-card/inventory?nic=${encodeURIComponent(userInfo.nic)}&_=${Date.now()}`
         );
         if (res.ok) {
           const data = await res.json();
-          if (data.cards) setCards(data.cards);
+          if (data.cards) {
+            setCards((prev) => {
+              if (JSON.stringify(prev) === JSON.stringify(data.cards)) return prev;
+              return data.cards;
+            });
+          }
         }
       } catch (e) {
         console.warn("fetchCards error:", e);
       } finally {
-        if (!silent) setLoadingCards(false);
+        setLoadingCards(false);
       }
     },
     [userInfo?.nic]
@@ -181,36 +207,47 @@ export default function ThirdPartyNfcSection({
   const fetchOrders = useCallback(
     async (silent = false) => {
       if (!userInfo?.nic) return;
-      if (!silent) setLoadingOrders(true);
+      if (!silent && ordersRef.current.length === 0) {
+        setLoadingOrders(true);
+      }
       try {
         const res = await fetch(
           `${API_BASE_URL}/api/nfc-card/orders?nic=${encodeURIComponent(userInfo.nic)}&_=${Date.now()}`
         );
         if (res.ok) {
           const data = await res.json();
-          if (data.orders) setOrders(data.orders);
+          if (data.orders) {
+            setOrders((prev) => {
+              if (JSON.stringify(prev) === JSON.stringify(data.orders)) return prev;
+              return data.orders;
+            });
+          }
         }
       } catch (e) {
         console.warn("fetchOrders error:", e);
       } finally {
-        if (!silent) setLoadingOrders(false);
+        setLoadingOrders(false);
       }
     },
     [userInfo?.nic]
   );
 
+  // Initial load when user info is ready
   useEffect(() => {
-    fetchCards();
-    fetchOrders();
+    if (userInfo?.nic) {
+      fetchCards(cardsRef.current.length > 0);
+      fetchOrders(ordersRef.current.length > 0);
+    }
+  }, [userInfo?.nic, fetchCards, fetchOrders]);
 
-    const interval = setInterval(() => {
+  // Silently refresh when user explicitly switches to NFC Cards or Orders tab
+  useEffect(() => {
+    if (subTab === "optional_cards") {
       fetchCards(true);
+    } else if (subTab === "orders_tracking") {
       fetchOrders(true);
-      if (onRefreshPermanent) onRefreshPermanent();
-    }, 3500);
-
-    return () => clearInterval(interval);
-  }, [fetchCards, fetchOrders, onRefreshPermanent]);
+    }
+  }, [subTab, fetchCards, fetchOrders]);
 
   // Duration Preset Change Helper
   const handleDurationChange = (preset: string) => {
@@ -440,6 +477,105 @@ export default function ThirdPartyNfcSection({
     }
   };
 
+  // ── Permanent Driver View More & Management Handlers ──
+  const handleOpenPermanentDriverViewMore = (req: any) => {
+    setSelectedDriverForViewMore(req);
+    setIsEditingPermanentDriver(false);
+    setEditPermanentPhone(req.driverDetails?.phoneNumber || "");
+    setEditPermanentAddress(req.driverDetails?.residentialAddress || "");
+  };
+
+  const handleBlockPermanentDriver = async (req: any) => {
+    Alert.alert(
+      "Temporarily Block Driver",
+      `Are you sure you want to temporarily suspend driver access for ${req.driverDetails?.fullName || "this driver"}? Digital authorization will be paused.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Block Access",
+          style: "destructive",
+          onPress: async () => {
+            setBlockingPermanentLoading(true);
+            try {
+              const res = await fetch(`${API_BASE_URL}/api/third-party/permanent/block/${req._id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  policyHolderNic: userInfo.nic,
+                  reason: "Temporarily blocked by policyholder via mobile app"
+                })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to block driver.");
+              showCustomAlert("Driver Blocked", data.message || "Driver access has been temporarily suspended.", "warning");
+              setSelectedDriverForViewMore((prev: any) => (prev ? { ...prev, status: "Temporarily Blocked" } : null));
+              if (onRefreshPermanent) onRefreshPermanent();
+            } catch (err: any) {
+              Alert.alert("Error", err.message || "Failed to block driver.");
+            } finally {
+              setBlockingPermanentLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleUnblockPermanentDriver = async (req: any) => {
+    setBlockingPermanentLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/third-party/permanent/unblock/${req._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ policyHolderNic: userInfo.nic })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to unblock driver.");
+      showCustomAlert("Driver Restored", data.message || "Driver access restored to active status.", "success");
+      setSelectedDriverForViewMore((prev: any) => (prev ? { ...prev, status: "Approved" } : null));
+      if (onRefreshPermanent) onRefreshPermanent();
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to unblock driver.");
+    } finally {
+      setBlockingPermanentLoading(false);
+    }
+  };
+
+  const handleSavePermanentDriverEdit = async () => {
+    if (!selectedDriverForViewMore) return;
+    if (!editPermanentPhone.trim()) {
+      Alert.alert("Validation Error", "Please provide a valid driver phone number.");
+      return;
+    }
+    setSavingPermanentEdit(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/third-party/permanent/update-driver/${selectedDriverForViewMore._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policyHolderNic: userInfo.nic,
+          phoneNumber: editPermanentPhone.trim(),
+          residentialAddress: editPermanentAddress.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update driver details.");
+      showCustomAlert("Details Updated", "Driver phone number and address saved successfully.", "success");
+      setSelectedDriverForViewMore(data.request);
+      setIsEditingPermanentDriver(false);
+      if (onRefreshPermanent) onRefreshPermanent();
+    } catch (err: any) {
+      Alert.alert("Update Error", err.message || "Failed to update driver details.");
+    } finally {
+      setSavingPermanentEdit(false);
+    }
+  };
+
+  // ── NFC Card View More Handler ──
+  const handleOpenNfcCardViewMore = (card: NfcCardItem) => {
+    setSelectedCardForViewMore(card);
+  };
+
   // Filtered Cards
   const availableCards = cards.filter((c) => c.status === "Available");
   const filteredCards = cards.filter((c) => {
@@ -479,48 +615,66 @@ export default function ThirdPartyNfcSection({
         </TouchableOpacity>
       </LinearGradient>
 
-      {/* ── SUB-TABS SELECTOR ── */}
-      <View style={styles.subTabRow}>
+      {/* ── SUB-TABS SELECTOR (REDESIGNED SEGMENTED ROW) ── */}
+      <View style={styles.modernSubTabRow}>
         <TouchableOpacity
-          style={[styles.subTabBtn, subTab === "permanent" && styles.subTabBtnActive]}
+          style={[styles.modernSubTabBtn, subTab === "permanent" && styles.modernSubTabBtnActive]}
           onPress={() => setSubTab("permanent")}
+          activeOpacity={0.8}
         >
           <MaterialCommunityIcons
             name="badge-account-outline"
-            size={16}
-            color={subTab === "permanent" ? "#ffffff" : "#64748b"}
+            size={15}
+            color={subTab === "permanent" ? "#ffffff" : "#475569"}
           />
-          <Text style={[styles.subTabBtnText, subTab === "permanent" && styles.subTabBtnTextActive]}>
-            Permanent Drivers ({permanentRequests.length})
+          <Text style={[styles.modernSubTabBtnText, subTab === "permanent" && styles.modernSubTabBtnTextActive]}>
+            Permanent
           </Text>
+          <View style={[styles.modernSubTabBadge, subTab === "permanent" && styles.modernSubTabBadgeActive]}>
+            <Text style={[styles.modernSubTabBadgeText, subTab === "permanent" && styles.modernSubTabBadgeTextActive]}>
+              {permanentRequests.length}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.subTabBtn, subTab === "optional_cards" && styles.subTabBtnActive]}
+          style={[styles.modernSubTabBtn, subTab === "optional_cards" && styles.modernSubTabBtnActive]}
           onPress={() => setSubTab("optional_cards")}
+          activeOpacity={0.8}
         >
           <MaterialCommunityIcons
             name="credit-card-wireless-outline"
-            size={16}
-            color={subTab === "optional_cards" ? "#ffffff" : "#64748b"}
+            size={15}
+            color={subTab === "optional_cards" ? "#ffffff" : "#475569"}
           />
-          <Text style={[styles.subTabBtnText, subTab === "optional_cards" && styles.subTabBtnTextActive]}>
-            Optional NFC Cards ({cards.length})
+          <Text style={[styles.modernSubTabBtnText, subTab === "optional_cards" && styles.modernSubTabBtnTextActive]}>
+            NFC Cards
           </Text>
+          <View style={[styles.modernSubTabBadge, subTab === "optional_cards" && styles.modernSubTabBadgeActive]}>
+            <Text style={[styles.modernSubTabBadgeText, subTab === "optional_cards" && styles.modernSubTabBadgeTextActive]}>
+              {cards.length}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.subTabBtn, subTab === "orders_tracking" && styles.subTabBtnActive]}
+          style={[styles.modernSubTabBtn, subTab === "orders_tracking" && styles.modernSubTabBtnActive]}
           onPress={() => setSubTab("orders_tracking")}
+          activeOpacity={0.8}
         >
           <MaterialCommunityIcons
             name="clock-check-outline"
-            size={16}
-            color={subTab === "orders_tracking" ? "#ffffff" : "#64748b"}
+            size={15}
+            color={subTab === "orders_tracking" ? "#ffffff" : "#475569"}
           />
-          <Text style={[styles.subTabBtnText, subTab === "orders_tracking" && styles.subTabBtnTextActive]}>
-            Card Orders ({orders.length})
+          <Text style={[styles.modernSubTabBtnText, subTab === "orders_tracking" && styles.modernSubTabBtnTextActive]}>
+            Orders
           </Text>
+          <View style={[styles.modernSubTabBadge, subTab === "orders_tracking" && styles.modernSubTabBadgeActive]}>
+            <Text style={[styles.modernSubTabBadgeText, subTab === "orders_tracking" && styles.modernSubTabBadgeTextActive]}>
+              {orders.length}
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -529,7 +683,7 @@ export default function ThirdPartyNfcSection({
       {/* ═════════════════════════════════════════════════════════════ */}
       {subTab === "permanent" && (
         <View style={styles.tabContent}>
-          {loadingPermanent ? (
+          {loadingPermanent && permanentRequests.length === 0 ? (
             <View style={styles.loaderBox}>
               <ActivityIndicator size="large" color="#0284c7" />
               <Text style={styles.loaderText}>Loading permanent drivers...</Text>
@@ -551,172 +705,141 @@ export default function ThirdPartyNfcSection({
               </TouchableOpacity>
             </View>
           ) : (
-            permanentRequests.map((req: any) => (
-              <View key={req._id} style={styles.requestCard}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.refBox}>
-                    <Text style={styles.refText}>{req.requestReference || "REF"}</Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusPill,
-                      req.status === "Approved"
-                        ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }
-                        : req.status === "Rejected"
-                        ? { backgroundColor: "#fef2f2", borderColor: "#fecaca" }
-                        : { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
-                    ]}
-                  >
-                    <Text
+            permanentRequests.map((req: any) => {
+              const isApproved = req.status === "Approved";
+              const isBlocked = req.status === "Temporarily Blocked";
+              const isRejected = req.status === "Rejected";
+              const isPendingPayment = req.status === "Pending Payment";
+              const isPendingApproval = req.status === "Pending Branch Approval";
+              const isTerminated = req.status === "Terminated";
+              const isActive = isApproved;
+
+              return (
+                <View key={req._id} style={styles.requestCard}>
+                  {/* Header: Ref and Active / Inactive Status Pill */}
+                  <View style={styles.cardHeader}>
+                    <View style={styles.refBox}>
+                      <Text style={styles.refText}>{req.requestReference || "REF"}</Text>
+                    </View>
+                    <View
                       style={[
-                        styles.statusText,
-                        req.status === "Approved"
-                          ? { color: "#16a34a" }
-                          : req.status === "Rejected"
-                          ? { color: "#dc2626" }
-                          : { color: "#b45309" }
+                        styles.statusPill,
+                        isActive
+                          ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }
+                          : isBlocked
+                          ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
+                          : isRejected
+                          ? { backgroundColor: "#fef2f2", borderColor: "#fecaca" }
+                          : isPendingPayment
+                          ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
+                          : isTerminated
+                          ? { backgroundColor: "#f1f5f9", borderColor: "#cbd5e1" }
+                          : { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }
                       ]}
                     >
-                      {req.status}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* ── Status Stepper for Permanent Driver ── */}
-                {(() => {
-                  const isPaid = req.payment?.status === "Paid" || req.status === "Approved" || req.status === "Scheduled" || req.status === "Pending Branch Approval";
-                  const isBranchReview = req.status === "Pending Branch Approval";
-                  const isApprovedOrActive = req.status === "Approved" || req.status === "Scheduled" || req.status === "Temporarily Blocked" || req.status === "Pending Termination Approval";
-                  const isRejected = req.status === "Rejected";
-
-                  const steps = ["Submitted", "Fee Paid", "Review", "Active"];
-                  let curIdx = 0;
-                  if (isApprovedOrActive) curIdx = 3;
-                  else if (isBranchReview || isPaid) curIdx = 2;
-                  else if (req.status === "Pending Payment") curIdx = 1;
-
-                  if (isRejected) {
-                    return (
-                      <View style={styles.tpRejectBox}>
-                        <Ionicons name="close-circle" size={15} color="#dc2626" />
-                        <Text style={styles.tpRejectText}>
-                          Rejected: {req.branchReview?.rejectionReason || "Verification criteria not met"}
-                        </Text>
-                      </View>
-                    );
-                  }
-
-                  return (
-                    <View style={styles.tpStepperContainer}>
-                      <View style={styles.tpStepperLineBg} />
                       <View
                         style={[
-                          styles.tpStepperLineProgress,
-                          { width: `${(Math.min(curIdx, 3) / 3) * 78}%` }
+                          styles.dotIndicator,
+                          isActive
+                            ? { backgroundColor: "#16a34a" }
+                            : isBlocked
+                            ? { backgroundColor: "#f59e0b" }
+                            : isRejected
+                            ? { backgroundColor: "#ef4444" }
+                            : isPendingPayment
+                            ? { backgroundColor: "#d97706" }
+                            : isTerminated
+                            ? { backgroundColor: "#64748b" }
+                            : { backgroundColor: "#2563eb" }
                         ]}
                       />
-                      <View style={styles.tpStepperRow}>
-                        {steps.map((st, i) => {
-                          const passed = curIdx >= i;
-                          const isCurrent = curIdx === i;
-                          return (
-                            <View key={st} style={styles.tpStepCol}>
-                              <View
-                                style={[
-                                  styles.tpStepCircle,
-                                  passed
-                                    ? styles.tpStepCirclePassed
-                                    : isCurrent
-                                    ? styles.tpStepCircleCurrent
-                                    : styles.tpStepCirclePending
-                                ]}
-                              >
-                                {passed ? (
-                                  <Ionicons name="checkmark" size={12} color="#ffffff" />
-                                ) : (
-                                  <Text style={[styles.tpStepNumText, isCurrent && { color: "#ffffff" }]}>
-                                    {i + 1}
-                                  </Text>
-                                )}
-                              </View>
-                              <Text
-                                style={[
-                                  styles.tpStepLabel,
-                                  isCurrent && styles.tpStepLabelCurrent,
-                                  passed && styles.tpStepLabelPassed
-                                ]}
-                                numberOfLines={1}
-                              >
-                                {st}
-                              </Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  );
-                })()}
-
-                {/* Driver Info */}
-                <View style={styles.driverRow}>
-                  <View style={styles.driverAvatar}>
-                    <MaterialCommunityIcons name="account" size={24} color="#4f46e5" />
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={styles.driverName}>{req.driverDetails?.fullName || "Authorized Driver"}</Text>
-                    <Text style={styles.driverSub}>NIC: {req.driverDetails?.nicNumber || "—"}</Text>
-                    <Text style={styles.driverSub}>Tel: {req.driverDetails?.phoneNumber || "—"}</Text>
-                  </View>
-                </View>
-
-                {/* Covered Vehicles */}
-                <View style={styles.vehiclesCoveredRow}>
-                  <Text style={styles.secLabel}>Covered Vehicles:</Text>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-                    {(req.selectedVehicles || []).map((v: any) => (
-                      <View key={v.numberPlate} style={styles.plateBadge}>
-                        <Text style={styles.plateText}>{v.numberPlate}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Duration */}
-                {req.accessDuration && (
-                  <View style={styles.durationRow}>
-                    <Ionicons name="calendar-outline" size={13} color="#64748b" />
-                    <Text style={styles.durationText}>
-                      Duration: {req.accessDuration.durationType || "12 Months"} (
-                      {new Date(req.accessDuration.startDate).toLocaleDateString("en-LK")} -{" "}
-                      {new Date(req.accessDuration.endDate).toLocaleDateString("en-LK")})
-                    </Text>
-                  </View>
-                )}
-
-                {/* Card Actions */}
-                <View style={styles.cardFooter}>
-                  {req.status === "Pending Payment" && (
-                    <TouchableOpacity
-                      style={styles.actionBtnPrimary}
-                      onPress={() => onResumePayment(req._id, req.requestReference)}
-                    >
-                      <Text style={styles.actionBtnPrimaryText}>Pay LKR 300 Now</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {req.status === "Approved" && (
-                    <View style={{ flexDirection: "row", gap: 8 }}>
-                      <TouchableOpacity
-                        style={styles.actionBtnDanger}
-                        onPress={() => onOpenTerminateModal(req)}
+                      <Text
+                        style={[
+                          styles.statusText,
+                          isActive
+                            ? { color: "#16a34a" }
+                            : isBlocked
+                            ? { color: "#b45309" }
+                            : isRejected
+                            ? { color: "#dc2626" }
+                            : isPendingPayment
+                            ? { color: "#d97706" }
+                            : isTerminated
+                            ? { color: "#475569" }
+                            : { color: "#1d4ed8" }
+                        ]}
                       >
-                        <Text style={styles.actionBtnDangerText}>Terminate</Text>
-                      </TouchableOpacity>
+                        {isActive
+                          ? "Active"
+                          : isBlocked
+                          ? "Temporarily Blocked"
+                          : isPendingApproval
+                          ? "Pending Approval"
+                          : req.status}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Driver Info Row */}
+                  <View style={styles.driverRow}>
+                    <View style={styles.driverAvatar}>
+                      <MaterialCommunityIcons name="account" size={24} color="#4f46e5" />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={styles.driverName}>{req.driverDetails?.fullName || "Authorized Driver"}</Text>
+                      <Text style={styles.driverSub}>NIC: {req.driverDetails?.nicNumber || "—"}</Text>
+                      <Text style={styles.driverSub}>Tel: {req.driverDetails?.phoneNumber || "—"}</Text>
+                    </View>
+                  </View>
+
+                  {/* Covered Vehicles */}
+                  <View style={styles.vehiclesCoveredRow}>
+                    <Text style={styles.secLabel}>Covered Vehicles:</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                      {(req.selectedVehicles || []).map((v: any) => (
+                        <View key={v.numberPlate} style={styles.plateBadge}>
+                          <Text style={styles.plateText}>{v.numberPlate}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Duration */}
+                  {req.accessDuration && (
+                    <View style={styles.durationRow}>
+                      <Ionicons name="calendar-outline" size={13} color="#64748b" />
+                      <Text style={styles.durationText}>
+                        Duration: {req.accessDuration.durationType || "12 Months"} (Valid until{" "}
+                        {new Date(req.accessDuration.endDate).toLocaleDateString("en-LK")})
+                      </Text>
                     </View>
                   )}
+
+                  {/* Card Actions: View More & Pay Now */}
+                  <View style={styles.cardFooterRow}>
+                    <TouchableOpacity
+                      style={styles.viewMoreBtn}
+                      onPress={() => handleOpenPermanentDriverViewMore(req)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="eye-outline" size={15} color="#0f172a" />
+                      <Text style={styles.viewMoreBtnText}>View More</Text>
+                    </TouchableOpacity>
+
+                    {isPendingPayment && (
+                      <TouchableOpacity
+                        style={styles.payNowBtn}
+                        onPress={() => onResumePayment(req._id, req.requestReference)}
+                        activeOpacity={0.85}
+                      >
+                        <MaterialCommunityIcons name="credit-card-outline" size={14} color="#ffffff" />
+                        <Text style={styles.payNowBtnText}>Pay LKR 300</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
       )}
@@ -741,7 +864,7 @@ export default function ThirdPartyNfcSection({
             ))}
           </ScrollView>
 
-          {loadingCards ? (
+          {loadingCards && cards.length === 0 ? (
             <View style={styles.loaderBox}>
               <ActivityIndicator size="large" color="#0284c7" />
               <Text style={styles.loaderText}>Loading NFC cards inventory...</Text>
@@ -794,6 +917,16 @@ export default function ThirdPartyNfcSection({
                           : { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }
                       ]}
                     >
+                      <View
+                        style={[
+                          styles.dotIndicator,
+                          isAvailable
+                            ? { backgroundColor: "#16a34a" }
+                            : isBlocked
+                            ? { backgroundColor: "#f59e0b" }
+                            : { backgroundColor: "#2563eb" }
+                        ]}
+                      />
                       <Text
                         style={[
                           styles.statusText,
@@ -829,48 +962,27 @@ export default function ThirdPartyNfcSection({
                     </View>
                   )}
 
-                  {/* Actions */}
-                  <View style={styles.cardFooter}>
-                    {isAvailable ? (
-                      <TouchableOpacity
-                        style={styles.actionBtnPrimary}
-                        onPress={() => handleOpenAssignModal(card)}
-                      >
-                        <Ionicons name="person-add" size={14} color="#ffffff" />
-                        <Text style={styles.actionBtnPrimaryText}>Assign Temporary Driver (+ OTP)</Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <View style={{ flexDirection: "row", gap: 8, flex: 1 }}>
-                        {isBlocked ? (
-                          <TouchableOpacity
-                            style={styles.actionBtnOutline}
-                            onPress={() => handleUnblockCard(card.cardId)}
-                          >
-                            <Text style={styles.actionBtnOutlineText}>Unblock</Text>
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.actionBtnOutline}
-                            onPress={() => handleBlockCard(card.cardId)}
-                          >
-                            <Text style={styles.actionBtnOutlineText}>Block</Text>
-                          </TouchableOpacity>
-                        )}
-                        <TouchableOpacity
-                          style={styles.actionBtnDanger}
-                          onPress={() => handleTerminateCard(card.cardId)}
-                        >
-                          <Text style={styles.actionBtnDangerText}>Terminate</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
+                  {/* Actions: View More & Assign Driver */}
+                  <View style={styles.cardFooterRow}>
                     <TouchableOpacity
-                      style={styles.historyBtn}
-                      onPress={() => setSelectedHistoryCard(card)}
+                      style={styles.viewMoreBtn}
+                      onPress={() => handleOpenNfcCardViewMore(card)}
+                      activeOpacity={0.8}
                     >
-                      <Ionicons name="time-outline" size={14} color="#64748b" />
+                      <Ionicons name="eye-outline" size={15} color="#0f172a" />
+                      <Text style={styles.viewMoreBtnText}>View More</Text>
                     </TouchableOpacity>
+
+                    {isAvailable && (
+                      <TouchableOpacity
+                        style={styles.actionBtnPrimaryCompact}
+                        onPress={() => handleOpenAssignModal(card)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="person-add" size={13} color="#ffffff" />
+                        <Text style={styles.actionBtnPrimaryCompactText}>Assign Driver</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               );
@@ -884,7 +996,7 @@ export default function ThirdPartyNfcSection({
       {/* ═════════════════════════════════════════════════════════════ */}
       {subTab === "orders_tracking" && (
         <View style={styles.tabContent}>
-          {loadingOrders ? (
+          {loadingOrders && orders.length === 0 ? (
             <View style={styles.loaderBox}>
               <ActivityIndicator size="large" color="#0284c7" />
               <Text style={styles.loaderText}>Loading card orders...</Text>
@@ -1282,6 +1394,559 @@ export default function ThirdPartyNfcSection({
                   </View>
                 ))
               )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {/* 5. PERMANENT DRIVER FULL DETAILS, TRACKING & MANAGEMENT MODAL */}
+      {/* ═════════════════════════════════════════════════════════════ */}
+      <Modal
+        visible={!!selectedDriverForViewMore}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedDriverForViewMore(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.fullDetailModalBox}>
+            {/* Header */}
+            <View style={styles.detailModalHeader}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={styles.detailModalRef}>{selectedDriverForViewMore?.requestReference || "REF"}</Text>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      selectedDriverForViewMore?.status === "Approved"
+                        ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }
+                        : selectedDriverForViewMore?.status === "Temporarily Blocked"
+                        ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
+                        : selectedDriverForViewMore?.status === "Rejected"
+                        ? { backgroundColor: "#fef2f2", borderColor: "#fecaca" }
+                        : { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        selectedDriverForViewMore?.status === "Approved"
+                          ? { color: "#16a34a" }
+                          : selectedDriverForViewMore?.status === "Temporarily Blocked"
+                          ? { color: "#b45309" }
+                          : selectedDriverForViewMore?.status === "Rejected"
+                          ? { color: "#dc2626" }
+                          : { color: "#2563eb" }
+                      ]}
+                    >
+                      {selectedDriverForViewMore?.status === "Approved" ? "Active" : selectedDriverForViewMore?.status}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.detailModalTitle} numberOfLines={1}>
+                  {selectedDriverForViewMore?.driverDetails?.fullName || "Driver Details"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedDriverForViewMore(null)}
+                style={styles.detailCloseBtn}
+              >
+                <Ionicons name="close" size={22} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.detailModalScroll}>
+              {/* ── 4-STAGE TRACKING STEPPER ── */}
+              {(() => {
+                const req = selectedDriverForViewMore;
+                if (!req) return null;
+                const isPaid = req.payment?.status === "Paid" || req.status === "Approved" || req.status === "Scheduled" || req.status === "Pending Branch Approval";
+                const isBranchReview = req.status === "Pending Branch Approval";
+                const isApprovedOrActive = req.status === "Approved" || req.status === "Scheduled" || req.status === "Temporarily Blocked" || req.status === "Pending Termination Approval";
+                const isRejected = req.status === "Rejected";
+
+                const steps = ["Submitted", "Fee Paid", "Review", "Active"];
+                let curIdx = 0;
+                if (isApprovedOrActive) curIdx = 3;
+                else if (isBranchReview || isPaid) curIdx = 2;
+                else if (req.status === "Pending Payment") curIdx = 1;
+
+                return (
+                  <View style={styles.detailStepperCard}>
+                    <Text style={styles.detailSectionTitle}>Application Progress & Verification</Text>
+                    {isRejected ? (
+                      <View style={styles.tpRejectBox}>
+                        <Ionicons name="close-circle" size={16} color="#dc2626" />
+                        <Text style={styles.tpRejectText}>
+                          Verification Rejected: {req.branchReview?.rejectionReason || "Verification criteria not met"}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.tpStepperContainer}>
+                        <View style={styles.tpStepperLineBg} />
+                        <View
+                          style={[
+                            styles.tpStepperLineProgress,
+                            { width: `${(Math.min(curIdx, 3) / 3) * 78}%` }
+                          ]}
+                        />
+                        <View style={styles.tpStepperRow}>
+                          {steps.map((st, i) => {
+                            const passed = curIdx >= i;
+                            const isCurrent = curIdx === i;
+                            return (
+                              <View key={st} style={styles.tpStepCol}>
+                                <View
+                                  style={[
+                                    styles.tpStepCircle,
+                                    passed
+                                      ? styles.tpStepCirclePassed
+                                      : isCurrent
+                                      ? styles.tpStepCircleCurrent
+                                      : styles.tpStepCirclePending
+                                  ]}
+                                >
+                                  {passed ? (
+                                    <Ionicons name="checkmark" size={12} color="#ffffff" />
+                                  ) : (
+                                    <Text style={[styles.tpStepNumText, isCurrent && { color: "#ffffff" }]}>
+                                      {i + 1}
+                                    </Text>
+                                  )}
+                                </View>
+                                <Text
+                                  style={[
+                                    styles.tpStepLabel,
+                                    isCurrent && styles.tpStepLabelCurrent,
+                                    passed && styles.tpStepLabelPassed
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {st}
+                                </Text>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                );
+              })()}
+
+              {/* ── DRIVER DETAILS & EDITABLE FIELDS ── */}
+              <View style={styles.detailSectionCard}>
+                <View style={styles.detailSectionHeaderRow}>
+                  <Text style={styles.detailSectionTitle}>Driver Identity & Contact</Text>
+                  {!isEditingPermanentDriver ? (
+                    <TouchableOpacity
+                      style={styles.detailEditTriggerBtn}
+                      onPress={() => setIsEditingPermanentDriver(true)}
+                    >
+                      <Ionicons name="pencil-outline" size={13} color="#2563eb" />
+                      <Text style={styles.detailEditTriggerText}>Edit</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.detailEditCancelBtn}
+                      onPress={() => setIsEditingPermanentDriver(false)}
+                    >
+                      <Text style={styles.detailEditCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Full Name:</Text>
+                  <Text style={styles.detailValBold}>
+                    {selectedDriverForViewMore?.driverDetails?.fullName || "—"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>NIC Number:</Text>
+                  <Text style={styles.detailValMono}>
+                    {selectedDriverForViewMore?.driverDetails?.nicNumber || "—"}
+                  </Text>
+                </View>
+
+                {/* Editable Phone */}
+                <View style={styles.detailRowVertical}>
+                  <Text style={styles.detailKey}>Phone Number:</Text>
+                  {isEditingPermanentDriver ? (
+                    <TextInput
+                      style={styles.detailInput}
+                      value={editPermanentPhone}
+                      onChangeText={setEditPermanentPhone}
+                      keyboardType="phone-pad"
+                      placeholder="0771234567"
+                    />
+                  ) : (
+                    <Text style={styles.detailValBold}>
+                      {selectedDriverForViewMore?.driverDetails?.phoneNumber || "—"}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Editable Residential Address */}
+                <View style={styles.detailRowVertical}>
+                  <Text style={styles.detailKey}>Residential Address:</Text>
+                  {isEditingPermanentDriver ? (
+                    <TextInput
+                      style={[styles.detailInput, { minHeight: 60 }]}
+                      value={editPermanentAddress}
+                      onChangeText={setEditPermanentAddress}
+                      multiline
+                      placeholder="Enter street address..."
+                    />
+                  ) : (
+                    <Text style={styles.detailVal}>
+                      {selectedDriverForViewMore?.driverDetails?.residentialAddress || "—"}
+                    </Text>
+                  )}
+                </View>
+
+                {isEditingPermanentDriver && (
+                  <TouchableOpacity
+                    style={styles.saveEditBtn}
+                    onPress={handleSavePermanentDriverEdit}
+                    disabled={savingPermanentEdit}
+                  >
+                    {savingPermanentEdit ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark" size={16} color="#ffffff" />
+                        <Text style={styles.saveEditBtnText}>Save Driver Details</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* ── COVERED VEHICLES ── */}
+              <View style={styles.detailSectionCard}>
+                <Text style={styles.detailSectionTitle}>Covered Insured Vehicles</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+                  {(selectedDriverForViewMore?.selectedVehicles || []).map((v: any) => (
+                    <View key={v.numberPlate} style={styles.detailPlatePill}>
+                      <MaterialCommunityIcons name="car" size={14} color="#0369a1" />
+                      <Text style={styles.detailPlatePillText}>{v.numberPlate}</Text>
+                      {v.model ? <Text style={styles.detailPlateModelText}>({v.model})</Text> : null}
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* ── DURATION & BRANCH DETAILS ── */}
+              <View style={styles.detailSectionCard}>
+                <Text style={styles.detailSectionTitle}>Authorization Window & Branch</Text>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Duration Type:</Text>
+                  <Text style={styles.detailVal}>
+                    {selectedDriverForViewMore?.accessDuration?.durationType || "12 Months"}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Valid Until:</Text>
+                  <Text style={styles.detailValBold}>
+                    {selectedDriverForViewMore?.accessDuration?.endDate
+                      ? new Date(selectedDriverForViewMore.accessDuration.endDate).toLocaleDateString("en-LK")
+                      : "—"}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Reviewing Branch:</Text>
+                  <Text style={styles.detailVal}>{selectedDriverForViewMore?.branch || "Galle"} Branch</Text>
+                </View>
+              </View>
+
+              {/* ── MANAGEMENT FUNCTIONS ── */}
+              <View style={styles.detailActionsCard}>
+                <Text style={styles.detailSectionTitle}>Driver Management Actions</Text>
+
+                {/* Temporary Block / Unblock Button */}
+                {selectedDriverForViewMore?.status === "Approved" && (
+                  <TouchableOpacity
+                    style={styles.detailBlockBtn}
+                    onPress={() => handleBlockPermanentDriver(selectedDriverForViewMore)}
+                    disabled={blockingPermanentLoading}
+                  >
+                    <MaterialCommunityIcons name="pause-circle-outline" size={18} color="#b45309" />
+                    <Text style={styles.detailBlockBtnText}>Temporarily Block Driver Access</Text>
+                  </TouchableOpacity>
+                )}
+
+                {selectedDriverForViewMore?.status === "Temporarily Blocked" && (
+                  <TouchableOpacity
+                    style={styles.detailUnblockBtn}
+                    onPress={() => handleUnblockPermanentDriver(selectedDriverForViewMore)}
+                    disabled={blockingPermanentLoading}
+                  >
+                    <MaterialCommunityIcons name="play-circle-outline" size={18} color="#16a34a" />
+                    <Text style={styles.detailUnblockBtnText}>Restore & Unblock Driver Access</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Terminate Button */}
+                {selectedDriverForViewMore?.status !== "Terminated" && (
+                  <TouchableOpacity
+                    style={styles.detailTerminateBtn}
+                    onPress={() => {
+                      setSelectedDriverForViewMore(null);
+                      onOpenTerminateModal(selectedDriverForViewMore);
+                    }}
+                  >
+                    <MaterialCommunityIcons name="account-remove-outline" size={18} color="#dc2626" />
+                    <Text style={styles.detailTerminateBtnText}>Terminate Driver Authorization</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Resume Payment if pending */}
+                {selectedDriverForViewMore?.status === "Pending Payment" && (
+                  <TouchableOpacity
+                    style={styles.detailPayBtn}
+                    onPress={() => {
+                      const req = selectedDriverForViewMore;
+                      setSelectedDriverForViewMore(null);
+                      onResumePayment(req._id, req.requestReference);
+                    }}
+                  >
+                    <MaterialCommunityIcons name="credit-card-outline" size={18} color="#ffffff" />
+                    <Text style={styles.detailPayBtnText}>Complete LKR 300 Registration Fee</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {/* 6. OPTIONAL NFC CARD FULL DETAILS, TRACKING & ACTIONS MODAL */}
+      {/* ═════════════════════════════════════════════════════════════ */}
+      <Modal
+        visible={!!selectedCardForViewMore}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedCardForViewMore(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.fullDetailModalBox}>
+            {/* Header */}
+            <View style={styles.detailModalHeader}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={styles.nfcIconBadge}>
+                    <MaterialCommunityIcons name="nfc" size={16} color="#059669" />
+                  </View>
+                  <Text style={styles.detailModalRef}>{selectedCardForViewMore?.cardId}</Text>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      selectedCardForViewMore?.status === "Available"
+                        ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }
+                        : selectedCardForViewMore?.status === "Temporarily Blocked"
+                        ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
+                        : { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        selectedCardForViewMore?.status === "Available"
+                          ? { color: "#16a34a" }
+                          : selectedCardForViewMore?.status === "Temporarily Blocked"
+                          ? { color: "#d97706" }
+                          : { color: "#2563eb" }
+                      ]}
+                    >
+                      {selectedCardForViewMore?.status}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.detailModalTitle}>Reusable NFC Card Details</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedCardForViewMore(null)}
+                style={styles.detailCloseBtn}
+              >
+                <Ionicons name="close" size={22} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.detailModalScroll}>
+              {/* ── CARD METADATA & TRACKING ── */}
+              <View style={styles.detailSectionCard}>
+                <Text style={styles.detailSectionTitle}>Card Inventory & Branch Status</Text>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Card UID:</Text>
+                  <Text style={styles.detailValMono}>{selectedCardForViewMore?.cardId}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Issuing Branch:</Text>
+                  <Text style={styles.detailVal}>{selectedCardForViewMore?.branch || "Galle"} Branch</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailKey}>Status:</Text>
+                  <Text style={styles.detailValBold}>{selectedCardForViewMore?.status}</Text>
+                </View>
+                {/* Associated Order Reference if available */}
+                {(() => {
+                  const matchingOrder = orders.find((o) => o.branch === selectedCardForViewMore?.branch);
+                  if (!matchingOrder) return null;
+                  return (
+                    <View style={styles.cardOrderTrackingRow}>
+                      <Ionicons name="cube-outline" size={15} color="#0284c7" />
+                      <Text style={styles.cardOrderTrackingText}>
+                        Order Ref: <Text style={{ fontWeight: "bold" }}>{matchingOrder.orderNumber}</Text> ({matchingOrder.status})
+                      </Text>
+                    </View>
+                  );
+                })()}
+              </View>
+
+              {/* ── CURRENT ASSIGNMENT DETAILS ── */}
+              {selectedCardForViewMore?.status !== "Available" && selectedCardForViewMore?.currentAssignment ? (
+                <View style={styles.detailSectionCard}>
+                  <Text style={styles.detailSectionTitle}>Current Temporary Driver Assignment</Text>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailKey}>Driver Name:</Text>
+                    <Text style={styles.detailValBold}>
+                      {selectedCardForViewMore.currentAssignment.driverName || "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailKey}>NIC Number:</Text>
+                    <Text style={styles.detailValMono}>
+                      {selectedCardForViewMore.currentAssignment.driverNic || "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailKey}>Phone Number:</Text>
+                    <Text style={styles.detailVal}>
+                      {selectedCardForViewMore.currentAssignment.driverPhone || "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailKey}>Vehicle Plate:</Text>
+                    <View style={styles.detailPlatePill}>
+                      <Text style={styles.detailPlatePillText}>
+                        {selectedCardForViewMore.currentAssignment.vehiclePlate || "—"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailKey}>Duration:</Text>
+                    <Text style={styles.detailVal}>
+                      {selectedCardForViewMore.currentAssignment.durationType || "Custom"} (Valid until{" "}
+                      {selectedCardForViewMore.currentAssignment.endDate
+                        ? new Date(selectedCardForViewMore.currentAssignment.endDate).toLocaleDateString("en-LK")
+                        : "—"}
+                      )
+                    </Text>
+                  </View>
+                  <View style={styles.otpConfirmedBadge}>
+                    <MaterialCommunityIcons name="shield-check" size={15} color="#16a34a" />
+                    <Text style={styles.otpConfirmedText}>Authorized & verified with Policyholder OTP</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.vacantNoticeCard}>
+                  <MaterialCommunityIcons name="check-decagram" size={24} color="#16a34a" />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.vacantNoticeTitle}>Card is Available & Vacant</Text>
+                    <Text style={styles.vacantNoticeDesc}>
+                      You can instantly assign this physical reusable card to any driver with your OTP confirmation.
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* ── CARD MANAGEMENT ACTIONS ── */}
+              <View style={styles.detailActionsCard}>
+                <Text style={styles.detailSectionTitle}>Card Functions</Text>
+
+                {selectedCardForViewMore?.status === "Available" ? (
+                  <TouchableOpacity
+                    style={styles.detailAssignBtn}
+                    onPress={() => {
+                      const card = selectedCardForViewMore;
+                      setSelectedCardForViewMore(null);
+                      handleOpenAssignModal(card);
+                    }}
+                  >
+                    <Ionicons name="person-add" size={17} color="#ffffff" />
+                    <Text style={styles.detailAssignBtnText}>Assign Driver via OTP</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    {selectedCardForViewMore?.status === "Temporarily Blocked" ? (
+                      <TouchableOpacity
+                        style={styles.detailUnblockBtn}
+                        onPress={() => {
+                          if (selectedCardForViewMore?.cardId) {
+                            handleUnblockCard(selectedCardForViewMore.cardId);
+                            setSelectedCardForViewMore((prev) => (prev ? { ...prev, status: "Active" } : null));
+                          }
+                        }}
+                      >
+                        <MaterialCommunityIcons name="play-circle-outline" size={18} color="#16a34a" />
+                        <Text style={styles.detailUnblockBtnText}>Unblock Card Access</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.detailBlockBtn}
+                        onPress={() => {
+                          if (selectedCardForViewMore?.cardId) {
+                            handleBlockCard(selectedCardForViewMore.cardId);
+                            setSelectedCardForViewMore((prev) => (prev ? { ...prev, status: "Temporarily Blocked" } : null));
+                          }
+                        }}
+                      >
+                        <MaterialCommunityIcons name="pause-circle-outline" size={18} color="#b45309" />
+                        <Text style={styles.detailBlockBtnText}>Temporarily Block Card</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                      style={styles.detailTerminateBtn}
+                      onPress={() => {
+                        if (selectedCardForViewMore?.cardId) {
+                          handleTerminateCard(selectedCardForViewMore.cardId);
+                          setSelectedCardForViewMore(null);
+                        }
+                      }}
+                    >
+                      <MaterialCommunityIcons name="close-circle-outline" size={18} color="#dc2626" />
+                      <Text style={styles.detailTerminateBtnText}>Terminate & Return to Available</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              {/* ── ASSIGNMENT HISTORY LOG ── */}
+              <View style={styles.detailSectionCard}>
+                <Text style={styles.detailSectionTitle}>Assignment History Log</Text>
+                {(!selectedCardForViewMore?.assignmentHistory || selectedCardForViewMore.assignmentHistory.length === 0) ? (
+                  <Text style={styles.detailEmptyText}>No previous assignment history recorded for this card.</Text>
+                ) : (
+                  selectedCardForViewMore.assignmentHistory.map((h, idx) => (
+                    <View key={idx} style={styles.historyLogItem}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text style={styles.historyLogDriver}>{h.driverName}</Text>
+                        <View style={styles.historyLogStatusBadge}>
+                          <Text style={styles.historyLogStatusText}>{h.status}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.historyLogPlate}>Vehicle Plate: {h.vehiclePlate}</Text>
+                      <Text style={styles.historyLogDates}>
+                        {new Date(h.startDate).toLocaleDateString("en-LK")} - {new Date(h.endDate).toLocaleDateString("en-LK")}
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </View>
             </ScrollView>
           </View>
         </View>
@@ -2052,5 +2717,488 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#dc2626",
     flex: 1
+  },
+
+  // ── REDESIGNED MODERN SUB-TABS ROW ──
+  modernSubTabRow: {
+    flexDirection: "row",
+    backgroundColor: "#ffffff",
+    padding: 5,
+    borderRadius: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    gap: 6
+  },
+  modernSubTabBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 9,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    backgroundColor: "#f8fafc",
+    gap: 6
+  },
+  modernSubTabBtnActive: {
+    backgroundColor: "#0284c7",
+    shadowColor: "#0284c7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  modernSubTabBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#64748b"
+  },
+  modernSubTabBtnTextActive: {
+    color: "#ffffff"
+  },
+  modernSubTabBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    backgroundColor: "#e2e8f0"
+  },
+  modernSubTabBadgeActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)"
+  },
+  modernSubTabBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#475569"
+  },
+  modernSubTabBadgeTextActive: {
+    color: "#ffffff"
+  },
+
+  // ── COMPACT FIRST-VIEW CARD ELEMENTS ──
+  dotIndicator: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    marginRight: 6
+  },
+  viewMoreBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#0284c7",
+    backgroundColor: "#f0f9ff"
+  },
+  viewMoreBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0284c7"
+  },
+  payNowBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: "#2563eb"
+  },
+  payNowBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#ffffff"
+  },
+  cardFooterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9"
+  },
+  actionBtnPrimaryCompact: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#0284c7",
+    paddingVertical: 9,
+    borderRadius: 10
+  },
+  actionBtnPrimaryCompactText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+
+  // ── FULL DETAIL & MANAGEMENT BOTTOM MODAL ──
+  fullDetailModalBox: {
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "88%",
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 24,
+    width: "100%"
+  },
+  detailModalHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9"
+  },
+  detailModalRef: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#64748b",
+    letterSpacing: 0.5,
+    fontFamily: "monospace"
+  },
+  detailModalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginTop: 4
+  },
+  detailCloseBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#f1f5f9"
+  },
+  detailModalScroll: {
+    paddingTop: 14,
+    paddingBottom: 24
+  },
+  detailStepperCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0"
+  },
+  detailSectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0f172a",
+    marginBottom: 10
+  },
+  detailSectionCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1
+  },
+  detailSectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10
+  },
+  detailEditTriggerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe"
+  },
+  detailEditTriggerText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2563eb"
+  },
+  detailEditCancelBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#f1f5f9"
+  },
+  detailEditCancelText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748b"
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 7,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#f1f5f9"
+  },
+  detailRowVertical: {
+    paddingVertical: 8
+  },
+  detailKey: {
+    fontSize: 12,
+    color: "#64748b",
+    fontWeight: "600"
+  },
+  detailVal: {
+    fontSize: 13,
+    color: "#1e293b"
+  },
+  detailValBold: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  detailValMono: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0f172a",
+    fontFamily: "monospace"
+  },
+  detailInput: {
+    borderWidth: 1.5,
+    borderColor: "#cbd5e1",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: "#0f172a",
+    backgroundColor: "#f8fafc",
+    marginTop: 6
+  },
+  saveEditBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#2563eb",
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginTop: 12
+  },
+  saveEditBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  detailPlatePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#e0f2fe",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#bae6fd"
+  },
+  detailPlatePillText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0369a1",
+    fontFamily: "monospace"
+  },
+  detailPlateModelText: {
+    fontSize: 11,
+    color: "#0284c7",
+    fontWeight: "500"
+  },
+  detailActionsCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    gap: 10
+  },
+  detailBlockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    paddingVertical: 12,
+    borderRadius: 12
+  },
+  detailBlockBtnText: {
+    color: "#b45309",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  detailUnblockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    paddingVertical: 12,
+    borderRadius: 12
+  },
+  detailUnblockBtnText: {
+    color: "#16a34a",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  detailTerminateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    paddingVertical: 12,
+    borderRadius: 12
+  },
+  detailTerminateBtnText: {
+    color: "#dc2626",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  detailPayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#2563eb",
+    paddingVertical: 12,
+    borderRadius: 12
+  },
+  detailPayBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  cardOrderTrackingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#f0f9ff",
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 8
+  },
+  cardOrderTrackingText: {
+    fontSize: 12,
+    color: "#0369a1"
+  },
+  otpConfirmedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10
+  },
+  otpConfirmedText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#15803d"
+  },
+  vacantNoticeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 14
+  },
+  vacantNoticeTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#166534"
+  },
+  vacantNoticeDesc: {
+    fontSize: 12,
+    color: "#15803d",
+    marginTop: 2,
+    lineHeight: 17
+  },
+  detailAssignBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#0284c7",
+    paddingVertical: 12,
+    borderRadius: 12
+  },
+  detailAssignBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
+  detailEmptyText: {
+    fontSize: 12,
+    color: "#94a3b8",
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 12
+  },
+  historyLogItem: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8
+  },
+  historyLogDriver: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0f172a"
+  },
+  historyLogStatusBadge: {
+    backgroundColor: "#e2e8f0",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6
+  },
+  historyLogStatusText: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#475569"
+  },
+  historyLogPlate: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0369a1",
+    marginTop: 4
+  },
+  historyLogDates: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2
   }
 });

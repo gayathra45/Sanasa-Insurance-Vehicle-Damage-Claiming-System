@@ -204,6 +204,9 @@ export default function MyVehicles() {
   const [terminating, setTerminating] = useState(false);
   const [terminateErrMsg, setTerminateErrMsg] = useState<string | null>(null);
 
+  // 3-Choice Driver Registration modal
+  const [showDriverChoiceModal, setShowDriverChoiceModal] = useState(false);
+
   const handleOpenTerminateModal = (req: any) => {
     setTerminateTargetReq(req);
     setTerminateReason("Driver resigned / employment ended");
@@ -660,6 +663,12 @@ export default function MyVehicles() {
     }
   }, [userNic, fetchVehicles, fetchThirdPartyRequests]);
 
+  const handleRefreshPermanent = useCallback(() => {
+    if (userNic) {
+      fetchThirdPartyRequests(userNic, true);
+    }
+  }, [userNic, fetchThirdPartyRequests]);
+
   // Open Vehicle Details Modal
   const handleOpenVehicleModal = (vehicle: Vehicle) => {
     setSelectedVehicleForModal(vehicle);
@@ -996,19 +1005,19 @@ export default function MyVehicles() {
               >
                 <View style={styles.tpHeroBadge}>
                   <MaterialCommunityIcons name="shield-star" size={13} color="#38bdf8" />
-                  <Text style={styles.tpHeroBadgeText}>Flat Fee: LKR 300 per Registration</Text>
+                  <Text style={styles.tpHeroBadgeText}>Authorized Drivers Management</Text>
                 </View>
-                <Text style={styles.tpHeroTitle}>Third-Party Driver Authorizations</Text>
+                <Text style={styles.tpHeroTitle}>Third-Party Driver Hub</Text>
                 <Text style={styles.tpHeroDesc}>
-                  Authorize drivers to legally operate your insured vehicles. Covered under your policy with a single fixed fee of LKR 300 for all selected vehicles, reviewed by your nearest branch office.
+                  Manage permanent authorized drivers with branch sign-off, or assign on-demand temporary drivers via reusable physical NFC cards.
                 </Text>
                 <TouchableOpacity
                   style={styles.tpRegisterHeroBtn}
-                  onPress={() => handleOpenThirdPartyForPlate()}
+                  onPress={() => setShowDriverChoiceModal(true)}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="person-add" size={15} color="#0f172a" />
-                  <Text style={styles.tpRegisterHeroBtnText}>+ Register New Driver (LKR 300)</Text>
+                  <Text style={styles.tpRegisterHeroBtnText}>+ Register New Driver</Text>
                 </TouchableOpacity>
               </LinearGradient>
 
@@ -1270,65 +1279,34 @@ export default function MyVehicles() {
                         </View>
                       )}
 
-                      {/* ── TECHNICAL SPECS OVERVIEW (COMPACT & CLEAN) ── */}
-                      <View style={styles.cleanSpecsCard}>
-                        <View style={styles.cleanSpecRow}>
-                          <Text style={styles.cleanSpecKey}>Policy Number</Text>
-                          <Text style={styles.cleanSpecValue} numberOfLines={1}>{v.policyNumber || "SGI-88942-019"}</Text>
-                        </View>
-                        <View style={styles.cleanSpecDivider} />
-                        <View style={styles.cleanSpecRow}>
-                          <Text style={styles.cleanSpecKey}>Engine Number</Text>
-                          <Text style={styles.cleanSpecValue} numberOfLines={1}>{v.engineNumber || "1NZ-FE-778122"}</Text>
-                        </View>
-                        <View style={styles.cleanSpecDivider} />
-                        <View style={styles.cleanSpecRow}>
-                          <Text style={styles.cleanSpecKey}>Chassis Number</Text>
-                          <Text style={styles.cleanSpecValue} numberOfLines={1}>{v.chassisNumber || "NZE141-8890204"}</Text>
+                      {/* ── POLICY NUMBER HIGHLIGHT (COMPACT & CLEAN) ── */}
+                      <View style={styles.cleanPolicyRow}>
+                        <View style={styles.cleanPolicyBadge}>
+                          <MaterialCommunityIcons name="shield-check-outline" size={13} color="#0284c7" />
+                          <Text style={styles.cleanPolicyLabel}>Policy:</Text>
+                          <Text style={styles.cleanPolicyVal} numberOfLines={1}>{v.policyNumber || "SGI-88942-019"}</Text>
                         </View>
                       </View>
 
-                      {/* ── ACTION BUTTONS: BALANCED 2x2 ERGONOMIC GRID ── */}
-                      <View style={styles.cleanActionGrid}>
-                        <View style={styles.cleanActionRow}>
-                          <TouchableOpacity
-                            style={[styles.cleanActionBtn, styles.cleanDetailsBtn]}
-                            onPress={() => handleOpenVehicleModal(v)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="document-text-outline" size={14} color="#1e293b" />
-                            <Text style={styles.cleanDetailsBtnText}>Details</Text>
-                          </TouchableOpacity>
+                      {/* ── ACTION BUTTONS: BALANCED 2-BUTTON ROW (DETAILS & ASSIGN DRIVER) ── */}
+                      <View style={styles.cleanActionRow}>
+                        <TouchableOpacity
+                          style={[styles.cleanActionBtn, styles.cleanDetailsBtn]}
+                          onPress={() => handleOpenVehicleModal(v)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="document-text-outline" size={15} color="#0f172a" />
+                          <Text style={styles.cleanDetailsBtnText}>Details</Text>
+                        </TouchableOpacity>
 
-                          <TouchableOpacity
-                            style={[styles.cleanActionBtn, styles.cleanDriverBtn]}
-                            onPress={() => handleOpenThirdPartyForPlate(v.numberPlate)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="person-add-outline" size={14} color="#4338ca" />
-                            <Text style={styles.cleanDriverBtnText}>Assign Driver</Text>
-                          </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.cleanActionRow}>
-                          <TouchableOpacity
-                            style={[styles.cleanActionBtn, styles.cleanCoverBtn]}
-                            onPress={() => handleOpenCoverNote(v)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="shield-checkmark-outline" size={14} color="#059669" />
-                            <Text style={styles.cleanCoverBtnText}>Cover Note</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={[styles.cleanActionBtn, styles.cleanClaimBtn]}
-                            onPress={() => handleFileClaim(v)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="alert-circle-outline" size={14} color="#dc2626" />
-                            <Text style={styles.cleanClaimBtnText}>Claim</Text>
-                          </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity
+                          style={[styles.cleanActionBtn, styles.cleanDriverBtn]}
+                          onPress={() => handleOpenThirdPartyForPlate(v.numberPlate)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="person-add-outline" size={15} color="#4338ca" />
+                          <Text style={styles.cleanDriverBtnText}>Assign Driver</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   );
@@ -1359,7 +1337,7 @@ export default function MyVehicles() {
               showCustomAlert={showCustomAlert}
               permanentRequests={thirdPartyRequests}
               loadingPermanent={loadingThirdParty}
-              onRefreshPermanent={() => userInfo?.nic && fetchThirdPartyRequests(userInfo.nic, true)}
+              onRefreshPermanent={handleRefreshPermanent}
               onOpenTerminateModal={handleOpenTerminateModal}
               onResumePayment={handleResumeThirdPartyPayment}
               resumingPaymentId={resumingPaymentId}
@@ -2210,6 +2188,94 @@ export default function MyVehicles() {
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── DRIVER REGISTRATION CHOICE MODAL (3 OPTIONS) ── */}
+      <Modal
+        visible={showDriverChoiceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDriverChoiceModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.driverChoiceModalBox}>
+            <View style={styles.modalHeaderRow}>
+              <View>
+                <Text style={styles.driverChoiceModalTitle}>Register New Driver</Text>
+                <Text style={styles.driverChoiceModalSubtitle}>Select driver authorization type</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowDriverChoiceModal(false)}
+                style={styles.modalCloseIconBtn}
+              >
+                <Ionicons name="close" size={22} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Option 1: Permanent Driver */}
+            <TouchableOpacity
+              style={styles.driverChoiceCard}
+              onPress={() => {
+                setShowDriverChoiceModal(false);
+                handleOpenThirdPartyForPlate();
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.driverChoiceIconBadge, { backgroundColor: "#eff6ff" }]}>
+                <MaterialCommunityIcons name="badge-account-outline" size={24} color="#2563eb" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.driverChoiceCardTitle}>Permanent Driver (KYC Review)</Text>
+                <Text style={styles.driverChoiceCardDesc}>
+                  Long-term driver authorization with branch verification. Covered for all vehicles for LKR 300.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+            </TouchableOpacity>
+
+            {/* Option 2: Reusable NFC Card */}
+            <TouchableOpacity
+              style={styles.driverChoiceCard}
+              onPress={() => {
+                setShowDriverChoiceModal(false);
+                setActiveMainTab("third_party");
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.driverChoiceIconBadge, { backgroundColor: "#f0fdf4" }]}>
+                <MaterialCommunityIcons name="credit-card-wireless-outline" size={24} color="#059669" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.driverChoiceCardTitle}>Temporary Driver (Reusable NFC Tag)</Text>
+                <Text style={styles.driverChoiceCardDesc}>
+                  On-demand temporary authorization (1-10 days) verified with YOUR OTP. Immediate activation.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+            </TouchableOpacity>
+
+            {/* Option 3: Order NFC Cards */}
+            <TouchableOpacity
+              style={styles.driverChoiceCard}
+              onPress={() => {
+                setShowDriverChoiceModal(false);
+                setActiveMainTab("third_party");
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.driverChoiceIconBadge, { backgroundColor: "#faf5ff" }]}>
+                <MaterialCommunityIcons name="credit-card-plus-outline" size={24} color="#9333ea" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.driverChoiceCardTitle}>Order NFC Cards</Text>
+                <Text style={styles.driverChoiceCardDesc}>
+                  Purchase physical reusable cards (LKR 500 each) via Stripe. Prepared by branch.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
       {/* ── 1. VEHICLE SPECIFICATIONS & RENEWAL MODAL ── */}
@@ -3858,6 +3924,85 @@ const styles: any = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#dc2626",
+  },
+  cleanPolicyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  cleanPolicyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#f0f9ff",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  cleanPolicyLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#0369a1",
+  },
+  cleanPolicyVal: {
+    fontSize: 11.5,
+    fontWeight: "800",
+    color: "#0c4a6e",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+
+  /* 3-Option Driver Choice Modal Styles */
+  driverChoiceModalBox: {
+    width: "90%",
+    maxWidth: 390,
+    backgroundColor: "#ffffff",
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  driverChoiceModalTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#0f172a",
+  },
+  driverChoiceModalSubtitle: {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  driverChoiceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 16,
+    padding: 13,
+    marginTop: 10,
+  },
+  driverChoiceIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  driverChoiceCardTitle: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  driverChoiceCardDesc: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 15,
   },
   vehicleCardAlert: {
     borderColor: "#fecaca",

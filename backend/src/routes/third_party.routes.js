@@ -1100,6 +1100,61 @@ router.post("/permanent/renew/:requestId", async (req, res) => {
   }
 });
 
+/**
+ * PUT /api/third-party/permanent/update-driver/:requestId
+ * Policyholder update driver phone number or residential address
+ */
+router.put("/permanent/update-driver/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, phoneNumber, residentialAddress, fullName } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "policyHolderNic is required." });
+    }
+
+    const cleanNic = String(policyHolderNic).trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver registration not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized access to this registration." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "Cannot edit a terminated driver registration." });
+    }
+
+    if (fullName && fullName.trim()) {
+      request.driverDetails.fullName = fullName.trim();
+    }
+    if (residentialAddress && residentialAddress.trim()) {
+      request.driverDetails.residentialAddress = residentialAddress.trim();
+    }
+    if (phoneNumber && phoneNumber.trim()) {
+      const phoneCheck = normalizeSriLankanPhone(phoneNumber.trim());
+      if (!phoneCheck.isValid) {
+        return res.status(400).json({ error: phoneCheck.error });
+      }
+      request.driverDetails.phoneNumber = phoneCheck.normalized;
+    }
+
+    await request.save();
+    emitThirdPartyRequestUpdated(request);
+
+    return res.json({
+      success: true,
+      message: "Driver details updated successfully.",
+      request
+    });
+  } catch (err) {
+    console.error("PUT /permanent/update-driver error:", err);
+    return res.status(500).json({ error: "Failed to update driver details." });
+  }
+});
+
 // ==========================================
 // 2. BRANCH (OFFICE STAFF) ENDPOINTS
 // ==========================================
