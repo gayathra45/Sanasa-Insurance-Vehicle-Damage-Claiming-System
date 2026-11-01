@@ -869,176 +869,262 @@ export default function OptionalCardRequestsTab({
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="py-20 text-center">
-            <HugeiconsIcon
-              icon={RefreshIcon}
-              className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3"
-            />
-            <p className="text-sm font-semibold text-slate-700">Loading branch card orders...</p>
-            <p className="text-xs text-slate-400 mt-1">Retrieving requests for {branch} Branch</p>
+      {/* Orders List / Card Rows (Matching Permanent Drivers UI Design) */}
+      {loading ? (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs py-20 text-center">
+          <HugeiconsIcon
+            icon={RefreshIcon}
+            className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3"
+          />
+          <p className="text-sm font-semibold text-slate-700">Loading branch card orders...</p>
+          <p className="text-xs text-slate-400 mt-1">Retrieving requests for {branch} Branch</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs py-16 text-center px-4">
+          <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+            <HugeiconsIcon icon={CreditCardIcon} className="w-7 h-7" />
           </div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="py-16 text-center px-4">
-            <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
-              <HugeiconsIcon icon={CreditCardIcon} className="w-7 h-7" />
+          <h4 className="text-base font-semibold text-slate-700">No Optional Card Requests Found</h4>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+            {searchQuery
+              ? `No requests match "${searchQuery}". Try clearing filters.`
+              : `There are currently no Optional NFC Card purchase requests for ${branch} Branch.`}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto pb-3 -mx-2 px-2">
+          <div className="min-w-[1080px] flex flex-col gap-3">
+            {/* Proportional Grid Header */}
+            <div className="hidden md:grid md:grid-cols-[minmax(230px,2.1fr)_minmax(180px,1.6fr)_minmax(130px,1.1fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(180px,1.5fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
+              <div>Request & Order ID</div>
+              <div>Policyholder</div>
+              <div>Cards & Quantity</div>
+              <div>Fee & Payment</div>
+              <div>Status & Timeline</div>
+              <div className="text-right">Actions</div>
             </div>
-            <h4 className="text-base font-semibold text-slate-700">No Optional Card Requests Found</h4>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
-              {searchQuery
-                ? `No requests match "${searchQuery}". Try clearing filters.`
-                : `There are currently no Optional NFC Card purchase requests for ${branch} Branch.`}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Request ID</th>
-                  <th className="py-3.5 px-4">Policy Holder</th>
-                  <th className="py-3.5 px-4 text-center">Cards</th>
-                  <th className="py-3.5 px-4">Payment</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Submission Date</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order._id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                    onClick={() => setSelectedOrder(order)}
-                  >
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#102A43]">
-                      <div className="flex items-center gap-1.5">
-                        <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-slate-400" />
-                        <span>{order.orderNumber}</span>
-                      </div>
-                    </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800">{order.policyHolderName}</div>
-                      <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
-                        <span>NIC: {order.policyHolderNic}</span>
-                        {order.policyHolderPhone && <span>• {order.policyHolderPhone}</span>}
-                      </div>
-                    </td>
+            {/* Card Rows with Colored Left Accent */}
+            {filteredOrders.map((order) => {
+              const isSubmitted = order.status === "Request Submitted";
+              const isApproved = order.status === "Approved";
+              const isProcessing = order.status === "Processing";
+              const isReady = order.status === "Ready for Collection";
+              const isCollected = order.status === "Collected";
+              const isRejected = order.status === "Rejected";
+              const isPaid = order.payment?.status === "Paid";
 
-                    <td className="py-3.5 px-4 text-center">
-                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold bg-[#102A43]/5 text-[#102A43]">
+              let borderAccentClass = "border-l-slate-300";
+              let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
+
+              if (isCollected) {
+                borderAccentClass = "border-l-slate-400";
+                gradientBgClass = "from-slate-50/30 via-transparent to-transparent";
+              } else if (isReady) {
+                borderAccentClass = "border-l-emerald-500";
+                gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
+              } else if (isProcessing) {
+                borderAccentClass = "border-l-indigo-500";
+                gradientBgClass = "from-indigo-50/30 via-transparent to-transparent";
+              } else if (isApproved) {
+                borderAccentClass = "border-l-blue-500";
+                gradientBgClass = "from-blue-50/30 via-transparent to-transparent";
+              } else if (isSubmitted) {
+                borderAccentClass = "border-l-amber-500";
+                gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
+              } else if (isRejected) {
+                borderAccentClass = "border-l-rose-500";
+                gradientBgClass = "from-rose-50/30 via-transparent to-transparent";
+              }
+
+              return (
+                <div
+                  key={order._id}
+                  onClick={() => setSelectedOrder(order)}
+                  className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(230px,2.1fr)_minmax(180px,1.6fr)_minmax(130px,1.1fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(180px,1.5fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group cursor-pointer`}
+                >
+                  {/* Col 1: Request & Order ID */}
+                  <div className="flex items-center gap-3 min-w-0 select-none">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-mono text-[11px] font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
+                        {order.orderNumber}
+                      </span>
+                      <div className="text-[11px] text-slate-500 font-medium mt-1">
+                        {order.branch} Branch
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Col 2: Policyholder */}
+                  <div className="flex flex-col min-w-0 select-none">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                      Policyholder
+                    </span>
+                    <h4 className="font-semibold text-xs text-slate-800 truncate" title={order.policyHolderName}>
+                      {order.policyHolderName || "—"}
+                    </h4>
+                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className="font-mono text-slate-600">NIC: {order.policyHolderNic}</span>
+                      {order.policyHolderPhone && (
+                        <span className="font-mono text-slate-400">• {order.policyHolderPhone}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Col 3: Cards & Quantity */}
+                  <div className="flex flex-col min-w-0 select-none">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                      Cards
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold bg-[#102A43]/10 text-[#102A43]">
                         {order.quantity} {order.quantity === 1 ? "Card" : "Cards"}
                       </span>
-                    </td>
+                    </div>
+                    <span className="text-[11px] text-slate-400 font-medium mt-0.5">
+                      @ LKR {order.unitPrice || 500} / card
+                    </span>
+                  </div>
 
-                    <td className="py-3.5 px-4">
+                  {/* Col 4: Fee & Payment */}
+                  <div className="flex flex-col min-w-0 select-none">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                      Payment
+                    </span>
+                    <div className="w-fit">
                       {getPaymentBadge(order.payment?.status, order.totalAmount)}
-                    </td>
+                    </div>
+                    {order.payment?.paidAt && (
+                      <span className="text-[10px] text-slate-400 mt-0.5">
+                        Paid {new Date(order.payment.paidAt).toLocaleDateString("en-LK", { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                  </div>
 
-                    <td className="py-3.5 px-4">{getStatusBadge(order.status)}</td>
-
-                    <td className="py-3.5 px-4 text-slate-500 text-[11px]">
-                      {new Date(order.createdAt).toLocaleDateString("en-LK", {
-                        timeZone: "Asia/Colombo",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
-                      })}
-                      <div className="text-[10px] text-slate-400">
-                        {new Date(order.createdAt).toLocaleTimeString("en-LK", {
-                          timeZone: "Asia/Colombo",
-                          hour: "2-digit",
-                          minute: "2-digit"
+                  {/* Col 5: Status & Timeline */}
+                  <div className="flex flex-col min-w-0 select-none">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                      Status & Timeline
+                    </span>
+                    <div className="w-fit">{getStatusBadge(order.status)}</div>
+                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
+                      <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span>
+                        {new Date(order.createdAt).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
                         })}
-                      </div>
-                    </td>
+                      </span>
+                      <span className="text-slate-400 text-[10px]">
+                        {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  </div>
 
-                    <td
-                      className="py-3.5 px-4 text-right"
-                      onClick={(e) => e.stopPropagation()}
+                  {/* Col 6: Actions */}
+                  <div
+                    className="flex items-center md:justify-end gap-1.5 flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => setSelectedOrder(order)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 flex-shrink-0"
                     >
-                      <div className="flex items-center justify-end gap-2">
+                      <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </button>
+
+                    {order.status === "Request Submitted" && order.payment?.status === "Paid" && (
+                      <>
                         <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setShowApproveModal(true);
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
                         >
-                          <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                          <span>View</span>
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                          <span>Approve</span>
                         </button>
+                        <button
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setShowRejectModal(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer flex-shrink-0"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
 
-                        {order.status === "Request Submitted" && order.payment?.status === "Paid" && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setShowApproveModal(true);
-                              }}
-                              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                            >
-                              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
-                              <span>Approve</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setShowRejectModal(true);
-                              }}
-                              className="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
+                    {order.status === "Approved" && (
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          handleProcessing();
+                        }}
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                      >
+                        <span>Start Prep</span>
+                      </button>
+                    )}
 
-                        {order.status === "Approved" && (
-                          <button
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              handleProcessing();
-                            }}
-                            className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                          >
-                            <span>Start Processing</span>
-                          </button>
-                        )}
+                    {order.status === "Processing" && (
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          handleReadyForCollection();
+                        }}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                      >
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                        <span>Mark Ready</span>
+                      </button>
+                    )}
 
-                        {order.status === "Processing" && (
-                          <button
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              handleReadyForCollection();
-                            }}
-                            className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                          >
-                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
-                            <span>Mark Ready</span>
-                          </button>
-                        )}
+                    {order.status === "Ready for Collection" && (
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setCollectorName(order.policyHolderName);
+                          setShowCollectModal(true);
+                        }}
+                        className="px-3 py-1.5 bg-[#102A43] hover:bg-[#1E3A8A] text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                      >
+                        <span>Record Handover</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
 
-                        {order.status === "Ready for Collection" && (
-                          <button
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setCollectorName(order.policyHolderName);
-                              setShowCollectModal(true);
-                            }}
-                            className="px-2.5 py-1.5 bg-[#102A43] hover:bg-[#1E3A8A] text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                          >
-                            <span>Record Collection</span>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Table Footer / Summary Bar */}
+            <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+              <div>
+                Showing <span className="font-bold text-slate-700">{filteredOrders.length}</span> of{" "}
+                <span className="font-bold text-slate-700">{orders.length}</span> card orders
+              </div>
+              {(statusFilter !== "all" || searchQuery) && (
+                <button
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setSearchQuery("");
+                  }}
+                  className="text-[#102A43] font-semibold hover:underline cursor-pointer"
+                >
+                  Reset filters
+                </button>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ============================================================== */}
       {/* ORDER DETAILS MODAL */}
