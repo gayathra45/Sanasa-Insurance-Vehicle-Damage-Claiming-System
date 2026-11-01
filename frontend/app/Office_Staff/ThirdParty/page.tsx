@@ -1038,226 +1038,228 @@ export default function OfficeStaffThirdPartyPage() {
             </div>
           ) : (
             /* VIEW MODE: LIST CARD ROWS (MATCHING ADMIN RENEWALS & POLICYHOLDERS) */
-            <div className="flex flex-col gap-3">
-              {/* Proportional Grid Header - No Horizontal Scroll */}
-              <div className="hidden md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
-                <div>Driver & Reference</div>
-                <div>Policyholder</div>
-                <div>Authorized Vehicle(s)</div>
-                <div>Fee & Payment</div>
-                <div>Status & Timeline</div>
-                <div className="text-right">Actions</div>
-              </div>
+            <div className="overflow-x-auto pb-3 -mx-2 px-2">
+              <div className="min-w-[1080px] flex flex-col gap-3">
+                {/* Proportional Grid Header */}
+                <div className="hidden md:grid md:grid-cols-[minmax(250px,2.2fr)_minmax(160px,1.4fr)_minmax(150px,1.3fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(150px,1.3fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
+                  <div>Driver & Reference</div>
+                  <div>Policyholder</div>
+                  <div>Authorized Vehicle(s)</div>
+                  <div>Fee & Payment</div>
+                  <div>Status & Timeline</div>
+                  <div className="text-right">Actions</div>
+                </div>
 
-              {/* Card Rows with Colored Left Accent */}
-              {filteredRequests.map((req) => {
-                const isPending = req.status === "Pending Branch Approval";
-                const isPendingTerm = req.status === "Pending Termination Approval";
-                const isApproved = req.status === "Approved";
-                const isTerminated = req.status === "Terminated";
-                const isRejected = req.status === "Rejected";
-                const isPaid = req.payment?.status === "Paid";
-                const initials = (req.driverDetails?.fullName || "TP")
-                  .split(" ")
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((s) => s[0].toUpperCase())
-                  .join("");
+                {/* Card Rows with Colored Left Accent */}
+                {filteredRequests.map((req) => {
+                  const isPending = req.status === "Pending Branch Approval";
+                  const isPendingTerm = req.status === "Pending Termination Approval";
+                  const isApproved = req.status === "Approved";
+                  const isTerminated = req.status === "Terminated";
+                  const isRejected = req.status === "Rejected";
+                  const isPaid = req.payment?.status === "Paid";
+                  const initials = (req.driverDetails?.fullName || "TP")
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((s) => s[0].toUpperCase())
+                    .join("");
 
-                let borderAccentClass = "border-l-slate-300";
-                let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
+                  let borderAccentClass = "border-l-slate-300";
+                  let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
 
-                if (isApproved) {
-                  borderAccentClass = "border-l-emerald-500";
-                  gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
-                } else if (isPending) {
-                  borderAccentClass = "border-l-amber-500";
-                  gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
-                } else if (isPendingTerm) {
-                  borderAccentClass = "border-l-rose-500";
-                  gradientBgClass = "from-rose-50/30 via-transparent to-transparent";
-                } else if (isTerminated) {
-                  borderAccentClass = "border-l-slate-400";
-                  gradientBgClass = "from-slate-50/30 via-transparent to-transparent";
-                } else if (isRejected) {
-                  borderAccentClass = "border-l-red-500";
-                  gradientBgClass = "from-red-50/30 via-transparent to-transparent";
-                } else {
-                  borderAccentClass = "border-l-blue-400";
-                  gradientBgClass = "from-blue-50/20 via-transparent to-transparent";
-                }
+                  if (isApproved) {
+                    borderAccentClass = "border-l-emerald-500";
+                    gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
+                  } else if (isPending) {
+                    borderAccentClass = "border-l-amber-500";
+                    gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
+                  } else if (isPendingTerm) {
+                    borderAccentClass = "border-l-rose-500";
+                    gradientBgClass = "from-rose-50/30 via-transparent to-transparent";
+                  } else if (isTerminated) {
+                    borderAccentClass = "border-l-slate-400";
+                    gradientBgClass = "from-slate-50/30 via-transparent to-transparent";
+                  } else if (isRejected) {
+                    borderAccentClass = "border-l-red-500";
+                    gradientBgClass = "from-red-50/30 via-transparent to-transparent";
+                  } else {
+                    borderAccentClass = "border-l-blue-400";
+                    gradientBgClass = "from-blue-50/20 via-transparent to-transparent";
+                  }
 
-                return (
-                  <div
-                    key={req._id}
-                    className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group`}
-                  >
-                    {/* Col 1: Driver Identity & Reference */}
-                    <div className="flex items-center gap-3 min-w-0 select-none">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
-                        {initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono text-[11px] font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
-                            {req.requestReference}
-                          </span>
+                  return (
+                    <div
+                      key={req._id}
+                      className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(250px,2.2fr)_minmax(160px,1.4fr)_minmax(150px,1.3fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(150px,1.3fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group`}
+                    >
+                      {/* Col 1: Driver Identity & Reference */}
+                      <div className="flex items-center gap-3 min-w-0 select-none">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                          {initials}
                         </div>
-                        <div
-                          className="font-bold text-slate-900 text-sm truncate mt-0.5"
-                          title={req.driverDetails?.fullName}
-                        >
-                          {req.driverDetails?.fullName || "—"}
-                        </div>
-                        <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1.5 mt-0.5">
-                          {req.driverDetails?.nicNumber && (
-                            <span className="font-mono bg-slate-100/80 px-1.5 py-0.5 rounded text-slate-600">
-                              NIC: {req.driverDetails.nicNumber}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono text-[11px] font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
+                              {req.requestReference}
                             </span>
-                          )}
-                          {req.driverDetails?.phoneNumber && (
-                            <span>{req.driverDetails.phoneNumber}</span>
+                          </div>
+                          <div
+                            className="font-bold text-slate-900 text-sm truncate mt-0.5"
+                            title={req.driverDetails?.fullName}
+                          >
+                            {req.driverDetails?.fullName || "—"}
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {req.driverDetails?.nicNumber && (
+                              <span className="font-mono bg-slate-100/80 px-1.5 py-0.5 rounded text-slate-600">
+                                NIC: {req.driverDetails.nicNumber}
+                              </span>
+                            )}
+                            {req.driverDetails?.phoneNumber && (
+                              <span className="font-mono text-slate-600">{req.driverDetails.phoneNumber}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Col 2: Policyholder & Contact */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                          Policyholder
+                        </span>
+                        <h4 className="font-semibold text-xs text-slate-800 truncate" title={req.policyHolderName}>
+                          {req.policyHolderName || "—"}
+                        </h4>
+                        <span className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+                          NIC: {req.policyHolderNic || "—"}
+                        </span>
+                      </div>
+
+                      {/* Col 3: Authorized Vehicle(s) */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                          Authorized Vehicles
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {req.selectedVehicles?.map((v) => (
+                            <span
+                              key={v.numberPlate}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono font-bold text-xs shadow-2xs"
+                            >
+                              <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-amber-700" />
+                              <span>{v.numberPlate}</span>
+                            </span>
+                          ))}
+                          {(!req.selectedVehicles || req.selectedVehicles.length === 0) && (
+                            <span className="text-xs text-slate-400 italic">No vehicles</span>
                           )}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Col 2: Policyholder & Contact */}
-                    <div className="flex flex-col min-w-0 select-none">
-                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                        Policyholder
-                      </span>
-                      <h4 className="font-semibold text-xs text-slate-800 truncate" title={req.policyHolderName}>
-                        {req.policyHolderName || "—"}
-                      </h4>
-                      <span className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
-                        NIC: {req.policyHolderNic || "—"}
-                      </span>
-                    </div>
-
-                    {/* Col 3: Authorized Vehicle(s) */}
-                    <div className="flex flex-col min-w-0 select-none">
-                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                        Authorized Vehicles
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {req.selectedVehicles?.map((v) => (
-                          <span
-                            key={v.numberPlate}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono font-bold text-xs shadow-2xs"
-                          >
-                            <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-amber-700" />
-                            <span>{v.numberPlate}</span>
+                      {/* Col 4: Fee & Payment */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                          Payment
+                        </span>
+                        {isPaid ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 w-fit">
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>LKR 300 (Paid)</span>
                           </span>
-                        ))}
-                        {(!req.selectedVehicles || req.selectedVehicles.length === 0) && (
-                          <span className="text-xs text-slate-400 italic">No vehicles</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 w-fit">
+                            <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Pending Payment</span>
+                          </span>
                         )}
                       </div>
-                    </div>
 
-                    {/* Col 4: Fee & Payment */}
-                    <div className="flex flex-col min-w-0 select-none">
-                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                        Payment
-                      </span>
-                      {isPaid ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 w-fit">
-                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>LKR 300 (Paid)</span>
+                      {/* Col 5: Status & Timeline */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                          Status & Timeline
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 w-fit">
-                          <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5 text-amber-600" />
-                          <span>Pending Payment</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Col 5: Status & Timeline */}
-                    <div className="flex flex-col min-w-0 select-none">
-                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                        Status & Timeline
-                      </span>
-                      <div className="w-fit">{getStatusBadge(req.status)}</div>
-                      <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
-                        <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span>
-                          {new Date(req.createdAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric"
-                          })}
-                        </span>
-                        <span className="text-slate-400 text-[10px]">
-                          {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
+                        <div className="w-fit">{getStatusBadge(req.status)}</div>
+                        <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
+                          <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>
+                            {new Date(req.createdAt).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric"
+                            })}
+                          </span>
+                          <span className="text-slate-400 text-[10px]">
+                            {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Col 6: Actions */}
-                    <div className="flex items-center md:justify-end gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedReq(req);
-                          setApprovalNotes("");
-                          setRejectionReason("");
-                        }}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
-                          isPending || isPendingTerm
-                            ? "bg-[#102A43] text-white hover:bg-[#1B365D]"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                        }`}
-                      >
-                        <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                        <span>{isPending ? "Review" : isPendingTerm ? "Review Term." : "View"}</span>
-                      </button>
-
-                      {isApproved && (
+                      {/* Col 6: Actions */}
+                      <div className="flex items-center md:justify-end gap-1.5 flex-shrink-0">
                         <button
                           onClick={() => {
                             setSelectedReq(req);
-                            setTerminationNotes("Terminated directly by branch office");
-                            setShowApproveTerminationModal(true);
+                            setApprovalNotes("");
+                            setRejectionReason("");
                           }}
-                          className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                          title="Direct Terminate Driver"
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 flex-shrink-0 ${
+                            isPending || isPendingTerm
+                              ? "bg-[#102A43] text-white hover:bg-[#1B365D]"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                          }`}
                         >
-                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                          <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                          <span>{isPending ? "Review" : isPendingTerm ? "Review Term." : "View"}</span>
                         </button>
-                      )}
 
-                      {isApproved && req.secureAccess?.accessUrl && (
-                        <button
-                          onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
-                          className="p-1.5 rounded-lg text-slate-600 hover:text-[#102A43] hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                          title="Copy driver access link"
-                        >
-                          <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                        {isApproved && (
+                          <button
+                            onClick={() => {
+                              setSelectedReq(req);
+                              setTerminationNotes("Terminated directly by branch office");
+                              setShowApproveTerminationModal(true);
+                            }}
+                            className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer flex-shrink-0"
+                            title="Direct Terminate Driver"
+                          >
+                            <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        {isApproved && req.secureAccess?.accessUrl && (
+                          <button
+                            onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
+                            className="p-1.5 rounded-lg text-slate-600 hover:text-[#102A43] hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer flex-shrink-0"
+                            title="Copy driver access link"
+                          >
+                            <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              {/* Table Footer / Summary Bar */}
-              <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
-                <div>
-                  Showing <span className="font-bold text-slate-700">{filteredRequests.length}</span> of{" "}
-                  <span className="font-bold text-slate-700">{requests.length}</span> registrations
+                {/* Table Footer / Summary Bar */}
+                <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+                  <div>
+                    Showing <span className="font-bold text-slate-700">{filteredRequests.length}</span> of{" "}
+                    <span className="font-bold text-slate-700">{requests.length}</span> registrations
+                  </div>
+                  {(statusFilter !== "all" || searchQuery) && (
+                    <button
+                      onClick={() => {
+                        setStatusFilter("all");
+                        setSearchQuery("");
+                      }}
+                      className="text-[#102A43] font-semibold hover:underline cursor-pointer"
+                    >
+                      Reset filters
+                    </button>
+                  )}
                 </div>
-                {(statusFilter !== "all" || searchQuery) && (
-                  <button
-                    onClick={() => {
-                      setStatusFilter("all");
-                      setSearchQuery("");
-                    }}
-                    className="text-[#102A43] font-semibold hover:underline cursor-pointer"
-                  >
-                    Reset filters
-                  </button>
-                )}
               </div>
             </div>
           )}
