@@ -964,27 +964,29 @@ export default function AdminThirdPartyPage() {
           {/* Order Inspection Modal */}
           {selectedOrder && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-100 overflow-hidden my-8 max-h-[90vh] flex flex-col text-xs text-slate-800">
-                <div className="px-6 py-5 bg-[#102A43] text-white flex items-center justify-between flex-shrink-0">
+              <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                {/* Modal Header matching Branch UI */}
+                <div className="p-6 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between flex-shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
-                      <HugeiconsIcon icon={CreditCardIcon} className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center shadow-xs">
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold flex items-center gap-2">
-                        <span>Order {selectedOrder.orderNumber}</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-normal">
-                          {selectedOrder.status}
-                        </span>
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-0.5">
-                        Placed on {new Date(selectedOrder.createdAt).toLocaleString("en-LK")}
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold text-[#102A43]">
+                          Order #{selectedOrder.orderNumber}
+                        </h2>
+                        {getStatusBadge(selectedOrder.status)}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Branch: <span className="font-semibold text-slate-700">{selectedOrder.branch}</span> • Placed on{" "}
+                        {new Date(selectedOrder.createdAt).toLocaleString("en-LK")}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
                   >
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
                   </button>
@@ -993,52 +995,93 @@ export default function AdminThirdPartyPage() {
                 <div className="p-6 space-y-5 overflow-y-auto flex-1">
                   {/* Order Overview */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                        Policyholder Details
-                      </span>
-                      <div className="font-bold text-sm text-[#102A43]">{selectedOrder.policyHolderName}</div>
-                      <div className="space-y-1 text-slate-600">
-                        <div>NIC: <span className="font-mono">{selectedOrder.policyHolderNic}</span></div>
-                        {selectedOrder.policyHolderEmail && <div>Email: {selectedOrder.policyHolderEmail}</div>}
-                        {selectedOrder.policyHolderPhone && <div>Phone: {selectedOrder.policyHolderPhone}</div>}
-                        <div>Branch: <span className="font-semibold text-slate-800">{selectedOrder.branch}</span></div>
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#102A43] uppercase tracking-wider border-b border-slate-200 pb-2">
+                        <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-blue-600" />
+                        <span>Policyholder Details</span>
                       </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Full Name</span>
+                          <span className="font-semibold text-slate-800">{selectedOrder.policyHolderName}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">NIC Number</span>
+                          <span className="font-mono font-semibold text-slate-800">{selectedOrder.policyHolderNic}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Contact Mobile</span>
+                          <span className="font-medium text-slate-800">{selectedOrder.policyHolderPhone || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Branch Office</span>
+                          <span className="font-semibold text-slate-800">{selectedOrder.branch}</span>
+                        </div>
+                      </div>
+                      {selectedOrder.policyHolderEmail && (
+                        <div className="text-xs pt-1 border-t border-slate-200/60 text-slate-500">
+                          Email: <span className="font-medium text-slate-700">{selectedOrder.policyHolderEmail}</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                        Payment & Order Fee
-                      </span>
-                      <div className="text-sm font-bold text-slate-800">
-                        LKR {selectedOrder.totalAmount?.toLocaleString()}
-                        <span className="text-xs text-slate-400 font-normal ml-1">
-                          ({selectedOrder.quantity} cards @ LKR 500)
-                        </span>
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#102A43] uppercase tracking-wider border-b border-slate-200 pb-2">
+                        <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-blue-600" />
+                        <span>Payment & Order Fee</span>
                       </div>
-                      <div className="space-y-1 text-slate-600">
-                        <div>Payment Status: {selectedOrder.payment?.status}</div>
-                        {selectedOrder.payment?.paidAt && (
-                          <div>
-                            Paid: {new Date(selectedOrder.payment.paidAt).toLocaleString("en-LK")}
-                          </div>
-                        )}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Total Fee</span>
+                          <span className="font-bold text-slate-900 text-sm">
+                            LKR {selectedOrder.totalAmount?.toLocaleString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Quantity</span>
+                          <span className="font-semibold text-blue-700">
+                            {selectedOrder.quantity} Card(s) @ LKR 500
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Payment Status</span>
+                          <span
+                            className={`font-semibold ${
+                              selectedOrder.payment?.status === "Paid" ? "text-emerald-700" : "text-amber-700"
+                            }`}
+                          >
+                            {selectedOrder.payment?.status || "Pending Payment"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Payment Date</span>
+                          <span className="text-slate-700 font-medium">
+                            {selectedOrder.payment?.paidAt
+                              ? new Date(selectedOrder.payment.paidAt).toLocaleDateString("en-LK")
+                              : "—"}
+                          </span>
+                        </div>
                       </div>
+                      {selectedOrder.payment?.paidAt && (
+                        <div className="text-xs pt-1 border-t border-slate-200/60 text-slate-500">
+                          Settled on {new Date(selectedOrder.payment.paidAt).toLocaleTimeString("en-LK")}
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Generated Cards */}
                   {selectedOrder.issuedCards && selectedOrder.issuedCards.length > 0 && (
-                    <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-                      <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
+                    <div className="space-y-2.5">
+                      <h4 className="text-xs font-bold text-[#102A43] uppercase tracking-wider flex items-center gap-1.5">
                         <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-blue-600" />
                         <span>Generated NFC Card Records ({selectedOrder.issuedCards.length})</span>
                       </h4>
-                      <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
+                      <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
                         {selectedOrder.issuedCards.map((card, idx) => (
                           <div
                             key={card.cardId || idx}
-                            className="p-3 bg-slate-50/50 hover:bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                            className="p-3 bg-slate-50/50 hover:bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors"
                           >
                             <div>
                               <div className="flex items-center gap-2">
@@ -1073,26 +1116,28 @@ export default function AdminThirdPartyPage() {
 
                   {/* Audit History */}
                   {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
-                    <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-                      <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
-                        <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4 text-slate-500" />
+                    <div className="space-y-2.5">
+                      <h4 className="text-xs font-bold text-[#102A43] uppercase tracking-wider flex items-center gap-1.5">
+                        <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4 text-blue-600" />
                         <span>Audit & Progression Timeline</span>
                       </h4>
-                      <div className="space-y-2.5 relative pl-4 border-l-2 border-slate-200 ml-1">
-                        {selectedOrder.statusHistory.map((h, i) => (
-                          <div key={i} className="relative">
-                            <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-600 ring-2 ring-white" />
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-bold text-slate-800">{h.status}</span>
-                              <span className="text-slate-400">
-                                {new Date(h.timestamp).toLocaleString("en-LK")}
-                              </span>
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="space-y-3 relative pl-4 border-l-2 border-slate-300 ml-1">
+                          {selectedOrder.statusHistory.map((h, i) => (
+                            <div key={i} className="relative">
+                              <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#102A43] ring-2 ring-white" />
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-bold text-slate-800">{h.status}</span>
+                                <span className="text-slate-400">
+                                  {new Date(h.timestamp).toLocaleString("en-LK")}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-600 mt-0.5">
+                                {h.note || "Status updated"} • By: <span className="font-semibold text-slate-700">{h.updatedBy}</span>
+                              </p>
                             </div>
-                            <p className="text-[11px] text-slate-600 mt-0.5">
-                              {h.note || "Status updated"} • By: {h.updatedBy}
-                            </p>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1101,9 +1146,9 @@ export default function AdminThirdPartyPage() {
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl font-semibold text-xs text-slate-700 transition-colors cursor-pointer"
+                    className="px-5 py-2.5 bg-[#102A43] hover:bg-[#1B365D] text-white rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-xs active:scale-95"
                   >
-                    Close
+                    Close Order
                   </button>
                 </div>
               </div>
@@ -1113,158 +1158,266 @@ export default function AdminThirdPartyPage() {
           {/* Permanent Driver Dossier Modal */}
           {selectedDriverReq && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-100 overflow-hidden my-8 max-h-[90vh] flex flex-col text-xs text-slate-800">
-                <div className="px-6 py-5 bg-[#102A43] text-white flex items-center justify-between flex-shrink-0">
+              <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                {/* Modal Header matching Branch UI */}
+                <div className="p-6 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between flex-shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
-                      <HugeiconsIcon icon={UserCheck01Icon} className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center shadow-xs">
+                      <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold flex items-center gap-2">
-                        <span>Pass Ref: {selectedDriverReq.requestReference}</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-normal">
-                          {selectedDriverReq.status}
-                        </span>
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-0.5">
-                        Driver: {selectedDriverReq.driverDetails.fullName} • Registered on{" "}
-                        {new Date(selectedDriverReq.createdAt).toLocaleDateString("en-LK")}
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold text-[#102A43]">
+                          Pass Ref: {selectedDriverReq.requestReference || selectedDriverReq._id.substring(0, 8)}
+                        </h2>
+                        {getStatusBadge(selectedDriverReq.status)}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Driver: <span className="font-semibold text-slate-700">{selectedDriverReq.driverDetails.fullName}</span> • Branch:{" "}
+                        <span className="font-semibold text-slate-700">{selectedDriverReq.branch}</span> • Registered on{" "}
+                        {new Date(selectedDriverReq.createdAt).toLocaleDateString("en-LK", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric"
+                        })}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedDriverReq(null)}
-                    className="p-1.5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
                   >
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="p-6 space-y-5 overflow-y-auto flex-1">
-                  {/* Driver & Policyholder Overview */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                        Driver Profile
-                      </span>
-                      <div className="font-bold text-sm text-[#102A43]">
-                        {selectedDriverReq.driverDetails.fullName}
+                  {/* Driver & Policyholder Overview Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Driver Profile */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#102A43] uppercase tracking-wider border-b border-slate-200 pb-2">
+                        <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4 text-blue-600" />
+                        <span>Third-Party Driver Profile</span>
                       </div>
-                      <div className="space-y-1 text-slate-600">
-                        <div>NIC: <span className="font-mono font-semibold">{selectedDriverReq.driverDetails.nicNumber || "N/A"}</span></div>
-                        <div>Phone: <span className="font-medium">{selectedDriverReq.driverDetails.phoneNumber}</span></div>
-                        <div>Address: {selectedDriverReq.driverDetails.residentialAddress}</div>
-                        <div>Branch: <span className="font-semibold text-slate-800">{selectedDriverReq.branch}</span></div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Full Name</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedDriverReq.driverDetails.fullName}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">NIC Number</span>
+                          <span className="font-mono font-semibold text-slate-800">
+                            {selectedDriverReq.driverDetails.nicNumber || "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Contact Mobile</span>
+                          <span className="font-medium text-slate-800">
+                            {selectedDriverReq.driverDetails.phoneNumber}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Branch Office</span>
+                          <span className="font-semibold text-slate-800">{selectedDriverReq.branch}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs pt-1 border-t border-slate-200/60">
+                        <span className="text-slate-400 block text-[11px]">Residential Address</span>
+                        <span className="text-slate-700">{selectedDriverReq.driverDetails.residentialAddress}</span>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                        Policyholder Details
-                      </span>
-                      <div className="font-bold text-sm text-[#102A43]">
-                        {selectedDriverReq.policyHolderName || "Vehicle Owner"}
+                    {/* Policyholder Profile */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#102A43] uppercase tracking-wider border-b border-slate-200 pb-2">
+                        <HugeiconsIcon icon={Building01Icon} className="w-4 h-4 text-blue-600" />
+                        <span>Policyholder & Billing</span>
                       </div>
-                      <div className="space-y-1 text-slate-600">
-                        <div>NIC: <span className="font-mono font-semibold">{selectedDriverReq.policyHolderNic}</span></div>
-                        {selectedDriverReq.policyHolderPhone && (
-                          <div>Phone: {selectedDriverReq.policyHolderPhone}</div>
-                        )}
-                        {selectedDriverReq.policyHolderEmail && (
-                          <div>Email: {selectedDriverReq.policyHolderEmail}</div>
-                        )}
-                        <div>Payment: <span className="font-semibold text-emerald-700">{selectedDriverReq.payment?.status}</span></div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Policyholder Name</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedDriverReq.policyHolderName || "Vehicle Owner"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Policyholder NIC</span>
+                          <span className="font-mono font-semibold text-slate-800">
+                            {selectedDriverReq.policyHolderNic}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Contact Mobile</span>
+                          <span className="font-medium text-slate-800">
+                            {selectedDriverReq.policyHolderPhone || "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[11px]">Payment Status</span>
+                          <span
+                            className={`font-semibold ${
+                              selectedDriverReq.payment?.status === "Paid"
+                                ? "text-emerald-700"
+                                : "text-amber-700"
+                            }`}
+                          >
+                            {selectedDriverReq.payment?.status || "Pending"}
+                          </span>
+                        </div>
                       </div>
+                      {selectedDriverReq.policyHolderEmail && (
+                        <div className="text-xs pt-1 border-t border-slate-200/60 text-slate-500">
+                          Email: <span className="font-medium text-slate-700">{selectedDriverReq.policyHolderEmail}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Permitted Vehicles */}
-                  <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-                    <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
-                      <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-emerald-600" />
+                  <div className="space-y-2.5">
+                    <h4 className="text-xs font-bold text-[#102A43] uppercase tracking-wider flex items-center gap-1.5">
+                      <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-blue-600" />
                       <span>Authorized Insured Vehicles ({(selectedDriverReq.selectedVehicles || []).length})</span>
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {(selectedDriverReq.selectedVehicles || []).map((v, i) => (
-                        <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-                          <div>
-                            <span className="font-mono font-bold text-slate-900 text-xs block">{v.numberPlate}</span>
-                            <span className="text-[11px] text-slate-500">{v.vehicleType || "Vehicle"} {v.model ? `• ${v.model}` : ""}</span>
+                        <div
+                          key={i}
+                          className="p-3 bg-white border border-slate-200 rounded-xl shadow-xs flex items-center gap-3"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0">
+                            <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" />
                           </div>
-                          {v.policyNumber && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-mono">
-                              {v.policyNumber}
+                          <div className="min-w-0 flex-1">
+                            <span className="font-mono font-bold text-slate-900 text-xs block">{v.numberPlate}</span>
+                            <span className="text-[11px] text-slate-500 truncate block">
+                              {v.vehicleType || "Vehicle"} {v.model ? `• ${v.model}` : ""}
                             </span>
+                            {v.policyNumber && (
+                              <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                                Pol: {v.policyNumber}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!selectedDriverReq.selectedVehicles || selectedDriverReq.selectedVehicles.length === 0) && (
+                        <span className="text-xs text-slate-400 italic">No assigned vehicles</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* KYC Documents */}
+                  <div className="space-y-2.5">
+                    <h4 className="text-xs font-bold text-[#102A43] uppercase tracking-wider flex items-center gap-1.5">
+                      <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-blue-600" />
+                      <span>Driver KYC & Verification Documents</span>
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { key: "nicFront", label: "Driver NIC Front", url: selectedDriverReq.driverDetails?.documents?.nicFront },
+                        { key: "nicBack", label: "Driver NIC Back", url: selectedDriverReq.driverDetails?.documents?.nicBack },
+                        { key: "drivingLicenceFront", label: "Licence Front", url: selectedDriverReq.driverDetails?.documents?.drivingLicenceFront },
+                        { key: "drivingLicenceBack", label: "Licence Back", url: selectedDriverReq.driverDetails?.documents?.drivingLicenceBack }
+                      ].map((doc) => (
+                        <div
+                          key={doc.key}
+                          className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center flex flex-col justify-between hover:border-slate-300 transition-colors"
+                        >
+                          <div>
+                            <div className="text-[11px] font-semibold text-slate-700 mb-2">{doc.label}</div>
+                            {doc.url ? (
+                              <div className="h-28 bg-slate-200 rounded-lg overflow-hidden relative group border border-slate-300 flex items-center justify-center">
+                                <img
+                                  src={doc.url}
+                                  alt={doc.label}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                  <a
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 bg-white text-slate-800 rounded-lg hover:bg-slate-100 text-xs shadow-md"
+                                    title="Open document"
+                                  >
+                                    <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" />
+                                  </a>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="h-28 bg-slate-100 rounded-lg border border-dashed border-slate-300 flex flex-col items-center justify-center p-2 text-slate-400">
+                                <HugeiconsIcon icon={File01Icon} className="w-6 h-6 mb-1 text-slate-300" />
+                                <span className="text-[10px]">Not uploaded</span>
+                              </div>
+                            )}
+                          </div>
+                          {doc.url && (
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 text-[11px] text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center justify-center gap-1"
+                            >
+                              <span>View Document</span>
+                              <span>↗</span>
+                            </a>
                           )}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* KYC Documents */}
-                  <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-                    <h4 className="font-bold text-sm text-[#102A43] flex items-center gap-1.5">
-                      <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-blue-600" />
-                      <span>KYC Verification Documents</span>
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {selectedDriverReq.driverDetails?.documents?.nicFront && (
-                        <a
-                          href={selectedDriverReq.driverDetails.documents.nicFront}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-center transition-colors block"
+                  {/* Secure Access Token (If Approved) */}
+                  {selectedDriverReq.status === "Approved" && selectedDriverReq.secureAccess?.accessUrl && (
+                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-emerald-700" />
+                          <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
+                            Driver Digital NFC & Access Pass
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-800">
+                          ACTIVE
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-800">
+                        Cryptographically generated secure token link prepared for the authorized third-party driver:
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={selectedDriverReq.secureAccess.accessUrl}
+                          className="flex-1 px-3 py-2 text-xs font-mono bg-white border border-emerald-300 rounded-lg text-slate-800 select-all focus:outline-none"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedDriverReq.secureAccess!.accessUrl!);
+                            showToast("Pass link copied!", "success");
+                          }}
+                          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <HugeiconsIcon icon={File01Icon} className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-                          <span className="font-bold text-[11px] text-slate-800 block">NIC Front</span>
-                          <span className="text-[9px] text-blue-600">View Document ↗</span>
-                        </a>
-                      )}
-                      {selectedDriverReq.driverDetails?.documents?.nicBack && (
-                        <a
-                          href={selectedDriverReq.driverDetails.documents.nicBack}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-center transition-colors block"
-                        >
-                          <HugeiconsIcon icon={File01Icon} className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-                          <span className="font-bold text-[11px] text-slate-800 block">NIC Back</span>
-                          <span className="text-[9px] text-blue-600">View Document ↗</span>
-                        </a>
-                      )}
-                      {selectedDriverReq.driverDetails?.documents?.drivingLicenceFront && (
-                        <a
-                          href={selectedDriverReq.driverDetails.documents.drivingLicenceFront}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-center transition-colors block"
-                        >
-                          <HugeiconsIcon icon={File01Icon} className="w-6 h-6 text-emerald-600 mx-auto mb-1" />
-                          <span className="font-bold text-[11px] text-slate-800 block">Licence Front</span>
-                          <span className="text-[9px] text-blue-600">View Document ↗</span>
-                        </a>
-                      )}
-                      {selectedDriverReq.driverDetails?.documents?.drivingLicenceBack && (
-                        <a
-                          href={selectedDriverReq.driverDetails.documents.drivingLicenceBack}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-center transition-colors block"
-                        >
-                          <HugeiconsIcon icon={File01Icon} className="w-6 h-6 text-emerald-600 mx-auto mb-1" />
-                          <span className="font-bold text-[11px] text-slate-800 block">Licence Back</span>
-                          <span className="text-[9px] text-blue-600">View Document ↗</span>
-                        </a>
-                      )}
+                          <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
+                          <span>Copy URL</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Branch Review Information */}
                   {selectedDriverReq.branchReview && selectedDriverReq.branchReview.reviewedByStaffName && (
-                    <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-xl">
-                      <span className="font-bold text-[11px] text-blue-900 block">Branch Review Log</span>
-                      <p className="text-[11px] text-blue-800 mt-0.5">
-                        Reviewed by {selectedDriverReq.branchReview.reviewedByStaffName} on{" "}
+                    <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl text-xs">
+                      <span className="font-bold text-blue-900 block">Branch Review Log</span>
+                      <p className="text-blue-800 mt-0.5">
+                        Reviewed by <span className="font-semibold">{selectedDriverReq.branchReview.reviewedByStaffName}</span> on{" "}
                         {selectedDriverReq.branchReview.reviewedAt
                           ? new Date(selectedDriverReq.branchReview.reviewedAt).toLocaleString("en-LK")
                           : "N/A"}
@@ -1277,9 +1430,9 @@ export default function AdminThirdPartyPage() {
                 <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
                   <button
                     onClick={() => setSelectedDriverReq(null)}
-                    className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl font-semibold text-xs text-slate-700 transition-colors cursor-pointer"
+                    className="px-5 py-2.5 bg-[#102A43] hover:bg-[#1B365D] text-white rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-xs active:scale-95"
                   >
-                    Close
+                    Close Dossier
                   </button>
                 </div>
               </div>
