@@ -132,6 +132,20 @@ const claimSchema = new mongoose.Schema({
     totalEstimatedCost: { type: Number, default: 0 },
     currency: { type: String, default: "LKR" },
     summary: { type: String, default: "" },
+    severityLevel: { type: String, default: "Moderate" },
+    confidenceScore: { type: Number, default: 95 },
+    impactPoint: { type: String, default: "" },
+    repairReplaceRatio: {
+      repairCount: { type: Number, default: 0 },
+      replaceCount: { type: Number, default: 0 },
+      partsPercentage: { type: Number, default: 0 },
+      laborPercentage: { type: Number, default: 0 }
+    },
+    estimatedRepairDays: { type: String, default: "3-5 Working Days" },
+    agentCorrelationStatus: { type: String, default: "Verified & Matched" },
+    technicalNarrative: { type: String, default: "" },
+    underwriterGuidance: { type: String, default: "" },
+    recommendedSettlementCap: { type: Number, default: 0 },
     analyzedAt: { type: Date, default: null }
   },
   garageEstimateComparison: {
