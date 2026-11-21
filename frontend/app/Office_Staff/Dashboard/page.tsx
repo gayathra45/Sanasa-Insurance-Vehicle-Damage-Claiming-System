@@ -416,7 +416,7 @@ export default function OfficeStaffDashboard() {
         <OfficeStaffNavbar />
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-clip">
           {/* Top Header Bar */}
           <header className="bg-white border-b border-slate-200/80 px-6 lg:px-8 py-3.5 flex justify-between items-center select-none shadow-xs sticky top-0 z-30">
             <div className="flex items-center gap-3">

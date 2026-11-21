@@ -401,7 +401,7 @@ export default function OfficeStaffRenewalsPage() {
         <OfficeStaffNavbar />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-clip">
           {/* Top Navbar */}
           <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 text-slate-800 px-6 sm:px-8 py-4 flex justify-between items-center select-none shadow-xs flex-shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3 min-w-0">

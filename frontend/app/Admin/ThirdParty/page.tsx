@@ -389,7 +389,7 @@ export default function AdminThirdPartyPage() {
     <div className="flex min-h-screen bg-slate-50 font-sans">
       <AdminNavbar />
 
-      <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-clip">
         {/* Top Header */}
         <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs h-[72px]">
           <div className="flex items-center gap-3">

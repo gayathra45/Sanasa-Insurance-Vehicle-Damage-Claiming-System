@@ -612,7 +612,7 @@ export default function OfficeStaffThirdPartyPage() {
         <OfficeStaffNavbar />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-clip">
           {/* Top Header */}
           <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
