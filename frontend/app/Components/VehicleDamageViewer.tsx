@@ -514,7 +514,7 @@ export default function VehicleDamageViewer({
             <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
               <span>📋</span> Category Inspection Checklist ({diagramSpec.displayName})
             </h4>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <div className="flex items-center gap-2 text-xs font-semibold shrink-0 flex-nowrap overflow-x-auto">
               {(() => {
                 const goodCount = checklist.filter((c) => (c.status || "").toLowerCase().includes("good")).length;
                 const damagedCount = checklist.filter((c) => (c.status || "").toLowerCase().includes("damag")).length;
@@ -522,17 +522,17 @@ export default function VehicleDamageViewer({
 
                 return (
                   <>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 text-[11px] inline-flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                      {goodCount} Good
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200 text-[11px] inline-flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
+                    <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block shrink-0" />
                       {damagedCount} Damaged
                     </span>
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0" />
+                      {goodCount} Good
+                    </span>
                     {pendingCount > 0 && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[11px] inline-flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                      <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0" />
                         {pendingCount} Not Inspected
                       </span>
                     )}
