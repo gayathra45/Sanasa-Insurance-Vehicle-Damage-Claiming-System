@@ -35,25 +35,32 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      - name: 4. Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: 4. Verify Android SDK & Accept Licenses
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT: $ANDROID_HOME"
+          yes | sdkmanager --licenses || true
 
-      - name: 5. Install Dependencies
+      - name: 5. Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 6. Install Dependencies
         working-directory: ./mobile_app
         run: |
           npm ci --legacy-peer-deps
 
-      - name: 6. Prebuild Android Native Project
+      - name: 7. Prebuild Android Native Project
         working-directory: ./mobile_app
         run: |
           npx expo prebuild --platform android --clean
 
-      - name: 7. Build Android Release APK
+      - name: 8. Ensure Gradlew Permissions & Build Release APK
         working-directory: ./mobile_app/android
         run: |
+          chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: 8. Prepare Output Artifact
+      - name: 9. Prepare Output Artifact
         run: |
           mkdir -p dist
           APK_PATH=$(find mobile_app/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
@@ -65,14 +72,14 @@ jobs:
             exit 1
           fi
 
-      - name: 9. Upload Artifact to GitHub Action Run
+      - name: 10. Upload Artifact to GitHub Action Run
         uses: actions/upload-artifact@v4
         with:
           name: Sanasa-SClaim-Go-APK
           path: dist/Sanasa-SClaim-Go.apk
           retention-days: 14
 
-      - name: 10. Publish GitHub Release (When Tagged)
+      - name: 11. Publish GitHub Release (When Tagged)
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
