@@ -1565,19 +1565,25 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition-all cursor-pointer shadow-sm hover:shadow active:scale-95 ring-1 ring-sky-500/50"
                     title="Download Official Claim PDF Report"
                   >
-                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
                     <span>Download PDF</span>
                   </button>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
-                    selectedClaim.status === "Approved" ? "bg-emerald-100 text-emerald-800" :
-                    selectedClaim.status === "Rejected" ? "bg-red-100 text-red-800" :
-                    selectedClaim.status === "Review" ? "bg-purple-100 text-purple-800" :
-                    "bg-amber-100 text-amber-800"
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border select-none ${
+                    selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "bg-emerald-50 text-emerald-800 border-emerald-200" :
+                    selectedClaim.status === "Approved" ? "bg-emerald-50 text-emerald-800 border-emerald-200" :
+                    selectedClaim.status === "Rejected" ? "bg-red-50 text-red-800 border-red-200" :
+                    selectedClaim.status === "Review" ? "bg-purple-50 text-purple-800 border-purple-200" :
+                    "bg-amber-50 text-amber-800 border-amber-200"
                   }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || selectedClaim.status === "Approved" ? "bg-emerald-500" :
+                      selectedClaim.status === "Rejected" ? "bg-red-500" :
+                      selectedClaim.status === "Review" ? "bg-purple-500" :
+                      "bg-amber-500"
+                    }`} />
                     {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "Completed" : selectedClaim.status}
                   </span>
                   <button
@@ -1653,12 +1659,13 @@ function OfficeStaffClaimsPageContent() {
                           <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
                             1. Physical Vehicle Findings (Agent Submission)
                           </h3>
-                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                          <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border select-none ${
                             isInspectionApproved
-                              ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
-                              : "text-amber-800 bg-amber-100 border border-amber-300"
+                              ? "text-emerald-800 bg-emerald-50 border-emerald-200"
+                              : "text-amber-800 bg-amber-50 border-amber-200"
                           }`}>
-                            {isInspectionApproved ? "✓ Physical Inspection Approved" : "Inspection Report Pending Approval"}
+                            <span className={`w-1.5 h-1.5 rounded-full ${isInspectionApproved ? "bg-emerald-500" : "bg-amber-500"}`} />
+                            {isInspectionApproved ? "Physical Inspection Approved" : "Inspection Report Pending Approval"}
                           </span>
                         </div>
 
@@ -1687,7 +1694,7 @@ function OfficeStaffClaimsPageContent() {
                                   type="button"
                                   onClick={handleRejectInspection}
                                   disabled={isRejectingInspection || isApprovingInspection}
-                                  className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm hover:shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                                 >
                                   {isRejectingInspection ? "Rejecting..." : "Reject Inspection"}
                                 </button>
@@ -1695,7 +1702,7 @@ function OfficeStaffClaimsPageContent() {
                                   type="button"
                                   onClick={handleApproveInspection}
                                   disabled={isApprovingInspection || isRejectingInspection}
-                                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm hover:shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
                                 >
                                   <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4" strokeWidth={3} />
                                   {isApprovingInspection ? "Approving..." : "Approve Inspection Report"}
@@ -1709,7 +1716,8 @@ function OfficeStaffClaimsPageContent() {
                               <div className="flex items-center gap-2">
                                 <span className="font-bold">✓ Physical Inspection Report Approved & Verified by Branch Office</span>
                               </div>
-                              <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1.5 text-[10px] text-emerald-800 font-bold uppercase tracking-wider bg-emerald-100/90 border border-emerald-200 px-2 py-0.5 rounded-md select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 Step 4 Review Active
                               </span>
                             </div>
@@ -1726,13 +1734,13 @@ function OfficeStaffClaimsPageContent() {
                     <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
                       2. AI Loss Assessment & Estimation Cost Sheet
                     </h3>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       {selectedClaim.aiAnalysis?.isAnalyzed && (
                         <button
                           type="button"
                           onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
                           disabled={analyzingClaim === selectedClaim.claimNumber}
-                          className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm hover:shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 ring-1 ring-indigo-500/50"
                           title="Recalculate damage and cost sheet with Gemini AI"
                         >
                           {analyzingClaim === selectedClaim.claimNumber ? (
@@ -1749,13 +1757,18 @@ function OfficeStaffClaimsPageContent() {
                         </button>
                       )}
                       {selectedClaim.aiAnalysis?.isAnalyzed && (
-                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                        <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-md border select-none ${
                           selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
-                            ? "text-rose-700 bg-rose-100 border border-rose-200"
-                            : "text-indigo-700 bg-indigo-100"
+                            ? "text-rose-700 bg-rose-50 border-rose-200"
+                            : "text-indigo-800 bg-indigo-50/90 border-indigo-200/80"
                         }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                              ? "bg-rose-500"
+                              : "bg-indigo-500"
+                          }`} />
                           {selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
-                            ? "⚠️ Photo Validation Alert"
+                            ? "Photo Validation Alert"
                             : "Assessed via Gemini Vision"}
                         </span>
                       )}
@@ -1771,7 +1784,7 @@ function OfficeStaffClaimsPageContent() {
                         type="button"
                         onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
                         disabled={analyzingClaim === selectedClaim.claimNumber}
-                        className="px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
+                        className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2 ring-1 ring-indigo-500/50"
                       >
                         {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "⚡ Run AI Damage Assessment / Cost Sheet"}
                       </button>
@@ -1886,8 +1899,8 @@ function OfficeStaffClaimsPageContent() {
                                         </td>
                                         <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
                                         <td className="py-2.5 px-3 text-center">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                            item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border select-none ${
+                                            item.action === "Replace" ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-blue-50 text-blue-700 border-blue-200"
                                           }`}>
                                             {item.action || "Repair"}
                                           </span>
@@ -1921,9 +1934,10 @@ function OfficeStaffClaimsPageContent() {
                       <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
                         3. Garage Estimate Report from Policy Holder
                       </h3>
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                        hasGarageDoc ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border select-none ${
+                        hasGarageDoc ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"
                       }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${hasGarageDoc ? "bg-emerald-500" : "bg-amber-500"}`} />
                         {hasGarageDoc ? "Document Uploaded" : "Awaiting Policy Holder Upload"}
                       </span>
                     </div>
@@ -1947,7 +1961,7 @@ function OfficeStaffClaimsPageContent() {
                               href={garageDoc.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 text-decoration-none"
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 inline-flex items-center gap-1.5 text-decoration-none ring-1 ring-emerald-500/50"
                             >
                               <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
                               View Garage Quotation
@@ -1970,7 +1984,7 @@ function OfficeStaffClaimsPageContent() {
                         type="button"
                         onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
                         disabled={comparingGarageClaim === selectedClaim.claimNumber}
-                        className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm hover:shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5 ring-1 ring-emerald-500/50"
                       >
                         {comparingGarageClaim === selectedClaim.claimNumber ? (
                           <>
@@ -2002,7 +2016,7 @@ function OfficeStaffClaimsPageContent() {
                             <button
                               type="button"
                               onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
-                              className="mt-2 px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                              className="mt-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5 ring-1 ring-emerald-500/50"
                             >
                               🔍 Run Cost Comparison Now
                             </button>
@@ -2199,7 +2213,8 @@ function OfficeStaffClaimsPageContent() {
                           Enter the approved claim settlement payout amount. Submitting will approve the claim and unlock bank disbursement (Section 5).
                         </p>
                       </div>
-                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-200 px-2.5 py-1 rounded-md uppercase tracking-wider select-none">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         Step 4 → Step 5
                       </span>
                     </div>
@@ -2279,7 +2294,7 @@ function OfficeStaffClaimsPageContent() {
                             setRejectionReasonText("");
                             setActiveSubModal("decision_reject");
                           }}
-                          className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
+                          className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm hover:shadow transition-all active:scale-95 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
                         >
                           <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
                           Reject
@@ -2288,7 +2303,7 @@ function OfficeStaffClaimsPageContent() {
                           type="button"
                           onClick={() => handleClaimDecision("Approve")}
                           disabled={updatingClaim}
-                          className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
+                          className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm hover:shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
                         >
                           <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
                           {updatingClaim ? "Approving..." : "Approve"}
@@ -2305,7 +2320,8 @@ function OfficeStaffClaimsPageContent() {
                       <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={3} />
                       <span className="font-bold">Claim Settlement Approved: LKR {(selectedClaim.amount || 0).toLocaleString()}</span>
                     </div>
-                    <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] text-emerald-800 font-bold uppercase tracking-wider bg-emerald-100/90 border border-emerald-200 px-2.5 py-1 rounded-md select-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                       {isClaimPaymentSettled ? "Payment Disbursed" : "Proceed to Bank Settlement Below"}
                     </span>
                   </div>
@@ -2318,9 +2334,10 @@ function OfficeStaffClaimsPageContent() {
                       <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wider">
                         5. Policy Holder Bank Account & Payment Settlement
                       </h3>
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                        isClaimPaymentSettled ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border select-none ${
+                        isClaimPaymentSettled ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"
                       }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isClaimPaymentSettled ? "bg-emerald-500" : "bg-amber-500"}`} />
                         {isClaimPaymentSettled ? "Payment Completed" : "Payment Pending Disbursement"}
                       </span>
                     </div>
@@ -2420,7 +2437,7 @@ function OfficeStaffClaimsPageContent() {
                             type="button"
                             onClick={handleSettlePayment}
                             disabled={isSettlingPayment || !settlingReceiptFile}
-                            className="px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
+                            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2 ring-1 ring-blue-500/50"
                           >
                             {isSettlingPayment ? "Uploading & Settling..." : "💳 Confirm Payment & Settle Claim"}
                           </button>
@@ -2443,7 +2460,7 @@ function OfficeStaffClaimsPageContent() {
                             href={selectedClaim.paymentReceipt}
                             target="_blank"
                             rel="noreferrer"
-                            className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs text-decoration-none inline-flex items-center gap-1.5"
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 text-decoration-none inline-flex items-center gap-1.5 ring-1 ring-emerald-500/50"
                           >
                             <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
                             View Payment Slip

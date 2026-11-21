@@ -134,11 +134,12 @@ export default function VehicleDamageViewer({
             <h3 className="text-base font-bold tracking-tight">
               {diagramSpec.displayName} Interactive Damage Inspection
             </h3>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider border select-none ${
               inspectionData?.status === "Submitted"
-                ? "bg-emerald-500 text-white"
-                : "bg-amber-400 text-slate-900"
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/30"
+                : "bg-amber-400/20 text-amber-200 border-amber-400/30"
             }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${inspectionData?.status === "Submitted" ? "bg-emerald-400" : "bg-amber-400"}`} />
               {inspectionData?.status || "Draft"}
             </span>
           </div>
@@ -521,16 +522,16 @@ export default function VehicleDamageViewer({
 
                 return (
                   <>
-                    <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs">
+                    <span className="px-2.5 py-1 rounded-md bg-rose-50 text-rose-700 font-bold border border-rose-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs select-none">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block shrink-0" />
                       {damagedCount} Damaged
                     </span>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs">
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs select-none">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0" />
                       {goodCount} Good
                     </span>
                     {pendingCount > 0 && (
-                      <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs">
+                      <span className="px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[11px] inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-2xs select-none">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0" />
                         {pendingCount} Not Inspected
                       </span>
@@ -570,7 +571,7 @@ export default function VehicleDamageViewer({
                   <span className="font-bold text-xs text-slate-800 leading-snug line-clamp-2 mr-2">
                     {item.item}
                   </span>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shrink-0 whitespace-nowrap border ${badgeClass} shadow-2xs`}>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider shrink-0 whitespace-nowrap border ${badgeClass} shadow-2xs select-none`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0`} />
                     <span>{displayStatus}</span>
                   </span>
