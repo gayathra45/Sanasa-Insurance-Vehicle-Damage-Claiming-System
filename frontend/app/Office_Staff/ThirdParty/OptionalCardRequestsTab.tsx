@@ -1063,16 +1063,16 @@ export default function OptionalCardRequestsTab({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto pb-3 -mx-2 px-2">
-          <div className="min-w-[1080px] flex flex-col gap-3">
+        <div className="w-full overflow-x-auto pb-6 [scrollbar-gutter:stable]">
+          <div className="min-w-[1040px] flex flex-col gap-2.5 pb-6">
             {/* Proportional Grid Header */}
-            <div className="hidden md:grid md:grid-cols-[minmax(230px,2.1fr)_minmax(180px,1.6fr)_minmax(130px,1.1fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(180px,1.5fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
-              <div>Request & Order ID</div>
+            <div className="hidden md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.75fr)_minmax(0,1.1fr)_minmax(0,1.3fr)_minmax(0,1.45fr)_minmax(0,1.4fr)] items-center gap-3.5 px-5 py-3 text-slate-500 font-bold text-[10px] uppercase tracking-wider select-none bg-slate-100/90 rounded-2xl border border-slate-200/90 border-l-[5px] border-l-transparent mb-1">
+              <div>Request &amp; Order ID</div>
               <div>Policyholder</div>
-              <div>Cards & Quantity</div>
-              <div>Fee & Payment</div>
-              <div>Status & Timeline</div>
-              <div className="text-right">Actions</div>
+              <div>Cards &amp; Quantity</div>
+              <div>Fee &amp; Payment</div>
+              <div>Status &amp; Timeline</div>
+              <div className="text-right pr-1">Actions</div>
             </div>
 
             {/* Card Rows with Colored Left Accent */}
@@ -1112,18 +1112,18 @@ export default function OptionalCardRequestsTab({
                 <div
                   key={order._id}
                   onClick={() => setSelectedOrder(order)}
-                  className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(230px,2.1fr)_minmax(180px,1.6fr)_minmax(130px,1.1fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(180px,1.5fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group cursor-pointer`}
+                  className={`bg-white border-l-[5px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200/90 rounded-2xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.75fr)_minmax(0,1.1fr)_minmax(0,1.3fr)_minmax(0,1.45fr)_minmax(0,1.4fr)] md:items-center gap-3.5 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group cursor-pointer`}
                 >
                   {/* Col 1: Request & Order ID */}
                   <div className="flex items-center gap-3 min-w-0 select-none">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
-                      <HugeiconsIcon icon={CreditCardIcon} className="w-5 h-5 text-white" />
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="font-mono text-[11px] font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
+                      <span className="inline-flex items-center font-mono text-[11px] font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
                         {order.orderNumber}
                       </span>
-                      <div className="text-[11px] text-slate-500 font-medium mt-1">
+                      <div className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
                         {order.branch} Branch
                       </div>
                     </div>
@@ -1134,13 +1134,13 @@ export default function OptionalCardRequestsTab({
                     <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
                       Policyholder
                     </span>
-                    <h4 className="font-semibold text-xs text-slate-800 truncate" title={order.policyHolderName}>
+                    <h4 className="font-bold text-xs text-slate-800 truncate" title={order.policyHolderName}>
                       {order.policyHolderName || "—"}
                     </h4>
-                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-0.5 truncate">
                       <span className="font-mono text-slate-600">NIC: {order.policyHolderNic}</span>
                       {order.policyHolderPhone && (
-                        <span className="font-mono text-slate-400">• {order.policyHolderPhone}</span>
+                        <span className="font-mono text-slate-400 truncate">• {order.policyHolderPhone}</span>
                       )}
                     </div>
                   </div>
@@ -1148,10 +1148,10 @@ export default function OptionalCardRequestsTab({
                   {/* Col 3: Cards & Quantity */}
                   <div className="flex flex-col min-w-0 select-none">
                     <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                      Cards
+                      Cards &amp; Quantity
                     </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-bold bg-[#102A43]/10 text-[#102A43]">
+                    <div>
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-xs font-bold bg-[#102A43]/10 text-[#102A43] border border-[#102A43]/15">
                         {order.quantity} {order.quantity === 1 ? "Card" : "Cards"}
                       </span>
                     </div>
@@ -1163,14 +1163,18 @@ export default function OptionalCardRequestsTab({
                   {/* Col 4: Fee & Payment */}
                   <div className="flex flex-col min-w-0 select-none">
                     <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                      Payment
+                      Fee &amp; Payment
                     </span>
                     <div className="w-fit">
                       {getPaymentBadge(order.payment?.status, order.totalAmount)}
                     </div>
-                    {order.payment?.paidAt && (
+                    {order.payment?.paidAt ? (
                       <span className="text-[10px] text-slate-400 mt-0.5">
                         Paid {safeFormatDate(order.payment.paidAt, { month: "short", day: "numeric" })}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 mt-0.5">
+                        Fee: LKR {safeCurrency(order.totalAmount)}
                       </span>
                     )}
                   </div>
@@ -1178,10 +1182,10 @@ export default function OptionalCardRequestsTab({
                   {/* Col 5: Status & Timeline */}
                   <div className="flex flex-col min-w-0 select-none">
                     <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
-                      Status & Timeline
+                      Status &amp; Timeline
                     </span>
                     <div className="w-fit">{getStatusBadge(order.status)}</div>
-                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
+                    <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5 truncate">
                       <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
                       <span>
                         {safeFormatDate(order.createdAt, {
@@ -1203,7 +1207,7 @@ export default function OptionalCardRequestsTab({
                   >
                     <button
                       onClick={() => setSelectedOrder(order)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 flex-shrink-0"
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/90 flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 flex-shrink-0 whitespace-nowrap"
                     >
                       <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
                       <span>View</span>
@@ -1216,7 +1220,7 @@ export default function OptionalCardRequestsTab({
                             setSelectedOrder(order);
                             setShowApproveModal(true);
                           }}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                          className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0 whitespace-nowrap active:scale-95"
                         >
                           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
                           <span>Approve</span>
@@ -1226,7 +1230,7 @@ export default function OptionalCardRequestsTab({
                             setSelectedOrder(order);
                             setShowRejectModal(true);
                           }}
-                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer flex-shrink-0"
+                          className="px-2 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer flex-shrink-0 whitespace-nowrap border border-rose-200/60 active:scale-95"
                         >
                           Reject
                         </button>
@@ -1239,7 +1243,7 @@ export default function OptionalCardRequestsTab({
                           setSelectedOrder(order);
                           handleProcessing();
                         }}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                        className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0 whitespace-nowrap active:scale-95"
                       >
                         <span>Start Prep</span>
                       </button>
@@ -1251,7 +1255,7 @@ export default function OptionalCardRequestsTab({
                           setSelectedOrder(order);
                           handleReadyForCollection();
                         }}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                        className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0 whitespace-nowrap active:scale-95"
                       >
                         <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
                         <span>Mark Ready</span>
@@ -1265,7 +1269,7 @@ export default function OptionalCardRequestsTab({
                           setCollectorName(order.policyHolderName);
                           setShowCollectModal(true);
                         }}
-                        className="px-3 py-1.5 bg-[#102A43] hover:bg-[#1E3A8A] text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0"
+                        className="px-2.5 py-1.5 bg-[#102A43] hover:bg-[#1E3A8A] text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer flex-shrink-0 whitespace-nowrap active:scale-95"
                       >
                         <span>Record Handover</span>
                       </button>
@@ -1276,7 +1280,7 @@ export default function OptionalCardRequestsTab({
             })}
 
             {/* Table Footer / Summary Bar */}
-            <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+            <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-2xl flex items-center justify-between text-xs text-slate-500 mt-1">
               <div>
                 Showing <span className="font-bold text-slate-700">{filteredOrders.length}</span> of{" "}
                 <span className="font-bold text-slate-700">{orders.length}</span> card orders

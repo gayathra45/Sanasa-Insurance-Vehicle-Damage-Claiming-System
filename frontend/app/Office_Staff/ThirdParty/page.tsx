@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
+import { getSocket } from "@/app/utils/socket";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import SimpleLoader from "@/app/Components/SimpleLoader";
@@ -27,8 +28,6 @@ import {
   Link01Icon,
   AlertCircleIcon,
   Clock01Icon,
-  LayoutListIcon,
-  LayoutGridIcon,
   Calendar01Icon,
   SmartPhone01Icon,
   UserIcon
@@ -136,11 +135,19 @@ export default function OfficeStaffThirdPartyPage() {
     | "Pending Payment"
   >("all");
 
-  // View Mode: Grid (Cards) vs Table (Default to table/list as requested)
-  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
-
   // Selected request for details modal
   const [selectedReq, setSelectedReq] = useState<ThirdPartyRequest | null>(null);
+
+  // NFC Writer Device Pairing States
+  const [showPairModal, setShowPairModal] = useState(false);
+  const [pairingCode, setPairingCode] = useState<string>("");
+  const [pairingExpiry, setPairingExpiry] = useState<string>("");
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [pairedDevice, setPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+    pairedAt: string;
+  } | null>(null);
 
   // Modals
   const [actionLoading, setActionLoading] = useState(false);
@@ -168,6 +175,100 @@ export default function OfficeStaffThirdPartyPage() {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  // Check current paired device status for this branch
+  const fetchPairingStatus = useCallback(async () => {
+    if (!branch) return;
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/writer/pairing/status?branch=${encodeURIComponent(branch)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.paired && data.pairing) {
+          setPairedDevice({
+            deviceId: data.pairing.deviceId,
+            deviceName: data.pairing.deviceName,
+            pairedAt: data.pairing.pairedAt
+          });
+        } else {
+          setPairedDevice(null);
+        }
+      }
+    } catch {
+      // safe fallback
+    }
+  }, [branch]);
+
+  // Generate a new 6-character single-use pairing code
+  const handleGeneratePairingCode = async () => {
+    if (!branch || !staffInfo?._id) return;
+    setPairingLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/nfc-card/writer/pairing/generate-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staffId: staffInfo._id,
+          staffName: staffInfo.name || "Branch Staff",
+          staffEmail: staffInfo.email || "",
+          branch
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate pairing code");
+      setPairingCode(data.pairingCode);
+      setPairingExpiry(data.expiresAt);
+      setShowPairModal(true);
+    } catch (err: any) {
+      showToast(err.message || "Failed to generate pairing code", "error");
+    } finally {
+      setPairingLoading(false);
+    }
+  };
+
+  // Safe Unpair action
+  const handleUnpair = async () => {
+    if (!branch) return;
+    try {
+      await fetch(`${API_URL}/nfc-card/writer/pairing/unpair`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch, staffId: staffInfo?._id })
+      });
+      setPairedDevice(null);
+      setPairingCode("");
+      showToast("NFC Writer device disconnected", "success");
+    } catch {
+      showToast("Failed to unpair device", "error");
+    }
+  };
+
+  useEffect(() => {
+    fetchPairingStatus();
+  }, [branch, fetchPairingStatus]);
+
+  // Socket.IO Real-Time listeners for Pairing
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const onPairingUpdated = (data: any) => {
+      if (data.status === "Paired") {
+        setPairedDevice({
+          deviceId: data.deviceId,
+          deviceName: data.deviceName,
+          pairedAt: data.pairedAt
+        });
+        showToast(`NFC Writer Connected: ${data.deviceName || "Android Device"}`, "success");
+      } else if (data.status === "Revoked" || data.status === "Expired") {
+        setPairedDevice(null);
+      }
+    };
+
+    socket.on("pairing:updated", onPairingUpdated);
+    return () => {
+      socket.off("pairing:updated", onPairingUpdated);
+    };
+  }, [showToast]);
 
   // 1. Authenticate Staff Member
   useEffect(() => {
@@ -1039,16 +1140,16 @@ export default function OfficeStaffThirdPartyPage() {
             </div>
           ) : (
             /* VIEW MODE: LIST CARD ROWS (MATCHING ADMIN RENEWALS & POLICYHOLDERS) */
-            <div className="overflow-x-auto pb-3 -mx-2 px-2">
-              <div className="min-w-[1080px] flex flex-col gap-3">
+            <div className="w-full overflow-x-auto pb-6 [scrollbar-gutter:stable]">
+              <div className="min-w-[1040px] flex flex-col gap-2.5 pb-6">
                 {/* Proportional Grid Header */}
-                <div className="hidden md:grid md:grid-cols-[minmax(250px,2.2fr)_minmax(160px,1.4fr)_minmax(150px,1.3fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(150px,1.3fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-[6px] border-l-transparent mb-1 items-center">
-                  <div>Driver & Reference</div>
+                <div className="hidden md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.3fr)] items-center gap-3.5 px-5 py-3 text-slate-500 font-bold text-[10px] uppercase tracking-wider select-none bg-slate-100/90 rounded-2xl border border-slate-200/90 border-l-[5px] border-l-transparent mb-1">
+                  <div>Driver &amp; Reference</div>
                   <div>Policyholder</div>
                   <div>Authorized Vehicle(s)</div>
-                  <div>Fee & Payment</div>
-                  <div>Status & Timeline</div>
-                  <div className="text-right">Actions</div>
+                  <div>Fee &amp; Payment</div>
+                  <div>Status &amp; Timeline</div>
+                  <div className="text-right pr-1">Actions</div>
                 </div>
 
                 {/* Card Rows with Colored Left Accent */}
@@ -1092,7 +1193,7 @@ export default function OfficeStaffThirdPartyPage() {
                   return (
                     <div
                       key={req._id}
-                      className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(250px,2.2fr)_minmax(160px,1.4fr)_minmax(150px,1.3fr)_minmax(140px,1.2fr)_minmax(170px,1.5fr)_minmax(150px,1.3fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group`}
+                      className={`bg-white border-l-[5px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200/90 rounded-2xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.3fr)] md:items-center gap-3.5 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group`}
                     >
                       {/* Col 1: Driver Identity & Reference */}
                       <div className="flex items-center gap-3 min-w-0 select-none">
@@ -1244,7 +1345,7 @@ export default function OfficeStaffThirdPartyPage() {
                 })}
 
                 {/* Table Footer / Summary Bar */}
-                <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
+                <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-2xl flex items-center justify-between text-xs text-slate-500 mt-1">
                   <div>
                     Showing <span className="font-bold text-slate-700">{filteredRequests.length}</span> of{" "}
                     <span className="font-bold text-slate-700">{requests.length}</span> registrations
