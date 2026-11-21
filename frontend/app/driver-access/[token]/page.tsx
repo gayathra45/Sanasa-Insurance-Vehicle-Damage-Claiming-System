@@ -42,7 +42,8 @@ import {
   PlayIcon,
   Tick01Icon,
   Loading03Icon,
-  Download01Icon
+  Download01Icon,
+  Menu01Icon
 } from "@hugeicons/core-free-icons";
 import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 import DriverClaimChat from "@/app/Components/ClaimChat/DriverClaimChat";
@@ -565,13 +566,13 @@ export default function ThirdPartyDriverPortalPage() {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<TabType>("home");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Mobile app vs Web preview detection
   const SCLAIM_GO_APK_URL = "https://expo.dev/artifacts/eas/s4TXp2v686487RuygP7EmwNWwfV59IdjhFDWxos-REQ.apk";
   const [showMobileAppPrompt, setShowMobileAppPrompt] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [isAppInstalled, setIsAppInstalled] = useState(false);
-  const [downloadingApp, setDownloadingApp] = useState(false);
-  const [downloadDone, setDownloadDone] = useState(false);
+  const [downloadPromptVisible, setDownloadPromptVisible] = useState(false);
   const [launchingApp, setLaunchingApp] = useState(false);
 
   useEffect(() => {
@@ -580,13 +581,8 @@ export default function ThirdPartyDriverPortalPage() {
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
     setIsMobileDevice(isMobile);
 
-    // Check if user previously validated app installation
-    const savedInstall = localStorage.getItem("sclaim_go_app_installed");
-    if (savedInstall === "true") {
-      setIsAppInstalled(true);
-    } else {
-      setIsAppInstalled(false);
-    }
+    // Initial state: do not assume installed on fresh open
+    setIsAppInstalled(false);
 
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab") as TabType;
@@ -606,6 +602,7 @@ export default function ThirdPartyDriverPortalPage() {
     const ua = navigator.userAgent || "";
     const isAndroid = /Android/i.test(ua);
     setLaunchingApp(true);
+    setDownloadPromptVisible(false);
 
     let appLaunched = false;
     const onVisibilityChange = () => {
@@ -613,23 +610,25 @@ export default function ThirdPartyDriverPortalPage() {
         // Native app successfully launched and took OS focus!
         appLaunched = true;
         setIsAppInstalled(true);
-        localStorage.setItem("sclaim_go_app_installed", "true");
         setLaunchingApp(false);
       }
     };
 
     document.addEventListener("visibilitychange", onVisibilityChange, { once: true });
 
-    // Fallback: if browser is still visible after 1600ms, the app is NOT installed
+    // Fallback: if browser is still visible after 1400ms, the app is NOT installed
     setTimeout(() => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       setLaunchingApp(false);
       if (!appLaunched) {
-        // App did not launch -> not installed on device
+        // App is NOT installed on this device -> show download state & redirect to Expo APK page
         setIsAppInstalled(false);
-        localStorage.setItem("sclaim_go_app_installed", "false");
+        setDownloadPromptVisible(true);
+        if (typeof window !== "undefined") {
+          window.location.href = SCLAIM_GO_APK_URL;
+        }
       }
-    }, 1600);
+    }, 1400);
 
     if (isAndroid) {
       // Android Intent URL: attempts to open SClaim Go
@@ -642,10 +641,9 @@ export default function ThirdPartyDriverPortalPage() {
   };
 
   const handleDownloadApp = () => {
-    setDownloadingApp(true);
-    setDownloadDone(true);
+    setDownloadPromptVisible(true);
     if (typeof window !== "undefined") {
-      window.open(SCLAIM_GO_APK_URL, "_blank");
+      window.location.href = SCLAIM_GO_APK_URL;
     }
   };
 
@@ -1920,162 +1918,130 @@ export default function ThirdPartyDriverPortalPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* Smart Mobile Launch / Web Preview Choice Modal */}
+      {/* Smart Mobile Launch / Web Preview Choice Modal (Clean Minimalist Sanasa Design) */}
+      {/* ========================================================================= */}
       {showMobileAppPrompt && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in slide-in-from-bottom duration-200">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#0d2a3a] via-[#0f3b54] to-[#0d2a3a] p-5 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-500/25 border border-sky-400/30 flex items-center justify-center text-xl shadow-inner">
-                  📱
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-950/65 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl border border-slate-100 overflow-hidden animate-in slide-in-from-bottom duration-200">
+            {/* Modal Header — System Primary Navy Background */}
+            <div className="bg-[#0d2a3a] px-6 py-5 text-white flex items-center justify-between border-b border-white/10">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-white/10 p-2 flex items-center justify-center shrink-0 border border-white/15 shadow-inner">
+                  <Image
+                    src="/logo.png"
+                    alt="Sanasa SClaim Go App"
+                    width={32}
+                    height={32}
+                    className="object-contain w-full h-full"
+                  />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-white leading-tight">Sanasa SClaim Go</h3>
-                  <p className="text-sky-200 text-xs">Driver Authorization Pass</p>
+                  <h3 className="font-bold text-sm sm:text-base text-white leading-tight">Sanasa SClaim Go</h3>
+                  <p className="text-sky-200/80 text-xs font-medium mt-0.5">Driver Authorization & Claims</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleContinueInWeb}
-                className="text-sky-300 hover:text-white text-base bg-sky-800/40 hover:bg-sky-700/50 rounded-full w-7 h-7 flex items-center justify-center border-none cursor-pointer"
+                className="text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center border-none cursor-pointer transition-colors"
                 title="Continue in browser"
               >
-                ✕
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-6 space-y-3.5">
-              <p className="text-slate-600 text-xs leading-relaxed">
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 space-y-3.5">
+              <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed">
                 Choose how you would like to open your authorized vehicle access pass and claim services:
               </p>
 
-              {/* Option 1: Mobile App Selection (Dynamic validation based on installation status) */}
-              {isAppInstalled ? (
-                <div className="space-y-1.5">
-                  <button
-                    type="button"
-                    onClick={handleLaunchMobileApp}
-                    disabled={launchingApp}
-                    className="w-full text-left p-4 rounded-2xl border-2 border-sky-500 bg-sky-50/60 hover:bg-sky-100/70 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-sm"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center text-base shrink-0 font-bold group-hover:scale-105 transition-transform shadow-md">
-                      {launchingApp ? (
-                        <HugeiconsIcon icon={Loading03Icon} className="animate-spin text-white w-5 h-5" />
-                      ) : (
-                        "🚀"
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-xs">Open in SClaim Go App</span>
-                        <span className="bg-sky-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Installed</span>
-                      </div>
-                      <p className="text-slate-500 text-[11px] mt-0.5">
-                        {launchingApp ? "Connecting to SClaim Go..." : "Fastest experience with real-time camera upload, GPS tracking, and instant notifications."}
-                      </p>
-                    </div>
-                  </button>
-
-                  <div className="flex items-center justify-between px-1 text-[10px] text-slate-400">
-                    <span>App installed on your device</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAppInstalled(false);
-                        localStorage.setItem("sclaim_go_app_installed", "false");
-                      }}
-                      className="text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer"
-                    >
-                      Need to re-download APK?
-                    </button>
+              {/* Option 1: Mobile App Selection */}
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleLaunchMobileApp}
+                  disabled={launchingApp}
+                  className="w-full text-left p-4 rounded-2xl border-2 border-[#0284c7] bg-sky-50/50 hover:bg-sky-50 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-xs"
+                >
+                  <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shrink-0 border border-sky-200 shadow-sm group-hover:scale-105 transition-transform">
+                    {launchingApp ? (
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin text-[#0284c7] w-6 h-6" />
+                    ) : (
+                      <Image
+                        src="/logo.png"
+                        alt="Mobile App"
+                        width={30}
+                        height={30}
+                        className="object-contain"
+                      />
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={handleDownloadApp}
-                    className="w-full text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60 hover:bg-emerald-100/70 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-sm"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-base shrink-0 font-bold group-hover:scale-105 transition-transform shadow-md">
-                      📥
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                        {isAppInstalled ? "Open in SClaim Go App" : "SClaim Go Mobile App"}
+                      </span>
+                      <span className="bg-[#0284c7] text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                        {isAppInstalled ? "Installed" : "Recommended"}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-xs">Download SClaim Go App</span>
-                        <span className="bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Download APK</span>
-                      </div>
-                      <p className="text-slate-500 text-[11px] mt-0.5">
-                        Install the official Android app (v1.0.1) for offline mode, camera upload, and instant claim tracking.
-                      </p>
-                    </div>
-                  </button>
-
-                  {downloadDone && (
-                    <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-left space-y-1.5 animate-in fade-in duration-200">
-                      <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-semibold">
-                        <span className="text-sm">✅</span>
-                        <span>APK download started!</span>
-                      </div>
-                      <p className="text-emerald-700 text-[11px]">
-                        Tap the downloaded file in your phone notifications to install. Once installed, click below:
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsAppInstalled(true);
-                          localStorage.setItem("sclaim_go_app_installed", "true");
-                          handleLaunchMobileApp();
-                        }}
-                        className="text-xs text-emerald-800 font-bold underline cursor-pointer hover:text-emerald-900"
-                      >
-                        I finished installing • Open in App →
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between px-1 text-[10px] text-slate-400">
-                    <span>Already downloaded and installed?</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAppInstalled(true);
-                        localStorage.setItem("sclaim_go_app_installed", "true");
-                        handleLaunchMobileApp();
-                      }}
-                      className="text-sky-600 hover:text-sky-700 font-bold underline cursor-pointer"
-                    >
-                      Open in App
-                    </button>
+                    <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
+                      {launchingApp
+                        ? "Opening app or checking installation..."
+                        : "Fast mobile pass with live GPS tracking, instant camera capture & push alerts."}
+                    </p>
                   </div>
-                </div>
-              )}
+                </button>
+
+                {/* If app is not installed, show clean Expo APK downloading alert */}
+                {downloadPromptVisible && (
+                  <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-2xl text-left space-y-2 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2 text-[#0284c7] text-xs font-bold">
+                      <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 shrink-0" strokeWidth={2.2} />
+                      <span>Opening SClaim Go APK Download...</span>
+                    </div>
+                    <p className="text-slate-600 text-[11px] leading-relaxed">
+                      App not detected on your device. We are directing you to the official Sanasa Expo APK download page.
+                    </p>
+                    <a
+                      href={SCLAIM_GO_APK_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl bg-[#0284c7] hover:bg-sky-700 text-white font-bold text-xs no-underline shadow-xs transition-colors"
+                    >
+                      <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5" />
+                      <span>Download SClaim Go APK (Expo)</span>
+                    </a>
+                  </div>
+                )}
+              </div>
 
               {/* Option 2: Web Preview */}
               <button
                 type="button"
                 onClick={handleContinueInWeb}
-                className="w-full text-left p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group"
+                className="w-full text-left p-4 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-2xs"
               >
-                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-base shrink-0 font-bold group-hover:scale-105 transition-transform">
-                  🌐
+                <div className="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={Globe02Icon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-800 text-xs">Continue in Web Browser</span>
-                    <span className="bg-slate-100 text-slate-600 text-[9px] font-semibold px-2 py-0.5 rounded-full">Web Preview</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-slate-900 text-xs sm:text-sm">Continue in Web Browser</span>
+                    <span className="bg-slate-100 text-slate-600 text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0">
+                      Web Preview
+                    </span>
                   </div>
-                  <p className="text-slate-500 text-[11px] mt-0.5">
-                    No installation or download needed. Access everything immediately right in your browser.
+                  <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
+                    No installation needed. View passes, vehicles and submit claims directly in your browser.
                   </p>
                 </div>
               </button>
 
               <div className="pt-1 text-center">
-                <p className="text-[10px] text-slate-400">
-                  Prefer not to install? Use <strong>Web Preview</strong> to view vehicles and submit claims online.
+                <p className="text-[10px] sm:text-[11px] text-slate-400">
+                  Prefer not to install? Use <button onClick={handleContinueInWeb} className="font-bold text-slate-600 underline border-none bg-transparent cursor-pointer p-0">Web Preview</button> to access services online.
                 </p>
               </div>
             </div>
@@ -2259,8 +2225,76 @@ export default function ThirdPartyDriverPortalPage() {
               <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5 text-rose-600" />
               <span className="hidden sm:inline">Logout</span>
             </button>
+
+            {/* Hamburger Menu Icon for Mobile View (Matching Policyholder Navbar 3 Slide Icon) */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden flex items-center justify-center p-1.5 sm:p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-black focus:outline-none transition-all duration-200 cursor-pointer border-none bg-transparent"
+              aria-label="Toggle Navigation Menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={2} />
+              ) : (
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={2} />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Navigation Menu — Exact Policyholder Navbar Content Design */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
+            {navLinks.map((link) => {
+              const active = activeTab === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => {
+                    setActiveTab(link.id as TabType);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`font-semibold text-base py-2.5 px-4 rounded-xl transition-all duration-200 text-left flex items-center justify-between border-none cursor-pointer w-full ${
+                    active
+                      ? "bg-slate-100/90 text-[#0d2a3a] border-l-4 border-[#0d2a3a]"
+                      : "text-slate-600 hover:text-[#0284c7] hover:bg-slate-50 bg-transparent"
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {!!link.count && link.count > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white">
+                      {link.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Mobile Actions: Live Support & New Claim matching Policyholder */}
+            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setChatModalOpen(true);
+                }}
+                className="w-full text-center font-bold text-sm py-2.5 px-4 rounded-2xl bg-sky-50 hover:bg-sky-100 text-[#0284c7] border border-sky-200 flex items-center justify-center gap-2 cursor-pointer transition-all duration-150"
+              >
+                <HugeiconsIcon icon={BubbleChatIcon} className="w-4 h-4 text-[#0284c7]" strokeWidth={2.4} />
+                <span>Live Support Chat</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setActiveTab("new_claim");
+                }}
+                className="w-full text-center font-semibold text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 border-none cursor-pointer"
+              >
+                New Claim
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Tab Row */}
         <div className="md:hidden flex items-center gap-1.5 px-3 py-2 border-t border-slate-100 overflow-x-auto no-scrollbar scroll-smooth">
@@ -2342,16 +2376,16 @@ export default function ThirdPartyDriverPortalPage() {
 
       {/* MY VEHICLES TAB: Policy Holder MyVehicles Authentic Header */}
       {activeTab === "vehicles" && (
-        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
+          <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
             <div className="absolute inset-0 bg-slate-900/35" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
           </div>
-          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <header className="relative z-10 h-auto min-h-[170px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-tight">
               My Vehicles
             </h1>
-            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
               Authorized vehicles under policyholder {profile?.policyHolderName || "Policy Holder"}
             </p>
           </header>
@@ -2360,16 +2394,16 @@ export default function ThirdPartyDriverPortalPage() {
 
       {/* MY CLAIMS TAB: Policy Holder My_claims Authentic Header */}
       {activeTab === "my_claims" && (
-        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/myclaim.png')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
+          <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/myclaim.png')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
             <div className="absolute inset-0 bg-slate-900/35" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
           </div>
-          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <header className="relative z-10 h-auto min-h-[170px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-tight">
               My Claims
             </h1>
-            <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+            <p className="text-slate-200 text-xs md:text-sm font-normal mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
               Track and manage all third-party insurance claims in one place
             </p>
           </header>
@@ -2378,16 +2412,16 @@ export default function ThirdPartyDriverPortalPage() {
 
       {/* DIGITAL PASS TAB: Policy Holder Style Digital Pass Header */}
       {activeTab === "digital_pass" && (
-        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
+          <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
             <div className="absolute inset-0 bg-slate-900/35" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
           </div>
-          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <header className="relative z-10 h-auto min-h-[170px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-tight">
               Official Digital Driver Pass
             </h1>
-            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
               Authorized credentials verified by Sanasa General Insurance ({profile?.branch} Branch)
             </p>
           </header>
@@ -2396,16 +2430,16 @@ export default function ThirdPartyDriverPortalPage() {
 
       {/* DOCUMENTS TAB: Policy Holder Style Curved Header */}
       {activeTab === "documents" && (
-        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
+          <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
             <div className="absolute inset-0 bg-slate-900/35" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
           </div>
-          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <header className="relative z-10 h-auto min-h-[170px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-tight">
               My Documents
             </h1>
-            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
               Assigned vehicles insurance policies and claim verification evidence
             </p>
           </header>
@@ -2414,17 +2448,17 @@ export default function ThirdPartyDriverPortalPage() {
 
       {/* NOTIFICATIONS TAB: Authentic Policy Holder Styled Curved Header */}
       {activeTab === "notifications" && (
-        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
+          <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
             <div className="absolute inset-0 bg-slate-900/35" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
           </div>
 
-          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <header className="relative z-10 h-auto min-h-[170px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
+            <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-tight">
               Notifications
             </h1>
-            <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+            <p className="text-slate-200 text-xs md:text-sm font-normal mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
               {loadingNotifs
                 ? "Loading updates..."
                 : notifications.length > 0
@@ -3177,16 +3211,16 @@ export default function ThirdPartyDriverPortalPage() {
         {activeTab === "new_claim" && (
           <div className="w-full">
             {/* Styled curved header matching Policyholder exactly */}
-            <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 md:px-12 mt-6 sm:mt-8 relative">
+            <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 md:px-12 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
               {/* Absolute positioned background banner spanning to left edge of screen */}
-              <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-4 sm:right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+              <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
                 {/* Mockup dark slate overlay */}
                 <div className="absolute inset-0 bg-slate-900/35" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
               </div>
 
               {/* Text content aligned automatically with the page container */}
-              <header className="relative z-10 h-[180px] sm:h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
+              <header className="relative z-10 h-auto min-h-[160px] sm:min-h-[180px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
                 <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-none">
                   File New Claim
                 </h1>

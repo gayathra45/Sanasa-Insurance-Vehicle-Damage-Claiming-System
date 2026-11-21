@@ -20,19 +20,16 @@
   }
 }
 
-html {
-  scrollbar-gutter: stable;
+@supports (scrollbar-gutter: stable) {
+  html {
+    scrollbar-gutter: stable;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-afacad), Arial, Helvetica, sans-serif;
-  scrollbar-gutter: stable;
-}
-
-main {
-  scrollbar-gutter: stable;
 }
 
 /* Hide scrollbar utility for clean modern messenger UI */
@@ -41,7 +38,11 @@ main {
 }
 .no-scrollbar {
   -ms-overflow-style: none;
-  scrollbar-width: none;
+}
+@supports (scrollbar-width: none) {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
 }
 
 
