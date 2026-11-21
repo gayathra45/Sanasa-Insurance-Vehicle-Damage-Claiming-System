@@ -1,0 +1,86 @@
+name: Build Sanasa SClaim Go APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - main
+    paths:
+      - 'mobile_app/**'
+      - '.github/workflows/build-mobile-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: mobile_app/package.json
+
+      - name: 3. Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: 4. Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 5. Install Dependencies
+        working-directory: ./mobile_app
+        run: |
+          npm ci --legacy-peer-deps
+
+      - name: 6. Prebuild Android Native Project
+        working-directory: ./mobile_app
+        run: |
+          npx expo prebuild --platform android --clean
+
+      - name: 7. Build Android Release APK
+        working-directory: ./mobile_app/android
+        run: |
+          ./gradlew assembleRelease --no-daemon
+
+      - name: 8. Prepare Output Artifact
+        run: |
+          mkdir -p dist
+          APK_PATH=$(find mobile_app/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -n "$APK_PATH" ]; then
+            cp "$APK_PATH" dist/Sanasa-SClaim-Go.apk
+            echo "Copied $APK_PATH to dist/Sanasa-SClaim-Go.apk"
+          else
+            echo "Error: APK build output not found!"
+            exit 1
+          fi
+
+      - name: 9. Upload Artifact to GitHub Action Run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sanasa-SClaim-Go-APK
+          path: dist/Sanasa-SClaim-Go.apk
+          retention-days: 14
+
+      - name: 10. Publish GitHub Release (When Tagged)
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: Sanasa SClaim Go ${{ github.ref_name }}
+          files: dist/Sanasa-SClaim-Go.apk
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
