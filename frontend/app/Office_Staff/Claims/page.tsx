@@ -1650,12 +1650,9 @@ function OfficeStaffClaimsPageContent() {
                     return (
                       <>
                         <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-base">📋</span>
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                              1. Physical Vehicle Findings (Agent Submission)
-                            </h3>
-                          </div>
+                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                            1. Physical Vehicle Findings (Agent Submission)
+                          </h3>
                           <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                             isInspectionApproved
                               ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
@@ -1726,12 +1723,9 @@ function OfficeStaffClaimsPageContent() {
                 {/* 2. AI DAMAGE ASSESSMENT & ESTIMATION COST SHEET */}
                 <div className="bg-indigo-50/50 border border-indigo-200 rounded-2xl p-5 space-y-4">
                   <div className="flex flex-wrap justify-between items-center gap-2 border-b border-indigo-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🤖</span>
-                      <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
-                        2. AI Loss Assessment & Estimation Cost Sheet
-                      </h3>
-                    </div>
+                    <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
+                      2. AI Loss Assessment & Estimation Cost Sheet
+                    </h3>
                     <div className="flex items-center gap-2">
                       {selectedClaim.aiAnalysis?.isAnalyzed && (
                         <button
@@ -1924,12 +1918,9 @@ function OfficeStaffClaimsPageContent() {
                 {isInspectionApproved && (
                   <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 space-y-4">
                     <div className="flex justify-between items-center border-b border-amber-200 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">📋</span>
-                        <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
-                          3. Garage Estimate Report from Policy Holder
-                        </h3>
-                      </div>
+                      <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
+                        3. Garage Estimate Report from Policy Holder
+                      </h3>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                         hasGarageDoc ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
                       }`}>
@@ -1972,12 +1963,9 @@ function OfficeStaffClaimsPageContent() {
                 {isInspectionApproved && hasGarageDoc && (
                   <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-5 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-200 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">📋</span>
-                        <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wider">
-                          4. Garage vs. AI Benchmark & Photo Cross-Check
-                        </h3>
-                      </div>
+                      <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wider">
+                        4. Garage vs. AI Benchmark & Photo Cross-Check
+                      </h3>
                       <button
                         type="button"
                         onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
@@ -2204,8 +2192,7 @@ function OfficeStaffClaimsPageContent() {
                   <div className="bg-white border-2 border-emerald-300 rounded-2xl p-5 space-y-4 shadow-sm">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
+                        <h4 className="text-sm font-bold text-slate-900">
                           Final Settlement Determination & Claim Approval
                         </h4>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -2328,12 +2315,9 @@ function OfficeStaffClaimsPageContent() {
                 {isClaimApprovedOrSettled && (
                   <div className="bg-blue-50/50 border border-blue-200 rounded-2xl p-5 space-y-4">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">💳</span>
-                        <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wider">
-                          5. Policy Holder Bank Account & Payment Settlement
-                        </h3>
-                      </div>
+                      <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wider">
+                        5. Policy Holder Bank Account & Payment Settlement
+                      </h3>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                         isClaimPaymentSettled ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
                       }`}>

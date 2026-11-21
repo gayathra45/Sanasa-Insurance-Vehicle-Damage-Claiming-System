@@ -131,7 +131,6 @@ export default function VehicleDamageViewer({
       <div className="bg-gradient-to-r from-slate-900 to-blue-950 rounded-2xl p-5 text-white flex flex-wrap justify-between items-center gap-4 shadow-md">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xl">🚗</span>
             <h3 className="text-base font-bold tracking-tight">
               {diagramSpec.displayName} Interactive Damage Inspection
             </h3>
@@ -511,8 +510,8 @@ export default function VehicleDamageViewer({
       {checklist.length > 0 && (
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
-            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <span>📋</span> Category Inspection Checklist ({diagramSpec.displayName})
+            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+              Category Inspection Checklist ({diagramSpec.displayName})
             </h4>
             <div className="flex items-center gap-2 text-xs font-semibold shrink-0 flex-nowrap overflow-x-auto">
               {(() => {
