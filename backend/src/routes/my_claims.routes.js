@@ -3,6 +3,7 @@ import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
+import InspectionReport from "../models/inspection_report.model.js";
 import ProfileUpdateRequest from "../models/profile_update_request.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { logAgentActivity } from "../utils/activity.js";
@@ -200,12 +201,33 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
       base64Photos = fetched.filter(Boolean);
     }
 
-    // Run AI comparison between garage doc and accident photos
+    // Fetch Agent Physical Inspection Report
+    const inspectionReportDoc = await InspectionReport.findOne({
+      claimNumber: { $regex: new RegExp(`^${claim.claimNumber.trim()}$`, "i") }
+    });
+
+    const physicalFindings = {
+      markers: inspectionReportDoc?.damageMarkers || claim.inspectionData?.damageMarkers || [],
+      checklist: inspectionReportDoc?.checklist || claim.inspectionData?.checklist || [],
+      vehicleCondition: inspectionReportDoc?.vehicleCondition || claim.inspectionData?.vehicleCondition || {},
+      agentNotes: inspectionReportDoc?.agentNotes || claim.inspectionReport || "",
+      legacyReportText: claim.inspectionReport || "",
+      vehicleCategory: inspectionReportDoc?.vehicleCategory || claim.vehicleType || "Car"
+    };
+
+    const vehicleInfo = {
+      vehiclePlate: claim.vehiclePlate,
+      damageType: claim.damageType,
+      vehicleType: physicalFindings.vehicleCategory
+    };
+
+    // Run AI comparison between garage doc, accident photos, and agent physical findings
     const comparison = await compareGarageEstimateWithPhotosAndAI(
       fileData,
       base64Photos,
       claim.aiAnalysis,
-      claim.inspectionReport || ""
+      physicalFindings,
+      vehicleInfo
     );
 
     comparison.garageDocumentUrl = uploadedUrl;

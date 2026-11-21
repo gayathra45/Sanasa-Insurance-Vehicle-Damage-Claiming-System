@@ -158,12 +158,22 @@ const claimSchema = new mongoose.Schema({
     costDifferencePercentage: { type: Number, default: 0 },
     verdict: { type: String, default: "Pending" }, // "Match" | "Discrepancy" | "High Variance" | "Approved" | "Rejected"
     matchConfidenceScore: { type: Number, default: 0 },
+    exteriorVerifiedCount: { type: Number, default: 0 },
+    internalVerifiedCount: { type: Number, default: 0 },
+    discrepancyCount: { type: Number, default: 0 },
     photoVerificationDetails: [
       {
         item: { type: String },
         garageCost: { type: Number, default: 0 },
         aiCost: { type: Number, default: 0 },
         matchesAccidentPhotos: { type: Boolean, default: true },
+        verificationType: {
+          type: String,
+          enum: ["ExteriorPhoto", "InternalConsequential", "Discrepancy"],
+          default: "ExteriorPhoto"
+        },
+        isInternalOrConsequential: { type: Boolean, default: false },
+        agentCorrelationReason: { type: String, default: "" },
         confidence: { type: Number, default: 0 },
         notes: { type: String, default: "" }
       }

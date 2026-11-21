@@ -1390,11 +1390,32 @@ router.post("/claims/:claimNumber/compare-garage-estimate", async (req, res) => 
       }
     }
 
+    // Fetch complete Agent Physical Inspection Report
+    const inspectionReportDoc = await InspectionReport.findOne({
+      claimNumber: { $regex: new RegExp(`^${claim.claimNumber.trim()}$`, "i") }
+    });
+
+    const physicalFindings = {
+      markers: inspectionReportDoc?.damageMarkers || claim.inspectionData?.damageMarkers || [],
+      checklist: inspectionReportDoc?.checklist || claim.inspectionData?.checklist || [],
+      vehicleCondition: inspectionReportDoc?.vehicleCondition || claim.inspectionData?.vehicleCondition || {},
+      agentNotes: inspectionReportDoc?.agentNotes || claim.inspectionReport || "",
+      legacyReportText: claim.inspectionReport || "",
+      vehicleCategory: inspectionReportDoc?.vehicleCategory || claim.vehicleType || "Car"
+    };
+
+    const vehicleInfo = {
+      vehiclePlate: claim.vehiclePlate,
+      damageType: claim.damageType,
+      vehicleType: physicalFindings.vehicleCategory
+    };
+
     const comparisonResult = await compareGarageEstimateWithPhotosAndAI(
       garageBase64,
       base64Photos,
       claim.aiAnalysis,
-      claim.inspectionReport || ""
+      physicalFindings,
+      vehicleInfo
     );
 
     comparisonResult.garageDocumentUrl = garageDoc.url;
