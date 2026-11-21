@@ -13,7 +13,7 @@
     "android": {
       "package": "com.sanasainsurance.mobileapp",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0A1E2E",
         "foregroundImage": "./assets/images/logo icon.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
