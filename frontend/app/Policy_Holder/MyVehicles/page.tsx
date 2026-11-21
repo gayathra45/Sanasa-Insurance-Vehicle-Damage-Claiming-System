@@ -1202,20 +1202,20 @@ export default function MyVehicles() {
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching mockup exactly */}
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-8 relative">
-        {/* Absolute positioned background banner spanning to left edge of screen */}
-        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative overflow-hidden md:overflow-visible">
+        {/* Absolute positioned background banner */}
+        <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Mockup dark slate overlay matching other policy holder pages */}
           <div className="absolute inset-0 bg-slate-900/35" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         {/* Text content aligned automatically with the page container */}
-        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+        <header className="relative z-10 h-auto min-h-[170px] md:h-[210px] py-6 md:py-0 flex flex-col justify-center pl-4 sm:pl-6 md:pl-8 pr-4 select-none">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-tight">
             {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
             {t.subtitle}
           </p>
         </header>

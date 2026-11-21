@@ -225,15 +225,15 @@ export default function PolicyHolderContact() {
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching mockup exactly */}
-      <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative">
+        <div className="absolute top-0 bottom-0 left-0 md:left-[calc(50%-50vw)] right-0 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-3xl md:rounded-l-none md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Dark overlay */}
           <div className="absolute inset-0 bg-[#004f6e]/65 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         {/* Text content aligned automatically with the page container */}
-        <header className="relative z-10 h-[190px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+        <header className="relative z-10 h-auto min-h-[160px] md:h-[190px] py-6 md:py-0 flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             {t.title}
           </h1>

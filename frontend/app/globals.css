@@ -22,6 +22,8 @@
 
 html {
   scrollbar-gutter: stable;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
@@ -29,6 +31,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-afacad), Arial, Helvetica, sans-serif;
   scrollbar-gutter: stable;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 main {

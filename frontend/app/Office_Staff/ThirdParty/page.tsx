@@ -865,35 +865,33 @@ export default function OfficeStaffThirdPartyPage() {
               ))}
             </div>
 
-            {/* Right: View Mode Toggle & Search Input */}
-            <div className="flex items-center gap-2.5 w-full lg:w-auto flex-shrink-0">
-              {/* View Switcher: Grid vs Table */}
-              <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80 flex-shrink-0">
+            {/* Right: NFC Writer Pairing Action & Search Input */}
+            <div className="flex items-center gap-2.5 w-full lg:w-auto flex-shrink-0 justify-end">
+              {/* NFC Writer Device Status / Action (Matching Optional Card Requests tab) */}
+              {pairedDevice ? (
+                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 flex-shrink-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>NFC Writer: {pairedDevice.deviceName || "Paired"}</span>
+                  <button
+                    onClick={handleUnpair}
+                    className="text-[11px] text-emerald-700 hover:text-rose-600 underline ml-1 cursor-pointer font-normal"
+                    title="Disconnect paired phone"
+                  >
+                    Unpair
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={() => setViewMode("grid")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border-none cursor-pointer flex items-center gap-1.5 ${
-                    viewMode === "grid"
-                      ? "bg-white text-[#102A43] shadow-xs font-bold"
-                      : "text-slate-500 hover:text-slate-800 bg-transparent"
-                  }`}
-                  title="Grid Card View"
+                  onClick={handleGeneratePairingCode}
+                  disabled={pairingLoading}
+                  className="px-3.5 py-2 bg-gradient-to-r from-[#102A43] to-blue-700 hover:from-[#1E3A8A] hover:to-blue-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer flex-shrink-0"
+                  title="Pair Android NFC Writer App"
                 >
-                  <HugeiconsIcon icon={LayoutGridIcon} className="w-3.5 h-3.5" />
-                  <span>Grid</span>
+                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-3.5 h-3.5" />
+                  <span>{pairingLoading ? "Generating..." : "Pair NFC Writer"}</span>
                 </button>
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border-none cursor-pointer flex items-center gap-1.5 ${
-                    viewMode === "table"
-                      ? "bg-white text-[#102A43] shadow-xs font-bold"
-                      : "text-slate-500 hover:text-slate-800 bg-transparent"
-                  }`}
-                  title="Card Row List View"
-                >
-                  <HugeiconsIcon icon={LayoutListIcon} className="w-3.5 h-3.5" />
-                  <span>List</span>
-                </button>
-              </div>
+              )}
 
               {/* Search Input */}
               <div className="relative flex-1 lg:w-64">
@@ -920,7 +918,7 @@ export default function OfficeStaffThirdPartyPage() {
             </div>
           </div>
 
-          {/* Main Content: Loading, Empty, Grid, or Table */}
+          {/* Main Content: Loading, Empty, or List */}
           {loading ? (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm py-20 flex flex-col items-center justify-center">
               <SimpleLoader />
@@ -937,206 +935,6 @@ export default function OfficeStaffThirdPartyPage() {
                   ? "Try adjusting your search criteria or status filter."
                   : `No third-party driver registration requests have been submitted for ${branch} Branch yet.`}
               </p>
-            </div>
-          ) : viewMode === "grid" ? (
-            /* VIEW MODE: MODERN CARDS GRID WITH CLEAN ALIGNMENT */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredRequests.map((req) => {
-                const isPending = req.status === "Pending Branch Approval";
-                const isPendingTerm = req.status === "Pending Termination Approval";
-                const isApproved = req.status === "Approved";
-                const isTerminated = req.status === "Terminated";
-                const isPaid = req.payment?.status === "Paid";
-
-                return (
-                  <div
-                    key={req._id}
-                    className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group overflow-hidden relative ${
-                      isPending
-                        ? "border-amber-300 ring-1 ring-amber-400/20"
-                        : isPendingTerm
-                        ? "border-rose-300 ring-1 ring-rose-400/20"
-                        : "border-slate-200/90 hover:border-slate-300"
-                    }`}
-                  >
-                    {/* Top ambient highlight */}
-                    <div
-                      className={`absolute top-0 left-0 right-0 h-1 ${
-                        isApproved
-                          ? "bg-emerald-500"
-                          : isPending
-                          ? "bg-amber-500"
-                          : isPendingTerm
-                          ? "bg-rose-500"
-                          : isTerminated
-                          ? "bg-slate-400"
-                          : "bg-slate-200"
-                      }`}
-                    />
-
-                    <div className="space-y-3.5">
-                      {/* Top Header: Ref & Status */}
-                      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-xs text-[#102A43] bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/80">
-                            {req.requestReference}
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">
-                            {new Date(req.createdAt).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric"
-                            })}
-                          </span>
-                        </div>
-                        <div>{getStatusBadge(req.status)}</div>
-                      </div>
-
-                      {/* Driver Identity */}
-                      <div className="flex items-start gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
-                          {(req.driverDetails?.fullName || "D").charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4
-                            className="font-bold text-slate-900 text-sm truncate"
-                            title={req.driverDetails?.fullName}
-                          >
-                            {req.driverDetails?.fullName || "—"}
-                          </h4>
-                          <div className="text-xs text-slate-500 font-mono mt-0.5 truncate">
-                            NIC: {req.driverDetails?.nicNumber || "—"} • Tel: {req.driverDetails?.phoneNumber || "—"}
-                          </div>
-                          {req.driverDetails?.residentialAddress && (
-                            <p
-                              className="text-[11px] text-slate-400 truncate mt-0.5"
-                              title={req.driverDetails.residentialAddress}
-                            >
-                              {req.driverDetails.residentialAddress}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Policyholder & Billing info */}
-                      <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100 text-xs space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-400 text-[11px] font-medium flex items-center gap-1">
-                            <HugeiconsIcon icon={Building01Icon} className="w-3.5 h-3.5 text-slate-400" />
-                            Policyholder
-                          </span>
-                          <span
-                            className="font-semibold text-slate-800 text-xs truncate max-w-[160px]"
-                            title={req.policyHolderName}
-                          >
-                            {req.policyHolderName || "—"} ({req.policyHolderNic})
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-                          <span className="text-slate-400 text-[11px] font-medium flex items-center gap-1">
-                            <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5 text-slate-400" />
-                            Fee Settlement
-                          </span>
-                          {isPaid ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
-                              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3 h-3 text-emerald-600" />
-                              LKR 300.00 (Paid)
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/80">
-                              <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3 text-amber-600" />
-                              Pending Payment
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Authorized Vehicles */}
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                          Authorized Vehicles ({req.selectedVehicles?.length || 0})
-                        </span>
-                        <div className="flex flex-wrap gap-1.5 min-h-[30px]">
-                          {req.selectedVehicles?.map((v) => (
-                            <span
-                              key={v.numberPlate}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white text-slate-800 font-mono font-bold text-xs border border-slate-200 shadow-2xs"
-                            >
-                              <span className="text-[9px] font-bold text-slate-400 font-sans">LK</span>
-                              <span className="w-px h-2.5 bg-slate-300" />
-                              <span>{v.numberPlate}</span>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Rejection Note */}
-                      {req.status === "Rejected" && req.branchReview?.rejectionReason && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
-                          <span className="font-semibold block text-[11px]">Rejection Reason:</span>
-                          <span className="text-rose-700 text-[11px]">{req.branchReview.rejectionReason}</span>
-                        </div>
-                      )}
-
-                      {/* Termination Note */}
-                      {req.status === "Pending Termination Approval" && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-0.5">
-                          <span className="font-semibold text-[11px] flex items-center gap-1 text-rose-900">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />
-                            Termination Requested
-                          </span>
-                          <span className="text-rose-700 text-[11px] block">
-                            {req.terminationRequest?.reason || "Policyholder requested driver termination"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom Action Footer */}
-                    <div className="pt-3.5 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedReq(req);
-                          setApprovalNotes("");
-                          setRejectionReason("");
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer border-none ${
-                          isPending
-                            ? "bg-[#102A43] hover:bg-[#163e63] text-white"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-800"
-                        }`}
-                      >
-                        <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                        <span>{isPending ? "Review Application" : "View Dossier"}</span>
-                      </button>
-
-                      {isApproved && (
-                        <button
-                          onClick={() => {
-                            setSelectedReq(req);
-                            setTerminationNotes("Terminated directly by branch office");
-                            setShowApproveTerminationModal(true);
-                          }}
-                          className="p-2 rounded-xl text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                          title="Direct Terminate Driver"
-                        >
-                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {isApproved && req.secureAccess?.accessUrl && (
-                        <button
-                          onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
-                          className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors cursor-pointer"
-                          title="Copy driver access link"
-                        >
-                          <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           ) : (
             /* VIEW MODE: LIST CARD ROWS (MATCHING ADMIN RENEWALS & POLICYHOLDERS) */
@@ -2165,6 +1963,118 @@ export default function OfficeStaffThirdPartyPage() {
               >
                 Open in new tab
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* NFC WRITER DEVICE PAIRING MODAL */}
+      {/* ============================================================== */}
+      {showPairModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-slate-800 text-xs animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#102A43]">SANASA NFC Writer Pairing</h4>
+                  <p className="text-slate-500">{branch} Branch • Staff Session</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowPairModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {pairedDevice ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2.5 text-emerald-800 font-bold text-sm">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs">
+                      ✓
+                    </div>
+                    <span>Phone Connected &amp; Paired!</span>
+                  </div>
+                  <div className="text-xs text-emerald-900 space-y-1">
+                    <div>
+                      Device: <span className="font-bold">{pairedDevice.deviceName}</span>
+                    </div>
+                    <div className="text-[11px] text-emerald-700 font-mono">
+                      Device ID: {pairedDevice.deviceId}
+                    </div>
+                    <div className="text-[11px] text-emerald-700">
+                      Paired on: {new Date(pairedDevice.pairedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-emerald-700">
+                    Your phone is connected and ready for SANASA NFC Writer tasks.
+                  </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={handleUnpair}
+                      className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Disconnect / Unpair Phone
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-slate-600 leading-relaxed text-xs">
+                    Enter this single-use 6-character code into the <strong>SANASA NFC Writer</strong> Android application on your phone to pair it securely with this branch session:
+                  </p>
+
+                  {/* Big Pairing Code Card */}
+                  <div className="bg-gradient-to-br from-slate-900 to-[#102A43] text-white p-5 rounded-2xl text-center shadow-md relative overflow-hidden">
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300 block mb-1">
+                      Pairing Code
+                    </span>
+                    <div className="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 select-all my-1">
+                      {pairingCode || "------"}
+                    </div>
+                    <span className="text-[10px] text-slate-300">
+                      Valid for 5 minutes • Single-use
+                    </span>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 space-y-2">
+                    <span className="font-bold text-slate-700 text-xs block">
+                      How to pair your Android Phone:
+                    </span>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600 leading-normal">
+                      <li>Open <strong>SANASA NFC Writer</strong> on your phone.</li>
+                      <li>Go to the <strong>Device Pairing</strong> tab or prompt.</li>
+                      <li>Type the code <strong className="font-mono text-slate-900">{pairingCode}</strong> and tap <strong>Connect</strong>.</li>
+                    </ol>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <button
+                      onClick={handleGeneratePairingCode}
+                      disabled={pairingLoading}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <HugeiconsIcon icon={RefreshIcon} className={`w-3.5 h-3.5 ${pairingLoading ? "animate-spin" : ""}`} />
+                      <span>Generate New Code</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowPairModal(false)}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -2089,16 +2089,16 @@ export default function ThirdPartyDriverPortalPage() {
       <nav className="sticky top-0 z-50 w-full bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-b border-slate-100 transition-all duration-300">
         
         {/* Top Utility Bar (Exact same Vibrant Sky Blue background as Policyholder Navbar) */}
-        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-4 sm:px-6 md:px-16 flex items-center justify-between text-xs select-none w-full font-medium shadow-inner">
-          <div className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
-            <span className="text-white">
+        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-3 sm:px-6 md:px-16 flex items-center justify-between text-[11px] sm:text-xs select-none w-full font-medium shadow-inner">
+          <div className="flex items-center gap-1 sm:gap-1.5 truncate mr-2">
+            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100 shrink-0" strokeWidth={2} />
+            <span className="text-white truncate">
               <span className="hidden sm:inline">{t.hotline}</span>
               <span className="inline sm:hidden">+94 112 003 000</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
             {/* Branch Button */}
             <button
               type="button"
@@ -2106,7 +2106,7 @@ export default function ThirdPartyDriverPortalPage() {
                 setBranchSearchQuery("");
                 setBranchModalOpen(true);
               }}
-              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-medium"
+              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-[11px] sm:text-xs font-medium"
             >
               <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
               <span>{t.branches}</span>
@@ -2120,7 +2120,7 @@ export default function ThirdPartyDriverPortalPage() {
               <button
                 type="button"
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-medium"
+                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-[11px] sm:text-xs font-medium"
               >
                 <HugeiconsIcon icon={Globe02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
                 <span className="uppercase">{lang === "si" ? "සිං" : lang === "ta" ? "தமி" : "EN"}</span>
@@ -2164,7 +2164,7 @@ export default function ThirdPartyDriverPortalPage() {
         </div>
 
         {/* Main Navbar Row (Logo, Navigation Links with Underline, Orange New Claim Button, Profile) */}
-        <div className="py-2.5 px-6 md:px-16 flex items-center justify-between w-full">
+        <div className="py-2.5 px-3 sm:px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <button
@@ -2176,7 +2176,7 @@ export default function ThirdPartyDriverPortalPage() {
                 alt="Sanasa General Insurance"
                 width={100}
                 height={40}
-                className="object-contain h-auto"
+                className="object-contain h-auto max-w-[85px] sm:max-w-[100px]"
                 priority
               />
             </button>
@@ -2218,7 +2218,7 @@ export default function ThirdPartyDriverPortalPage() {
           </div>
 
           {/* Right Action Icons & Driver Profile */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Direct Notification Bell Quick Access */}
             <button
               onClick={() => setActiveTab("notifications")}
@@ -2237,8 +2237,8 @@ export default function ThirdPartyDriverPortalPage() {
               )}
             </button>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-[#0d2a3a] flex items-center justify-center font-bold text-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 text-[#0d2a3a] flex items-center justify-center font-bold text-xs shrink-0">
                 {profile?.driverName ? profile.driverName.charAt(0).toUpperCase() : "D"}
               </div>
               <div className="hidden sm:block text-left">
@@ -2253,7 +2253,7 @@ export default function ThirdPartyDriverPortalPage() {
 
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold transition-all cursor-pointer"
               title="Logout"
             >
               <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5 text-rose-600" />
@@ -2263,7 +2263,7 @@ export default function ThirdPartyDriverPortalPage() {
         </div>
 
         {/* Mobile Tab Row */}
-        <div className="md:hidden flex items-center gap-2 px-4 py-2 border-t border-slate-100 overflow-x-auto">
+        <div className="md:hidden flex items-center gap-1.5 px-3 py-2 border-t border-slate-100 overflow-x-auto no-scrollbar scroll-smooth">
           {navLinks.map((link) => (
             <button
               key={link.id}
@@ -2298,9 +2298,9 @@ export default function ThirdPartyDriverPortalPage() {
       
       {/* HOME TAB: Full Hero Banner with Policyholder Association */}
       {activeTab === "home" && (
-        <header className="relative w-full h-[450px] md:h-[420px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
+        <header className="relative w-full h-auto min-h-[380px] md:h-[420px] rounded-b-[40px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
-          <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-12 flex flex-col justify-between">
+          <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 md:px-16 pt-6 sm:pt-10 pb-8 sm:pb-12 flex flex-col justify-between">
             <div>
               <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
                 <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight">
@@ -2314,8 +2314,8 @@ export default function ThirdPartyDriverPortalPage() {
               </p>
             </div>
 
-            <div className="my-auto max-w-4xl mx-auto text-center px-4">
-              <h1 className="text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
+            <div className="my-auto max-w-4xl mx-auto text-center px-2 sm:px-4 py-4 sm:py-0">
+              <h1 className="text-sm sm:text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
                 An authorized third-party driver claim with Sanasa General Insurance Company Limited enables fast-track vehicle inspection and settlement for authorized vehicles.
               </h1>
             </div>
