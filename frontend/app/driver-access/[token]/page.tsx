@@ -566,14 +566,27 @@ export default function ThirdPartyDriverPortalPage() {
   // Active Tab
   const [activeTab, setActiveTab] = useState<TabType>("home");
   // Mobile app vs Web preview detection
+  const SCLAIM_GO_APK_URL = "https://expo.dev/artifacts/eas/s4TXp2v686487RuygP7EmwNWwfV59IdjhFDWxos-REQ.apk";
   const [showMobileAppPrompt, setShowMobileAppPrompt] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+  const [downloadingApp, setDownloadingApp] = useState(false);
+  const [downloadDone, setDownloadDone] = useState(false);
+  const [launchingApp, setLaunchingApp] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const ua = navigator.userAgent || "";
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
     setIsMobileDevice(isMobile);
+
+    // Check if user previously validated app installation
+    const savedInstall = localStorage.getItem("sclaim_go_app_installed");
+    if (savedInstall === "true") {
+      setIsAppInstalled(true);
+    } else {
+      setIsAppInstalled(false);
+    }
 
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab") as TabType;
@@ -592,15 +605,47 @@ export default function ThirdPartyDriverPortalPage() {
     if (typeof window === "undefined" || !token) return;
     const ua = navigator.userAgent || "";
     const isAndroid = /Android/i.test(ua);
-    const currentUrl = window.location.href;
+    setLaunchingApp(true);
+
+    let appLaunched = false;
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        // Native app successfully launched and took OS focus!
+        appLaunched = true;
+        setIsAppInstalled(true);
+        localStorage.setItem("sclaim_go_app_installed", "true");
+        setLaunchingApp(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange, { once: true });
+
+    // Fallback: if browser is still visible after 1600ms, the app is NOT installed
+    setTimeout(() => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      setLaunchingApp(false);
+      if (!appLaunched) {
+        // App did not launch -> not installed on device
+        setIsAppInstalled(false);
+        localStorage.setItem("sclaim_go_app_installed", "false");
+      }
+    }, 1600);
 
     if (isAndroid) {
-      // Android Intent URL: if installed, directly launches SClaim Go; if not installed, falls back safely to web preview!
-      const intentUrl = `intent://driver-access/${token}#Intent;scheme=mobileapp;package=com.sanasainsurance.mobileapp;S.browser_fallback_url=${encodeURIComponent(currentUrl)};end`;
+      // Android Intent URL: attempts to open SClaim Go
+      const intentUrl = `intent://driver-access/${token}#Intent;scheme=mobileapp;package=com.sanasainsurance.mobileapp;end`;
       window.location.href = intentUrl;
     } else {
       // iOS / other: attempt custom deep link scheme
       window.location.href = `mobileapp://driver-access/${token}`;
+    }
+  };
+
+  const handleDownloadApp = () => {
+    setDownloadingApp(true);
+    setDownloadDone(true);
+    if (typeof window !== "undefined") {
+      window.open(SCLAIM_GO_APK_URL, "_blank");
     }
   };
 
@@ -1906,25 +1951,107 @@ export default function ThirdPartyDriverPortalPage() {
                 Choose how you would like to open your authorized vehicle access pass and claim services:
               </p>
 
-              {/* Option 1: Mobile App */}
-              <button
-                type="button"
-                onClick={handleLaunchMobileApp}
-                className="w-full text-left p-4 rounded-2xl border-2 border-sky-500 bg-sky-50/60 hover:bg-sky-100/70 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-sm"
-              >
-                <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center text-base shrink-0 font-bold group-hover:scale-105 transition-transform shadow-md">
-                  🚀
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 text-xs">Open in SClaim Go App</span>
-                    <span className="bg-sky-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Installed</span>
+              {/* Option 1: Mobile App Selection (Dynamic validation based on installation status) */}
+              {isAppInstalled ? (
+                <div className="space-y-1.5">
+                  <button
+                    type="button"
+                    onClick={handleLaunchMobileApp}
+                    disabled={launchingApp}
+                    className="w-full text-left p-4 rounded-2xl border-2 border-sky-500 bg-sky-50/60 hover:bg-sky-100/70 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-sm"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center text-base shrink-0 font-bold group-hover:scale-105 transition-transform shadow-md">
+                      {launchingApp ? (
+                        <HugeiconsIcon icon={Loading03Icon} className="animate-spin text-white w-5 h-5" />
+                      ) : (
+                        "🚀"
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-xs">Open in SClaim Go App</span>
+                        <span className="bg-sky-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Installed</span>
+                      </div>
+                      <p className="text-slate-500 text-[11px] mt-0.5">
+                        {launchingApp ? "Connecting to SClaim Go..." : "Fastest experience with real-time camera upload, GPS tracking, and instant notifications."}
+                      </p>
+                    </div>
+                  </button>
+
+                  <div className="flex items-center justify-between px-1 text-[10px] text-slate-400">
+                    <span>App installed on your device</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAppInstalled(false);
+                        localStorage.setItem("sclaim_go_app_installed", "false");
+                      }}
+                      className="text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer"
+                    >
+                      Need to re-download APK?
+                    </button>
                   </div>
-                  <p className="text-slate-500 text-[11px] mt-0.5">
-                    Fastest experience with real-time camera upload, GPS tracking, and instant notifications.
-                  </p>
                 </div>
-              </button>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadApp}
+                    className="w-full text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60 hover:bg-emerald-100/70 active:scale-[0.99] transition-all flex items-start gap-3.5 cursor-pointer group shadow-sm"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-base shrink-0 font-bold group-hover:scale-105 transition-transform shadow-md">
+                      📥
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-xs">Download SClaim Go App</span>
+                        <span className="bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Download APK</span>
+                      </div>
+                      <p className="text-slate-500 text-[11px] mt-0.5">
+                        Install the official Android app (v1.0.1) for offline mode, camera upload, and instant claim tracking.
+                      </p>
+                    </div>
+                  </button>
+
+                  {downloadDone && (
+                    <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-left space-y-1.5 animate-in fade-in duration-200">
+                      <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-semibold">
+                        <span className="text-sm">✅</span>
+                        <span>APK download started!</span>
+                      </div>
+                      <p className="text-emerald-700 text-[11px]">
+                        Tap the downloaded file in your phone notifications to install. Once installed, click below:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAppInstalled(true);
+                          localStorage.setItem("sclaim_go_app_installed", "true");
+                          handleLaunchMobileApp();
+                        }}
+                        className="text-xs text-emerald-800 font-bold underline cursor-pointer hover:text-emerald-900"
+                      >
+                        I finished installing • Open in App →
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between px-1 text-[10px] text-slate-400">
+                    <span>Already downloaded and installed?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAppInstalled(true);
+                        localStorage.setItem("sclaim_go_app_installed", "true");
+                        handleLaunchMobileApp();
+                      }}
+                      className="text-sky-600 hover:text-sky-700 font-bold underline cursor-pointer"
+                    >
+                      Open in App
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Option 2: Web Preview */}
               <button
@@ -1948,7 +2075,7 @@ export default function ThirdPartyDriverPortalPage() {
 
               <div className="pt-1 text-center">
                 <p className="text-[10px] text-slate-400">
-                  Don't have the app? Use <strong>Web Preview</strong> to view vehicles and submit claims online.
+                  Prefer not to install? Use <strong>Web Preview</strong> to view vehicles and submit claims online.
                 </p>
               </div>
             </div>
