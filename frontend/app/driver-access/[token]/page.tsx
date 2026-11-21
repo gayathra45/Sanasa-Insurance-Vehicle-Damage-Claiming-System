@@ -2438,7 +2438,7 @@ export default function ThirdPartyDriverPortalPage() {
       {/* ========================================================================= */}
       {/* 3. MAIN CONTAINER & HOME STAT CARDS */}
       {/* ========================================================================= */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-8 md:py-10 relative z-20">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 py-6 sm:py-8 md:py-10 pb-28 md:pb-12 relative z-20">
         
         {/* Three Stat Cards - ONLY DISPLAYED ON HOME TAB */}
         {activeTab === "home" && (
@@ -2619,27 +2619,27 @@ export default function ThirdPartyDriverPortalPage() {
 
             {/* Full-Width Redesigned Driver Authorization Scope & Limitations Section */}
             <section className="w-full">
-              <div className="bg-white border border-slate-200/90 rounded-[32px] p-7 sm:p-9 shadow-[0_12px_40px_rgba(0,0,0,0.03)] relative overflow-hidden select-none">
+              <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-[32px] p-4 sm:p-6 md:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.03)] relative overflow-hidden select-none">
                 {/* Ambient Decorative Backdrops */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-sky-100/40 via-indigo-50/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
                 <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100/30 via-slate-50/20 to-transparent rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
                 {/* Card Header (Full Width) */}
-                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-slate-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0d2a3a] via-[#103a52] to-[#0284c7] text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-sky-900/20">
-                      <HugeiconsIcon icon={SecurityCheckIcon} className="w-6 h-6 text-cyan-300" strokeWidth={2.2} />
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5 pb-5 sm:pb-6 border-b border-slate-100">
+                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#0d2a3a] via-[#103a52] to-[#0284c7] text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-sky-900/20">
+                      <HugeiconsIcon icon={SecurityCheckIcon} className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-300" strokeWidth={2.2} />
                     </div>
                     <div>
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                        <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-snug">
                           Driver Authorization Scope & Limitations
                         </h3>
-                        <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-slate-900 text-white shadow-2xs">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-slate-900 text-white shadow-2xs whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Underwriter Verified</span>
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap">
                           Authorized Third-Party Driver
                         </span>
                       </div>
@@ -2649,37 +2649,37 @@ export default function ThirdPartyDriverPortalPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 font-medium">
-                      <HugeiconsIcon icon={ShieldCheckIcon} className="w-4 h-4 text-emerald-600" />
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                    <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] sm:text-xs text-slate-700 font-medium">
+                      <HugeiconsIcon icon={ShieldCheckIcon} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
                       <span>Sri Lanka Motor Traffic Act Compliant</span>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-700 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[11px] sm:text-xs text-emerald-700 font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                       <span>Live Pass Active</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Scope & Limitations 2-Column Grid (Now with full width and generous space) */}
-                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-7">
+                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 lg:gap-8 mt-5 sm:mt-7">
                   
                   {/* Left Column: Authorized Scope (Allowed) */}
-                  <div className="bg-gradient-to-b from-emerald-50/70 via-emerald-50/25 to-white border border-emerald-200/90 rounded-[26px] p-6 sm:p-7 shadow-xs flex flex-col justify-between">
+                  <div className="bg-gradient-to-b from-emerald-50/70 via-emerald-50/25 to-white border border-emerald-200/90 rounded-2xl sm:rounded-[26px] p-3.5 sm:p-5 md:p-7 shadow-xs flex flex-col justify-between">
                     <div>
                       {/* Section Title */}
-                      <div className="flex items-center justify-between pb-4 mb-5 border-b border-emerald-200/70">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold tracking-wide uppercase shadow-sm shadow-emerald-600/30">
-                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      <div className="flex items-center justify-between gap-2 pb-3.5 sm:pb-4 mb-4 sm:mb-5 border-b border-emerald-200/70">
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase shadow-sm shadow-emerald-600/30 shrink-0 whitespace-nowrap">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" strokeWidth={2.5} />
                           <span>Authorized Scope (Allowed)</span>
                         </div>
-                        <span className="text-xs font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300/60">
+                        <span className="text-[11px] sm:text-xs font-bold text-emerald-800 bg-emerald-100/90 px-2.5 sm:px-3 py-1 rounded-full border border-emerald-300/60 shrink-0 whitespace-nowrap">
                           5 Active Rights
                         </span>
                       </div>
 
                       {/* Items List */}
-                      <div className="space-y-3.5">
+                      <div className="space-y-2.5 sm:space-y-3.5">
                         {[
                           {
                             title: "Drive Assigned Vehicles Legally",
@@ -2704,16 +2704,16 @@ export default function ThirdPartyDriverPortalPage() {
                         ].map((item, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start gap-3.5 p-3 rounded-2xl bg-white/70 border border-emerald-100 hover:bg-emerald-100/40 hover:border-emerald-200 transition-all shadow-2xs"
+                            className="flex items-start gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/70 border border-emerald-100 hover:bg-emerald-100/40 hover:border-emerald-200 transition-all shadow-2xs"
                           >
-                            <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs shadow-emerald-500/30">
-                              <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs shadow-emerald-500/30">
+                              <HugeiconsIcon icon={Tick01Icon} className="w-3 h-3 sm:w-3.5 sm:h-3.5" strokeWidth={3} />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h5 className="text-slate-900 text-[13px] sm:text-sm font-bold leading-snug">
+                              <h5 className="text-slate-900 text-xs sm:text-[13px] md:text-sm font-bold leading-snug">
                                 {item.title}
                               </h5>
-                              <p className="text-slate-600 text-xs sm:text-[12.5px] font-normal leading-relaxed mt-0.5">
+                              <p className="text-slate-600 text-[11px] sm:text-xs md:text-[12.5px] font-normal leading-relaxed mt-0.5">
                                 {item.desc}
                               </p>
                             </div>
@@ -2722,31 +2722,31 @@ export default function ThirdPartyDriverPortalPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3.5 border-t border-emerald-100 flex items-center justify-between text-xs text-emerald-800 font-semibold">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span>Comprehensive underwritten third-party coverage active</span>
+                    <div className="mt-4 sm:mt-5 pt-3 sm:pt-3.5 border-t border-emerald-100 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs text-emerald-800 font-semibold">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        <span className="leading-tight">Comprehensive underwritten third-party coverage active</span>
                       </div>
-                      <span className="hidden sm:inline text-emerald-600 text-[11px] font-normal">Section 99 MTR Act</span>
+                      <span className="hidden sm:inline text-emerald-600 text-[11px] font-normal shrink-0">Section 99 MTR Act</span>
                     </div>
                   </div>
 
                   {/* Right Column: Access Limitations (Restricted) */}
-                  <div className="bg-gradient-to-b from-rose-50/70 via-rose-50/25 to-white border border-rose-200/90 rounded-[26px] p-6 sm:p-7 shadow-xs flex flex-col justify-between">
+                  <div className="bg-gradient-to-b from-rose-50/70 via-rose-50/25 to-white border border-rose-200/90 rounded-2xl sm:rounded-[26px] p-3.5 sm:p-5 md:p-7 shadow-xs flex flex-col justify-between">
                     <div>
                       {/* Section Title */}
-                      <div className="flex items-center justify-between pb-4 mb-5 border-b border-rose-200/70">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-bold tracking-wide uppercase shadow-sm shadow-rose-500/30">
-                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      <div className="flex items-center justify-between gap-2 pb-3.5 sm:pb-4 mb-4 sm:mb-5 border-b border-rose-200/70">
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-rose-500 text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase shadow-sm shadow-rose-500/30 shrink-0 whitespace-nowrap">
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" strokeWidth={2.5} />
                           <span>Access Limitations (Restricted)</span>
                         </div>
-                        <span className="text-xs font-bold text-rose-800 bg-rose-100/90 px-3 py-1 rounded-full border border-rose-300/60">
+                        <span className="text-[11px] sm:text-xs font-bold text-rose-800 bg-rose-100/90 px-2.5 sm:px-3 py-1 rounded-full border border-rose-300/60 shrink-0 whitespace-nowrap">
                           4 Restrictions
                         </span>
                       </div>
 
                       {/* Items List */}
-                      <div className="space-y-3.5">
+                      <div className="space-y-2.5 sm:space-y-3.5">
                         {[
                           {
                             title: "No Policy Term Alterations",
@@ -2767,16 +2767,16 @@ export default function ThirdPartyDriverPortalPage() {
                         ].map((item, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start gap-3.5 p-3 rounded-2xl bg-white/70 border border-rose-100 hover:bg-rose-100/40 hover:border-rose-200 transition-all shadow-2xs"
+                            className="flex items-start gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/70 border border-rose-100 hover:bg-rose-100/40 hover:border-rose-200 transition-all shadow-2xs"
                           >
-                            <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-600 border border-rose-300 flex items-center justify-center shrink-0 mt-0.5">
-                              <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-rose-100 text-rose-600 border border-rose-300 flex items-center justify-center shrink-0 mt-0.5">
+                              <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3 sm:w-3.5 sm:h-3.5" strokeWidth={2.5} />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h5 className="text-slate-900 text-[13px] sm:text-sm font-bold leading-snug">
+                              <h5 className="text-slate-900 text-xs sm:text-[13px] md:text-sm font-bold leading-snug">
                                 {item.title}
                               </h5>
-                              <p className="text-slate-600 text-xs sm:text-[12.5px] font-normal leading-relaxed mt-0.5">
+                              <p className="text-slate-600 text-[11px] sm:text-xs md:text-[12.5px] font-normal leading-relaxed mt-0.5">
                                 {item.desc}
                               </p>
                             </div>
@@ -2785,29 +2785,29 @@ export default function ThirdPartyDriverPortalPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3.5 border-t border-rose-100 flex items-center justify-between text-xs text-rose-700 font-semibold">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-rose-400" />
-                        <span>Cryptographic sandbox guards owner privacy and financial records</span>
+                    <div className="mt-4 sm:mt-5 pt-3 sm:pt-3.5 border-t border-rose-100 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs text-rose-700 font-semibold">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
+                        <span className="leading-tight">Cryptographic sandbox guards owner privacy and financial records</span>
                       </div>
-                      <span className="hidden sm:inline text-rose-500 text-[11px] font-normal">ISO 27001 Compliant</span>
+                      <span className="hidden sm:inline text-rose-500 text-[11px] font-normal shrink-0">ISO 27001 Compliant</span>
                     </div>
                   </div>
 
                 </div>
 
                 {/* Bottom Trust Seal Footer */}
-                <div className="relative z-10 mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-500">
+                <div className="relative z-10 mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 text-[11px] sm:text-xs text-slate-500">
                   <div className="flex items-center gap-2">
-                    <HugeiconsIcon icon={ShieldCheckIcon} className="w-4 h-4 text-cyan-600" />
+                    <HugeiconsIcon icon={ShieldCheckIcon} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-600 shrink-0" />
                     <span>Verified under Sanasa General Insurance Company Limited Policy Framework</span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <HugeiconsIcon icon={Call02Icon} className="w-4 h-4 text-slate-500" />
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
                       <span className="font-mono text-slate-700 font-bold">24/7 Hotline: +94 112 003 000</span>
                     </div>
-                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-300 hidden sm:inline">•</span>
                     <span className="text-slate-400">Driver Reference: {profile?.driverNicMasked || profile?.reference || "VERIFIED"}</span>
                   </div>
                 </div>
