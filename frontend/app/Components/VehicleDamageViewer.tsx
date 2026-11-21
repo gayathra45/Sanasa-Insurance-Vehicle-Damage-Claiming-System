@@ -510,30 +510,70 @@ export default function VehicleDamageViewer({
       {/* Component Checklist Table */}
       {checklist.length > 0 && (
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
             <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
               <span>📋</span> Category Inspection Checklist ({diagramSpec.displayName})
             </h4>
-            <span className="text-xs text-slate-500 font-medium">
-              {checklist.filter((c) => c.status === "Good condition").length} Good • {checklist.filter((c) => c.status === "Damaged").length} Damaged
-            </span>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              {(() => {
+                const goodCount = checklist.filter((c) => (c.status || "").toLowerCase().includes("good")).length;
+                const damagedCount = checklist.filter((c) => (c.status || "").toLowerCase().includes("damag")).length;
+                const pendingCount = checklist.filter((c) => (c.status || "").toLowerCase().includes("not inspected") || (c.status || "").toLowerCase().includes("pending")).length;
+
+                return (
+                  <>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 text-[11px] inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                      {goodCount} Good
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200 text-[11px] inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
+                      {damagedCount} Damaged
+                    </span>
+                    {pendingCount > 0 && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[11px] inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                        {pendingCount} Not Inspected
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {checklist.map((item, idx) => {
-              let badgeBg = "bg-slate-100 text-slate-600";
-              if (item.status === "Good condition") badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200 border";
-              if (item.status === "Damaged") badgeBg = "bg-red-50 text-red-700 border-red-200 border";
-              if (item.status === "Not inspected") badgeBg = "bg-amber-50 text-amber-700 border-amber-200 border";
+              const normStatus = (item.status || "").toLowerCase().trim();
+              let badgeClass = "bg-slate-100 text-slate-600 border-slate-200";
+              let dotColor = "bg-slate-400";
+              let displayStatus = item.status || "Not Inspected";
+
+              if (normStatus.includes("good")) {
+                badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                dotColor = "bg-emerald-500";
+              } else if (normStatus.includes("damag")) {
+                badgeClass = "bg-rose-50 text-rose-700 border-rose-200";
+                dotColor = "bg-rose-500";
+              } else if (normStatus.includes("not inspected") || normStatus.includes("pending")) {
+                badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                dotColor = "bg-amber-500";
+              } else if (normStatus.includes("not applicable") || normStatus.includes("n/a")) {
+                badgeClass = "bg-slate-100 text-slate-500 border-slate-200";
+                dotColor = "bg-slate-400";
+              }
 
               return (
                 <div
                   key={idx}
-                  className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                  className="min-h-[54px] px-3.5 py-2.5 rounded-2xl bg-slate-50/80 hover:bg-slate-100/70 border border-slate-200/80 flex items-center justify-between text-xs transition-colors shadow-2xs"
                 >
-                  <span className="font-bold text-slate-700">{item.item}</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${badgeBg}`}>
-                    {item.status}
+                  <span className="font-bold text-xs text-slate-800 leading-snug line-clamp-2 mr-2">
+                    {item.item}
+                  </span>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shrink-0 whitespace-nowrap border ${badgeClass} shadow-2xs`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0`} />
+                    <span>{displayStatus}</span>
                   </span>
                 </div>
               );
